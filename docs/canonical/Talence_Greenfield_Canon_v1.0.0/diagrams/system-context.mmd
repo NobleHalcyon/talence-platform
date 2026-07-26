@@ -1,0 +1,12 @@
+flowchart LR
+    A[Anonymous Visitor] -->|Static only| W[Next.js / Vercel]
+    U[Admitted User] -->|Supabase session| W
+    W -->|RLS-bound queries and functions| P[(Supabase Postgres)]
+    W -->|Human identity| H[Supabase Auth]
+    W -->|Private imports / signed snapshots| S[Supabase Storage]
+    C[Python Catalog Worker] -->|Scryfall bulk + sets| F[Scryfall]
+    C -->|Stage, validate, promote| P
+    C -->|Publish immutable SQLite snapshot| S
+    R[Robot / Third-Party Device] -->|Device credential + /api/v1| W
+    R -->|Signed snapshot download| S
+    R -->|Offline local execution| L[(Local SQLite Runtime + Catalog)]

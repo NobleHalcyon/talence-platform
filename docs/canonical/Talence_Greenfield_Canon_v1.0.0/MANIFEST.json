@@ -1,0 +1,168 @@
+{
+  "file_count": 32,
+  "files": [
+    {
+      "bytes": 3654,
+      "path": "00 - Canonical Authority.md",
+      "sha256": "f950fc73169acfb90115c049f5f9aeb8d1612da23425a2760a3c8d6d6ac1911d"
+    },
+    {
+      "bytes": 5158,
+      "path": "01 - Product Charter.md",
+      "sha256": "8718253960b2134c3d7a6d1cd8a33a4c04c670b2443ccd9267aed53579090119"
+    },
+    {
+      "bytes": 6632,
+      "path": "02 - Domain Glossary and Invariants.md",
+      "sha256": "013accd55ec4f8f9c4df00f745ae37fc75bb05c9a9f3c40f747d7f3694e48e79"
+    },
+    {
+      "bytes": 13021,
+      "path": "03 - Feature Specification.md",
+      "sha256": "f7e1c5ef65a08e1af62ea64198a798f0dfea5709b32f3df16986d8d92e4db9f6"
+    },
+    {
+      "bytes": 8790,
+      "path": "04 - Greenfield System Architecture.md",
+      "sha256": "b2ead689f2c4b9f165b1945e8a42d783e8717472eef7b7ad64f392f4c4c703e8"
+    },
+    {
+      "bytes": 8091,
+      "path": "05 - Identity Invites Workspaces and Authorization.md",
+      "sha256": "a47156f352cd74588a2eb48c0363fcad3529f31beb5860bab5fbc98ffd89f849"
+    },
+    {
+      "bytes": 20304,
+      "path": "06 - Database Domain Model.md",
+      "sha256": "e4c1f386cd1c136f956734cc500cff4a23ab9f0f1d1f9c437b1a828b64716eb0"
+    },
+    {
+      "bytes": 10044,
+      "path": "07 - Catalog Pricing and Robot Snapshot Pipeline.md",
+      "sha256": "a254f1212679235481fa88827928024d68ebceac94cabf156823120303df2947"
+    },
+    {
+      "bytes": 8986,
+      "path": "08 - API and Device Integration Contract.md",
+      "sha256": "452925ff4163389edc35246203f2a09947a6b9ddfcba854a8ec9a9ef7420e1d6"
+    },
+    {
+      "bytes": 8722,
+      "path": "09 - Web UX and Design System.md",
+      "sha256": "49aa22d10eabbfc70cc0bab9c861a650e97674e4fa46077c488fcc16fe3300b0"
+    },
+    {
+      "bytes": 5459,
+      "path": "10 - Robot Cloud Boundary.md",
+      "sha256": "ef5d298746bac822e390087f917419009e7518dcad0f1373238605e4206954c5"
+    },
+    {
+      "bytes": 10020,
+      "path": "11 - Security Cost Controls and Operations.md",
+      "sha256": "fe0368f37595a2d6c5b81b72062e8aa1410bfe799ba6535f9d27eb3a19b4cfba"
+    },
+    {
+      "bytes": 7089,
+      "path": "12 - Roadmap and Acceptance Criteria.md",
+      "sha256": "bce2daca3eee7f5e5a0537265d11eeb98d933ceae1d108fc78a5b4ac50da246a"
+    },
+    {
+      "bytes": 4841,
+      "path": "13 - Decision Ledger.md",
+      "sha256": "e6bff246b0d7f73fa0dae45aacb5aee737697476c541449ad0ea1362e2b079a3"
+    },
+    {
+      "bytes": 2834,
+      "path": "14 - Historical Source Reconciliation.md",
+      "sha256": "4270a975d828750a7bd85383e0bb2aa5bda82008bc9a553dfcb6a05fe9ccf365"
+    },
+    {
+      "bytes": 2303,
+      "path": "15 - Official References.md",
+      "sha256": "0d93ec4eaf45f6aa2079450067a4d8c51f33c4f8663e77ebfb2354e3b1cf1183"
+    },
+    {
+      "bytes": 2135,
+      "path": "AGENTS.md",
+      "sha256": "f3eb012fb3f25003435513fa5c4c7753e8ba701a782530d94916d98293473df3"
+    },
+    {
+      "bytes": 745,
+      "path": "CHANGELOG.md",
+      "sha256": "205089a9cc0c2e017dd247baefd24b0d038cc4473beeaf81da0022d7dcd81c3f"
+    },
+    {
+      "bytes": 3253,
+      "path": "README.md",
+      "sha256": "dd0bb2b4ceb8e2ff33863cc36c801399d19f23cc415d587cc9477ccd63fb81c2"
+    },
+    {
+      "bytes": 127599,
+      "path": "TALENCE-GREENFIELD-CANON-COMBINED.md",
+      "sha256": "ee6db16a267002414051f7bcf6bd3e3e35675dc9968136584d122a1de2206e70"
+    },
+    {
+      "bytes": 924,
+      "path": "VALIDATION_REPORT.md",
+      "sha256": "bb8a34b1a467f0c9b44f4ac120a7e4e3358eb3bece738bd6a82332295129feed"
+    },
+    {
+      "bytes": 621,
+      "path": "contracts/README.md",
+      "sha256": "db657ca56dce078977d0b4bdb600e0913ff42179ca708224282f09d33473fab3"
+    },
+    {
+      "bytes": 2344,
+      "path": "contracts/catalog-snapshot-manifest.schema.json",
+      "sha256": "2cec92bf612d170ce9e4c6be180fdbe4b4f4a909de421ee42a05d25f71b8d209"
+    },
+    {
+      "bytes": 16614,
+      "path": "contracts/device-api.openapi.yaml",
+      "sha256": "463d2e6484647dd79a8d08aded4e0729c8dc1e298dfe1b2fe9f1f02e0b9081da"
+    },
+    {
+      "bytes": 1991,
+      "path": "contracts/device-inventory-batch.schema.json",
+      "sha256": "f041a7ef992c02414d34248c05f015a3416335d7370742a228c78e5c7e5e16b1"
+    },
+    {
+      "bytes": 1704,
+      "path": "contracts/device-run-summary.schema.json",
+      "sha256": "78cbeed8133df9a75dd242ef314d533ce2e8103917eb0e75ddc4c20a317ed22d"
+    },
+    {
+      "bytes": 6756,
+      "path": "contracts/edge-catalog-schema.sql",
+      "sha256": "6c6dbc6d928afb2335bbea3e5b4b0aec3cbe96166ca762b84ae10eecacd237ac"
+    },
+    {
+      "bytes": 811,
+      "path": "diagrams/auth-invite-flow.mmd",
+      "sha256": "9819cccee6a1d347394ee637a0d80b538a46c9c9d6bf7eb63d1708c00ead7fb0"
+    },
+    {
+      "bytes": 612,
+      "path": "diagrams/catalog-flow.mmd",
+      "sha256": "8e83972a6019e0901d7cb68ef88ba4a3705cb88693fa57ce08a18eb20f104233"
+    },
+    {
+      "bytes": 1322,
+      "path": "diagrams/domain-erd.mmd",
+      "sha256": "12998591d93edcc537745410eb8e2f7accc2ddc9cbfe4eb689c54e269b5cc05e"
+    },
+    {
+      "bytes": 660,
+      "path": "diagrams/inventory-ledger-flow.mmd",
+      "sha256": "2e2e8f193c6169b0790f81c3ca5b68ee6357a144cb2a7c84d05f0ca763c3e4fb"
+    },
+    {
+      "bytes": 625,
+      "path": "diagrams/system-context.mmd",
+      "sha256": "2d9740401940f26479f36459989aafbc460b8e14af87c789499906a1fd4e76cd"
+    }
+  ],
+  "generated_at": "2026-07-26T20:11:56+00:00",
+  "package": "Talence Greenfield Canon",
+  "version": "1.0.0"
+}

@@ -1,0 +1,12 @@
+flowchart TD
+    A[Scryfall bulk metadata] --> B[Download source to temporary storage]
+    B --> C[Verify size, content type, SHA-256]
+    C --> D[Stream parse and normalize into staging]
+    D --> E[Validate counts, identities, relationships, prices]
+    E -- Failure --> F[Record failure; retain current catalog]
+    E -- Success --> G[Promote staging transactionally]
+    G --> H[Refresh PostgreSQL search indexes]
+    G --> I[Generate deterministic SQLite snapshot]
+    I --> J[SQLite integrity check + SHA-256]
+    J --> K[Upload immutable artifact]
+    K --> L[Publish manifest only after upload succeeds]

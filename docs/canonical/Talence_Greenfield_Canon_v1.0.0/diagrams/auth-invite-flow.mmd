@@ -1,0 +1,21 @@
+sequenceDiagram
+  actor Admin
+  participant Web as Trusted Talence Server
+  participant DB as Supabase Postgres
+  participant Auth as Supabase Auth
+  actor Invitee
+
+  Admin->>Web: Issue invitation(email, expiry)
+  Web->>DB: Upsert app_private.invited_users
+  Web->>Auth: inviteUserByEmail(email, metadata)
+  Auth->>DB: Before User Created hook
+  DB-->>Auth: Allow only valid invited email
+  Auth-->>Invitee: Managed invitation email
+  Invitee->>Auth: Accept invite / establish session
+  Auth-->>Web: Auth callback with verified session
+  Web->>DB: finalize_admitted_user(auth.uid())
+  DB->>DB: Lock invitation and validate link
+  DB->>DB: Create profile + personal workspace
+  DB->>DB: Create owner membership + default collection
+  DB-->>Web: Canonical resource IDs
+  Web-->>Invitee: Enter private application

@@ -1,0 +1,13 @@
+flowchart LR
+  A[Human action / CSV commit / device batch] --> B[Validate identity, workspace, grant, payload]
+  B --> C[Resolve idempotency key and request hash]
+  C -->|identical replay| D[Return stored result]
+  C -->|conflicting replay| E[Reject conflict]
+  C -->|new request| F[Begin database transaction]
+  F --> G[Lock affected balance keys in deterministic order]
+  G --> H[Validate printings, finish, condition, and nonnegative result]
+  H --> I[Insert immutable inventory transaction]
+  I --> J[Insert immutable transaction lines]
+  J --> K[Upsert materialized balances]
+  K --> L[Commit]
+  L --> M[Return before/after quantities and transaction ID]
