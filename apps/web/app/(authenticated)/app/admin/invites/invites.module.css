@@ -1,0 +1,69 @@
+.notice {
+  margin-block-end: var(--tl-space-5);
+}
+
+.issuePanel,
+.listSection {
+  display: grid;
+  gap: var(--tl-space-5);
+}
+
+.listSection {
+  margin-block-start: var(--tl-space-8);
+}
+
+.sectionHeader {
+  display: grid;
+  gap: var(--tl-space-1);
+}
+
+.sectionHeader h2,
+.sectionHeader h3,
+.sectionHeader p,
+.empty h3,
+.empty p {
+  margin: 0;
+}
+
+.sectionHeader h2,
+.empty h3 {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+}
+
+.sectionHeader p,
+.empty p {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-14);
+}
+
+.issueForm {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.issueAction {
+  display: flex;
+  align-items: end;
+}
+
+.rowActions {
+  display: flex;
+  gap: var(--tl-space-2);
+}
+
+.empty {
+  display: grid;
+  gap: var(--tl-space-2);
+  text-align: center;
+}
+
+@media (min-width: 40rem) {
+  .issueForm {
+    grid-template-columns: minmax(0, 2fr) minmax(10rem, 1fr);
+  }
+
+  .issueForm > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}

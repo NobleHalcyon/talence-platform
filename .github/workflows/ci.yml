@@ -59,6 +59,8 @@ jobs:
       - run: npm ci
       - run: npx supabase start
       - run: npx supabase db reset
+      - run: npm run db:lint
+      - run: npm run db:types:check
       - run: npx supabase test db
 
   browser:

@@ -36,6 +36,36 @@
   gap: var(--tl-space-4);
 }
 
+.status {
+  margin-block-end: var(--tl-space-4);
+}
+
+.captcha {
+  display: grid;
+  min-height: 4.125rem;
+  align-items: center;
+  justify-items: center;
+  overflow: hidden;
+}
+
+.formSection {
+  display: grid;
+  gap: var(--tl-space-4);
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 @media (min-width: 40rem) {
   .fieldRow {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -2,8 +2,8 @@
 # Reference: https://supabase.com/docs/guides/local-development/cli/config
 #
 # This file contains local-only, non-secret settings. Hosted project settings,
-# credentials, CAPTCHA, SMTP, and the Before User Created hook are configured in
-# later phases and documented separately.
+# credentials, CAPTCHA, SMTP, and hosted hook activation are documented
+# separately.
 
 project_id = "talence-platform"
 
@@ -40,7 +40,7 @@ enabled = true
 port = 54323
 api_url = "http://127.0.0.1"
 
-[inbucket]
+[local_smtp]
 # Local invitation and recovery emails are captured here rather than delivered.
 enabled = true
 port = 54324
@@ -54,12 +54,10 @@ file_size_limit = "50MiB"
 enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = [
-  "http://localhost:3000/auth/callback",
-  "http://127.0.0.1:3000/auth/callback",
-  "http://localhost:3000/invite/complete",
-  "http://127.0.0.1:3000/invite/complete",
-  "http://localhost:3000/reset-password",
-  "http://127.0.0.1:3000/reset-password",
+  "http://localhost:3000/auth/callback?type=invite&next=/invite/complete",
+  "http://127.0.0.1:3000/auth/callback?type=invite&next=/invite/complete",
+  "http://localhost:3000/auth/callback?type=recovery&next=/reset-password",
+  "http://127.0.0.1:3000/auth/callback?type=recovery&next=/reset-password",
 ]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
@@ -84,3 +82,7 @@ otp_expiry = 3600
 [auth.sms]
 enable_signup = false
 enable_confirmations = false
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/app_private/before_user_created_hook"

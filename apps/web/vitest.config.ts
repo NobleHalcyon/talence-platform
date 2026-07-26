@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(workspaceRoot),
+      "server-only": path.resolve(workspaceRoot, "tests/server-only.ts"),
     },
   },
   test: {

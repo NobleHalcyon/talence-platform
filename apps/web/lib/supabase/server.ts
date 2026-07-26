@@ -3,8 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 import { getPublicSupabaseConfig } from "./config";
+import type { Database } from "./database.types";
 
-export async function createServerSupabaseClient(): Promise<SupabaseClient | null> {
+export async function createServerSupabaseClient(): Promise<SupabaseClient<Database> | null> {
   const config = getPublicSupabaseConfig();
   if (!config) {
     return null;
@@ -12,7 +13,7 @@ export async function createServerSupabaseClient(): Promise<SupabaseClient | nul
 
   const cookieStore = await cookies();
 
-  return createServerClient(config.url, config.publishableKey, {
+  return createServerClient<Database>(config.url, config.publishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

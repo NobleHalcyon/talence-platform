@@ -1,0 +1,45 @@
+.form {
+  display: grid;
+  gap: var(--tl-space-6);
+}
+
+.section {
+  display: grid;
+  gap: var(--tl-space-5);
+}
+
+.sectionHeader {
+  display: grid;
+  gap: var(--tl-space-1);
+}
+
+.sectionHeader h2,
+.sectionHeader p {
+  margin: 0;
+}
+
+.sectionHeader h2 {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+}
+
+.sectionHeader p {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-14);
+}
+
+.fieldGrid {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 40rem) {
+  .fieldGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

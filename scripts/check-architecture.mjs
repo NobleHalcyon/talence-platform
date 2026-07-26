@@ -45,7 +45,7 @@ async function walk(directory) {
     if (/\bsignUp\s*\(/.test(contents)) {
       findings.push(`${relative}: public Supabase signUp call is prohibited`);
     }
-    if (/(?:^|\/)register(?:\/|$)/i.test(relative)) {
+    if (/(?:^|\/)(?:register|sign-?up)(?:\/|$)/i.test(relative)) {
       findings.push(`${relative}: public registration route is prohibited`);
     }
     if (

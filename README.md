@@ -53,11 +53,18 @@ Copy-Item apps\web\.env.example apps\web\.env.local
 .\scripts\setup-python.ps1
 npx supabase start
 npx supabase db reset
+npx supabase status -o env
 npm run dev
 ```
 
-Open `http://localhost:3000`. Phase fixture data is local only. Never put a
-production key in `.env.local`.
+Copy the local API URL, publishable key, and service-role/secret key reported by
+the local stack into `apps/web/.env.local`; also set
+`NEXT_PUBLIC_APP_ORIGIN=http://localhost:3000`. Local credentials and fixture
+data are development-only. Never put a production key in `.env.local`.
+
+If `supabase/config.toml` changes while the stack is running, use
+`npx supabase stop` followed by `npx supabase start`; a database reset alone
+does not recreate the Auth container configuration.
 
 ## macOS/Linux setup
 
@@ -101,13 +108,16 @@ Database and browser:
 
 ```powershell
 npx supabase db reset
-npx supabase test db
+npm run db:lint
+npm run db:types:check
+npm run test:supabase
 npx playwright install chromium
 npm run test:e2e
 ```
 
 `npm run ci` runs the local checks that do not require Docker or a browser
-download. GitHub Actions also starts a clean local Supabase stack.
+download. GitHub Actions starts a clean local Supabase stack, checks generated
+database types, lints all Phase 1 schemas, and runs pgTAP.
 
 ## Environment contract
 
@@ -121,9 +131,10 @@ Browser-exposed variables are limited to:
 - `NEXT_PUBLIC_APP_ORIGIN`
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
 
-The Supabase secret key, database URL, CAPTCHA secret, device credential pepper,
-and catalog-worker configuration are server/worker-only. They must never use a
-`NEXT_PUBLIC_` prefix.
+The Supabase secret key, database URL, device credential pepper, and
+catalog-worker configuration are server/worker-only. They must never use a
+`NEXT_PUBLIC_` prefix. The Turnstile secret is configured in Supabase Auth, not
+in the web application; only its site key is browser-visible.
 
 All incident-sensitive features default off when configuration is absent:
 invitations, catalog sync, device inventory writes, and snapshot downloads.
@@ -138,9 +149,22 @@ call public `signUp`. A platform administrator first writes an invitation to
 `app_private.invited_users`, then calls Supabase Admin invitation. The Before
 User Created hook rejects all other account creation.
 
-Local SQL installs the hook function, but hosted activation, production CAPTCHA,
-SMTP, Auth rate limits, and redirect URLs are human setup steps documented in
-`docs/operations/production-setup.md`.
+Phase 1 includes:
+
+- the private invitation ledger and Before User Created hook;
+- atomic, idempotent admission finalization;
+- profile, personal workspace, owner membership, preferences, and default MTG
+  collection provisioning;
+- default-deny workspace RLS and final-owner protection;
+- login, logout, recovery, invitation completion, settings, workspace context,
+  and platform-admin invitation management;
+- trusted bootstrap, invite, revoke, and status commands under `scripts/admin`.
+
+For local trusted CLI usage and the first-admin sequence, see
+[`scripts/admin/README.md`](scripts/admin/README.md). Hosted hook activation,
+server-readable email templates, production CAPTCHA, SMTP, Auth/WAF rate
+limits, exact redirect URLs, and environment values are documented in
+[`docs/operations/production-setup.md`](docs/operations/production-setup.md).
 
 ## Catalog worker safety
 

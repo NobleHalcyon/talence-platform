@@ -81,6 +81,38 @@
   text-decoration: none;
 }
 
+.accountGroup {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--tl-space-2);
+}
+
+.adminLink {
+  display: none;
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+  text-decoration: none;
+}
+
+.logoutButton {
+  min-height: var(--tl-touch-target);
+  border: 0;
+  background: transparent;
+  color: var(--tl-color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.logoutButton:hover,
+.adminLink:hover {
+  color: var(--tl-color-navy);
+  text-decoration: underline;
+}
+
 .previewBanner {
   display: flex;
   min-height: 2.25rem;
@@ -129,6 +161,38 @@
   margin: var(--tl-space-4) 0 0;
   padding: 0;
   list-style: none;
+}
+
+.workspaceForm {
+  display: grid;
+  gap: var(--tl-space-2);
+  margin-block-start: var(--tl-space-4);
+}
+
+.workspaceLabel {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.workspaceSelect,
+.workspaceButton {
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-white);
+  color: var(--tl-color-text);
+  padding-inline: var(--tl-space-3);
+  font: inherit;
+  font-size: var(--tl-font-size-12);
+}
+
+.workspaceButton {
+  background: var(--tl-color-navy);
+  color: var(--tl-color-white);
+  cursor: pointer;
+  font-weight: var(--tl-font-weight-semibold);
 }
 
 .railItem {
@@ -241,6 +305,10 @@
 
   .main {
     padding: var(--tl-space-8) var(--tl-space-6) calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .adminLink {
+    display: inline-flex;
   }
 }
 

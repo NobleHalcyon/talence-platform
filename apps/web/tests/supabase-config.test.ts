@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { getApplicationOrigin, getPublicSupabaseConfig } from "@/lib/supabase/config";
 
 const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const originalPublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const originalAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const originalAppOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN;
+const originalVercelUrl = process.env.VERCEL_URL;
 
 afterEach(() => {
   if (originalUrl === undefined) {
@@ -23,6 +25,18 @@ afterEach(() => {
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   } else {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalAnonKey;
+  }
+
+  if (originalAppOrigin === undefined) {
+    delete process.env.NEXT_PUBLIC_APP_ORIGIN;
+  } else {
+    process.env.NEXT_PUBLIC_APP_ORIGIN = originalAppOrigin;
+  }
+
+  if (originalVercelUrl === undefined) {
+    delete process.env.VERCEL_URL;
+  } else {
+    process.env.VERCEL_URL = originalVercelUrl;
   }
 });
 
@@ -60,5 +74,14 @@ describe("Supabase public configuration", () => {
       url: "http://127.0.0.1:54321",
       publishableKey: "local-public-key",
     });
+  });
+
+  it("normalizes host-only and qualified Vercel application origins", () => {
+    delete process.env.NEXT_PUBLIC_APP_ORIGIN;
+    process.env.VERCEL_URL = "preview.example.vercel.app";
+    expect(getApplicationOrigin()).toBe("https://preview.example.vercel.app");
+
+    process.env.VERCEL_URL = "https://preview.example.vercel.app";
+    expect(getApplicationOrigin()).toBe("https://preview.example.vercel.app");
   });
 });
