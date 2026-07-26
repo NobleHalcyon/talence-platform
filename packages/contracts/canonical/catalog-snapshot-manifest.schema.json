@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talence.example/contracts/catalog-snapshot-manifest.schema.json",
+  "title": "Talence Catalog Snapshot Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "up_to_date",
+    "server_time",
+    "latest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "up_to_date": { "type": "boolean" },
+    "server_time": { "type": "string", "format": "date-time" },
+    "latest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_id",
+        "version",
+        "snapshot_schema_version",
+        "game_code",
+        "generated_at",
+        "provider_observed_at",
+        "sha256",
+        "byte_size",
+        "record_counts",
+        "minimum_client_version"
+      ],
+      "properties": {
+        "snapshot_id": { "type": "string", "format": "uuid" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "snapshot_schema_version": { "type": "integer", "minimum": 1 },
+        "game_code": { "const": "mtg" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "provider_observed_at": { "type": "string", "format": "date-time" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "byte_size": { "type": "integer", "minimum": 1 },
+        "record_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sets", "oracle_cards", "printings", "faces", "prices"],
+          "properties": {
+            "sets": { "type": "integer", "minimum": 0 },
+            "oracle_cards": { "type": "integer", "minimum": 0 },
+            "printings": { "type": "integer", "minimum": 0 },
+            "faces": { "type": "integer", "minimum": 0 },
+            "prices": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "minimum_client_version": { "type": "string", "minLength": 1 },
+        "download": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["url", "expires_at"],
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "expires_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    }
+  }
+}

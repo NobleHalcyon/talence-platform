@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talence.example/contracts/device-run-summary.schema.json",
+  "title": "Talence Device Run Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "external_run_id",
+    "collection_id",
+    "status",
+    "catalog_snapshot_version",
+    "started_at",
+    "completed_at",
+    "counts"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "external_run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "collection_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": ["completed", "failed", "cancelled", "partially_posted"]
+    },
+    "catalog_snapshot_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "recognized", "unrecognized", "posted"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "recognized": { "type": "integer", "minimum": 0 },
+        "unrecognized": { "type": "integer", "minimum": 0 },
+        "posted": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "diagnostic_code": {
+      "type": ["string", "null"],
+      "maxLength": 128
+    },
+    "metadata": {
+      "type": "object",
+      "maxProperties": 20,
+      "additionalProperties": {
+        "type": ["string", "number", "integer", "boolean", "null"]
+      }
+    }
+  }
+}

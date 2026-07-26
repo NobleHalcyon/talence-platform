@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling==1.31.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "talence-catalog-worker"
+version = "0.1.0"
+description = "Fixture-first Scryfall catalog normalization and Talence snapshot tooling."
+readme = "README.md"
+requires-python = "==3.13.*"
+license = { text = "UNLICENSED" }
+authors = [{ name = "Talence" }]
+dependencies = [
+  "httpx==0.28.1",
+  "ijson==3.5.1",
+  "psycopg[binary]==3.3.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy==2.3.0",
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "ruff==0.15.22",
+]
+
+[project.scripts]
+talence-catalog = "talence_catalog.cli:entrypoint"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/talence_catalog"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers -p no:cacheprovider -p no:tmpdir"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.format]
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["B011"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+mypy_path = "src"
+packages = ["talence_catalog"]
+warn_unreachable = true
+show_error_codes = true

@@ -1,0 +1,26 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2);
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-16);
+  font-weight: var(--tl-font-weight-bold);
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.mark {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--tl-color-navy);
+}
+
+.compact .word {
+  display: none;
+}
+
+@media (min-width: 40rem) {
+  .compact .word {
+    display: inline;
+  }
+}

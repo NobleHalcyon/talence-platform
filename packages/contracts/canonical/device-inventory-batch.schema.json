@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talence.example/contracts/device-inventory-batch.schema.json",
+  "title": "Talence Device Inventory Batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "catalog_snapshot_version",
+    "occurred_at",
+    "lines"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "catalog_snapshot_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "external_run_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "$ref": "#/$defs/line"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "maxProperties": 20,
+      "additionalProperties": {
+        "type": ["string", "number", "integer", "boolean", "null"]
+      }
+    }
+  },
+  "$defs": {
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line_id",
+        "printing_id",
+        "finish",
+        "condition",
+        "quantity_delta"
+      ],
+      "properties": {
+        "line_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "printing_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "finish": {
+          "enum": ["unknown", "nonfoil", "foil", "etched"]
+        },
+        "condition": {
+          "enum": [
+            "unknown",
+            "near_mint",
+            "lightly_played",
+            "moderately_played",
+            "heavily_played",
+            "damaged"
+          ]
+        },
+        "quantity_delta": {
+          "type": "integer",
+          "minimum": -10000,
+          "maximum": 10000,
+          "not": { "const": 0 }
+        }
+      }
+    }
+  }
+}

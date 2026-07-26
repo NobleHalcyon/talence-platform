@@ -1,0 +1,43 @@
+{
+  "name": "talence-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.8.0",
+  "description": "Invite-only Talence collection, deck, and device platform.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @talence/web",
+    "build": "npm run build --workspace @talence/domain && npm run build --workspace @talence/ui && npm run build --workspace @talence/contracts && npm run build --workspace @talence/web",
+    "clean": "npm run clean --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test:unit && npm run test:contracts && npm run test:python",
+    "test:unit": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspace @talence/web",
+    "test:contracts": "npm run validate --workspace @talence/contracts",
+    "test:python": "node scripts/python.mjs -m pytest services/catalog-worker/tests",
+    "test:supabase": "npx supabase test db",
+    "lint:python": "node scripts/python.mjs -m ruff check services/catalog-worker",
+    "format:python": "node scripts/python.mjs -m ruff format --check services/catalog-worker",
+    "typecheck:python": "node scripts/python.mjs -m mypy services/catalog-worker/src",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "guard:architecture": "node scripts/check-architecture.mjs",
+    "canon:validate": "node scripts/check-canonical-manifest.mjs",
+    "ci": "npm run canon:validate && npm run guard:architecture && npm run format:check && npm run lint && npm run typecheck && npm run test:unit && npm run test:contracts && npm run lint:python && npm run format:python && npm run typecheck:python && npm run test:python && npm run build"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6",
+    "supabase": "2.109.1",
+    "tsx": "4.23.1",
+    "typescript": "5.9.3"
+  }
+}

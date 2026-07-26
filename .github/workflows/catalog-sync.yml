@@ -1,0 +1,25 @@
+name: Catalog sync
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phase-0-readiness:
+    # Phase 2 replaces this deliberately disabled readiness job with the
+    # fixture/live import and promotion workflow.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: services/catalog-worker/pyproject.toml
+      - run: python -m pip install -e "./services/catalog-worker"
+      - name: Report Phase 0 worker capabilities
+        run: talence-catalog status
