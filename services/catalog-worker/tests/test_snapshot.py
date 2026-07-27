@@ -1,4 +1,5 @@
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -7,6 +8,7 @@ from talence_catalog.snapshot import (
     LocalSnapshotStorage,
     SnapshotCounts,
     SnapshotMetadata,
+    SnapshotStorageError,
     create_snapshot_shell,
     validate_snapshot,
 )
@@ -83,5 +85,38 @@ def test_local_storage_is_immutable(
 
     assert stored.sha256 == source.sha256
     assert stored.byte_size == source.byte_size
-    with pytest.raises(FileExistsError, match="Immutable snapshot"):
-        storage.publish(source.path, version=metadata().catalog_version)
+    replay = storage.publish(source.path, version=metadata().catalog_version)
+
+    assert replay.replayed is True
+    assert replay.path == stored.path
+
+    different = tmp_path / "different.sqlite"
+    different.write_bytes(source.path.read_bytes() + b"different")
+    with pytest.raises(SnapshotStorageError, match="different bytes"):
+        storage.publish(different, version=metadata().catalog_version)
+
+
+def test_local_storage_publication_is_create_only_under_a_race(
+    tmp_path: Path,
+    canonical_snapshot_schema_path: Path,
+) -> None:
+    source = create_snapshot_shell(
+        tmp_path / "source.sqlite",
+        metadata(),
+        schema_path=canonical_snapshot_schema_path,
+    )
+    storage = LocalSnapshotStorage(tmp_path / "artifacts")
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        stored = tuple(
+            executor.map(
+                lambda _: storage.publish(
+                    source.path,
+                    version=metadata().catalog_version,
+                ),
+                range(2),
+            )
+        )
+
+    assert sorted(artifact.replayed for artifact in stored) == [False, True]
+    assert stored[0].sha256 == stored[1].sha256 == source.sha256

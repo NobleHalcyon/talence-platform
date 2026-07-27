@@ -501,6 +501,87 @@ export type Database = {
           },
         ];
       };
+      catalog_snapshots: {
+        Row: {
+          api_contract_version: string;
+          byte_size: number;
+          catalog_import_id: string;
+          created_at: string;
+          game_id: string;
+          generated_at: string;
+          id: string;
+          minimum_client_version: string;
+          provider_observed_at: string;
+          published_at: string;
+          record_counts: Json;
+          schema_version: number;
+          sha256: string;
+          source_sha256: string;
+          status: Database["public"]["Enums"]["job_status"];
+          storage_bucket: string;
+          storage_path: string;
+          superseded_at: string | null;
+          version: string;
+        };
+        Insert: {
+          api_contract_version?: string;
+          byte_size: number;
+          catalog_import_id: string;
+          created_at?: string;
+          game_id: string;
+          generated_at: string;
+          id?: string;
+          minimum_client_version: string;
+          provider_observed_at: string;
+          published_at?: string;
+          record_counts: Json;
+          schema_version: number;
+          sha256: string;
+          source_sha256: string;
+          status?: Database["public"]["Enums"]["job_status"];
+          storage_bucket?: string;
+          storage_path: string;
+          superseded_at?: string | null;
+          version: string;
+        };
+        Update: {
+          api_contract_version?: string;
+          byte_size?: number;
+          catalog_import_id?: string;
+          created_at?: string;
+          game_id?: string;
+          generated_at?: string;
+          id?: string;
+          minimum_client_version?: string;
+          provider_observed_at?: string;
+          published_at?: string;
+          record_counts?: Json;
+          schema_version?: number;
+          sha256?: string;
+          source_sha256?: string;
+          status?: Database["public"]["Enums"]["job_status"];
+          storage_bucket?: string;
+          storage_path?: string;
+          superseded_at?: string | null;
+          version?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "catalog_snapshots_catalog_import_id_fkey";
+            columns: ["catalog_import_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_import_runs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "catalog_snapshots_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       catalog_source_files: {
         Row: {
           catalog_identity_sha256: string | null;
@@ -601,6 +682,13 @@ export type Database = {
             columns: ["active_import_id"];
             isOneToOne: false;
             referencedRelation: "catalog_import_runs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "catalog_state_current_robot_snapshot_fk";
+            columns: ["current_robot_snapshot_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_snapshots";
             referencedColumns: ["id"];
           },
         ];
@@ -1200,6 +1288,320 @@ export type Database = {
           },
         ];
       };
+      device_collection_grants: {
+        Row: {
+          collection_id: string;
+          created_at: string;
+          device_id: string;
+          granted_by_user_id: string;
+          permission: Database["public"]["Enums"]["grant_permission"];
+          workspace_id: string;
+        };
+        Insert: {
+          collection_id: string;
+          created_at?: string;
+          device_id: string;
+          granted_by_user_id: string;
+          permission: Database["public"]["Enums"]["grant_permission"];
+          workspace_id: string;
+        };
+        Update: {
+          collection_id?: string;
+          created_at?: string;
+          device_id?: string;
+          granted_by_user_id?: string;
+          permission?: Database["public"]["Enums"]["grant_permission"];
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "device_collection_grants_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "device_collection_grants_device_fk";
+            columns: ["workspace_id", "device_id"];
+            isOneToOne: false;
+            referencedRelation: "devices";
+            referencedColumns: ["workspace_id", "id"];
+          },
+        ];
+      };
+      device_run_summaries: {
+        Row: {
+          catalog_snapshot_id: string;
+          catalog_snapshot_version: string;
+          collection_id: string;
+          completed_at: string;
+          correlation_id: string;
+          created_at: string;
+          device_id: string;
+          diagnostic_code: string | null;
+          external_run_id: string;
+          id: string;
+          idempotency_key: string;
+          metadata: Json;
+          posted_count: number;
+          received_at: string;
+          recognized_count: number;
+          started_at: string;
+          status: Database["public"]["Enums"]["device_run_status"];
+          total_count: number;
+          unrecognized_count: number;
+          workspace_id: string;
+        };
+        Insert: {
+          catalog_snapshot_id: string;
+          catalog_snapshot_version: string;
+          collection_id: string;
+          completed_at: string;
+          correlation_id: string;
+          created_at?: string;
+          device_id: string;
+          diagnostic_code?: string | null;
+          external_run_id: string;
+          id?: string;
+          idempotency_key: string;
+          metadata?: Json;
+          posted_count: number;
+          received_at?: string;
+          recognized_count: number;
+          started_at: string;
+          status: Database["public"]["Enums"]["device_run_status"];
+          total_count: number;
+          unrecognized_count: number;
+          workspace_id: string;
+        };
+        Update: {
+          catalog_snapshot_id?: string;
+          catalog_snapshot_version?: string;
+          collection_id?: string;
+          completed_at?: string;
+          correlation_id?: string;
+          created_at?: string;
+          device_id?: string;
+          diagnostic_code?: string | null;
+          external_run_id?: string;
+          id?: string;
+          idempotency_key?: string;
+          metadata?: Json;
+          posted_count?: number;
+          received_at?: string;
+          recognized_count?: number;
+          started_at?: string;
+          status?: Database["public"]["Enums"]["device_run_status"];
+          total_count?: number;
+          unrecognized_count?: number;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "device_run_summaries_catalog_snapshot_id_fkey";
+            columns: ["catalog_snapshot_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_snapshots";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "device_run_summaries_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "device_run_summaries_device_fk";
+            columns: ["workspace_id", "device_id"];
+            isOneToOne: false;
+            referencedRelation: "devices";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "device_run_summaries_snapshot_fk";
+            columns: ["catalog_snapshot_id", "catalog_snapshot_version"];
+            isOneToOne: false;
+            referencedRelation: "catalog_snapshots";
+            referencedColumns: ["id", "version"];
+          },
+        ];
+      };
+      device_sync_batches: {
+        Row: {
+          catalog_snapshot_id: string;
+          catalog_snapshot_version: string;
+          collection_id: string;
+          correlation_id: string;
+          created_at: string;
+          device_id: string;
+          external_run_id: string | null;
+          id: string;
+          idempotency_key: string;
+          inventory_transaction_id: string;
+          occurred_at: string;
+          received_at: string;
+          request_hash: string;
+          response_code: string;
+          result_lines: Json;
+          status: string;
+          workspace_id: string;
+        };
+        Insert: {
+          catalog_snapshot_id: string;
+          catalog_snapshot_version: string;
+          collection_id: string;
+          correlation_id: string;
+          created_at?: string;
+          device_id: string;
+          external_run_id?: string | null;
+          id?: string;
+          idempotency_key: string;
+          inventory_transaction_id: string;
+          occurred_at: string;
+          received_at?: string;
+          request_hash: string;
+          response_code?: string;
+          result_lines: Json;
+          status?: string;
+          workspace_id: string;
+        };
+        Update: {
+          catalog_snapshot_id?: string;
+          catalog_snapshot_version?: string;
+          collection_id?: string;
+          correlation_id?: string;
+          created_at?: string;
+          device_id?: string;
+          external_run_id?: string | null;
+          id?: string;
+          idempotency_key?: string;
+          inventory_transaction_id?: string;
+          occurred_at?: string;
+          received_at?: string;
+          request_hash?: string;
+          response_code?: string;
+          result_lines?: Json;
+          status?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "device_sync_batches_catalog_snapshot_id_fkey";
+            columns: ["catalog_snapshot_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_snapshots";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "device_sync_batches_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "device_sync_batches_device_fk";
+            columns: ["workspace_id", "device_id"];
+            isOneToOne: false;
+            referencedRelation: "devices";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "device_sync_batches_snapshot_fk";
+            columns: ["catalog_snapshot_id", "catalog_snapshot_version"];
+            isOneToOne: false;
+            referencedRelation: "catalog_snapshots";
+            referencedColumns: ["id", "version"];
+          },
+          {
+            foreignKeyName: "device_sync_batches_transaction_fk";
+            columns: ["inventory_transaction_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_transactions";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+        ];
+      };
+      devices: {
+        Row: {
+          created_at: string;
+          created_by_user_id: string;
+          deleted_at: string | null;
+          id: string;
+          last_catalog_snapshot_id: string | null;
+          last_client_version: string | null;
+          last_firmware_version: string | null;
+          last_seen_at: string | null;
+          manufacturer: string | null;
+          model: string | null;
+          name: string;
+          revoked_at: string | null;
+          serial_number: string | null;
+          status: Database["public"]["Enums"]["device_status"];
+          suspended_at: string | null;
+          type: Database["public"]["Enums"]["device_type"];
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by_user_id: string;
+          deleted_at?: string | null;
+          id?: string;
+          last_catalog_snapshot_id?: string | null;
+          last_client_version?: string | null;
+          last_firmware_version?: string | null;
+          last_seen_at?: string | null;
+          manufacturer?: string | null;
+          model?: string | null;
+          name: string;
+          revoked_at?: string | null;
+          serial_number?: string | null;
+          status?: Database["public"]["Enums"]["device_status"];
+          suspended_at?: string | null;
+          type: Database["public"]["Enums"]["device_type"];
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by_user_id?: string;
+          deleted_at?: string | null;
+          id?: string;
+          last_catalog_snapshot_id?: string | null;
+          last_client_version?: string | null;
+          last_firmware_version?: string | null;
+          last_seen_at?: string | null;
+          manufacturer?: string | null;
+          model?: string | null;
+          name?: string;
+          revoked_at?: string | null;
+          serial_number?: string | null;
+          status?: Database["public"]["Enums"]["device_status"];
+          suspended_at?: string | null;
+          type?: Database["public"]["Enums"]["device_type"];
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "devices_last_catalog_snapshot_id_fkey";
+            columns: ["last_catalog_snapshot_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_snapshots";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "devices_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       games: {
         Row: {
           active: boolean;
@@ -1622,6 +2024,13 @@ export type Database = {
             referencedColumns: ["workspace_id", "id"];
           },
           {
+            foreignKeyName: "inventory_transactions_device_fk";
+            columns: ["workspace_id", "device_id"];
+            isOneToOne: false;
+            referencedRelation: "devices";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
             foreignKeyName: "inventory_transactions_import_job_fk";
             columns: ["import_job_id", "workspace_id", "collection_id"];
             isOneToOne: false;
@@ -1899,6 +2308,20 @@ export type Database = {
         Returns: Json;
       };
       admin_catalog_status: { Args: { p_actor_user_id: string }; Returns: Json };
+      admin_device_feature_policies: { Args: never; Returns: Json };
+      admin_device_feature_policy_update: {
+        Args: {
+          p_enabled: boolean;
+          p_expected_updated_at: string;
+          p_feature_key: string;
+          p_max_items: number;
+          p_max_request_bytes: number;
+          p_per_day_requests: number;
+          p_per_day_units: number;
+          p_per_minute_requests: number;
+        };
+        Returns: Json;
+      };
       admin_get_invited_user: {
         Args: {
           p_actor_user_id: string;
@@ -1959,6 +2382,22 @@ export type Database = {
       };
       admin_revoke_invited_user: {
         Args: { p_actor_user_id: string; p_invited_user_id: string };
+        Returns: Json;
+      };
+      apply_device_inventory_batch: {
+        Args: {
+          p_catalog_snapshot_version: string;
+          p_collection_id: string;
+          p_credential_id: string;
+          p_device_id: string;
+          p_external_run_id: string;
+          p_idempotency_key: string;
+          p_lines: Json;
+          p_metadata: Json;
+          p_occurred_at: string;
+          p_request_bytes: number;
+          p_request_id: string;
+        };
         Returns: Json;
       };
       apply_inventory_transaction: {
@@ -2238,6 +2677,151 @@ export type Database = {
         Args: { p_deck_id: string; p_limit?: number };
         Returns: Json;
       };
+      device_api_catalog_manifest: {
+        Args: {
+          p_client_version: string;
+          p_credential_id: string;
+          p_current_version: string;
+          p_device_id: string;
+          p_request_bytes: number;
+          p_request_id: string;
+          p_supported_schema_versions: number[];
+        };
+        Returns: Json;
+      };
+      device_api_create_run_summary: {
+        Args: {
+          p_catalog_snapshot_version: string;
+          p_collection_id: string;
+          p_completed_at: string;
+          p_counts: Json;
+          p_credential_id: string;
+          p_device_id: string;
+          p_diagnostic_code: string;
+          p_external_run_id: string;
+          p_idempotency_key: string;
+          p_metadata: Json;
+          p_request_bytes: number;
+          p_request_id: string;
+          p_started_at: string;
+          p_status: Database["public"]["Enums"]["device_run_status"];
+        };
+        Returns: Json;
+      };
+      device_api_heartbeat: {
+        Args: {
+          p_catalog_snapshot_version: string;
+          p_client_version: string;
+          p_credential_id: string;
+          p_device_id: string;
+          p_firmware_version: string;
+          p_health: Json;
+          p_request_bytes: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      device_api_inventory_page: {
+        Args: {
+          p_after: string;
+          p_collection_id: string;
+          p_credential_id: string;
+          p_device_id: string;
+          p_limit: number;
+          p_request_bytes: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      device_api_me: {
+        Args: {
+          p_credential_id: string;
+          p_device_id: string;
+          p_request_bytes: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      device_auth_touch: {
+        Args: {
+          p_credential_id: string;
+          p_device_id: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      device_credential_candidate: { Args: { p_prefix: string }; Returns: Json };
+      device_credential_revoke: {
+        Args: { p_credential_id: string; p_device_id: string };
+        Returns: Json;
+      };
+      device_delete: {
+        Args: { p_device_id: string; p_expected_updated_at: string };
+        Returns: Json;
+      };
+      device_detail: { Args: { p_device_id: string }; Returns: Json };
+      device_grants_replace: {
+        Args: { p_device_id: string; p_grants: Json };
+        Returns: Json;
+      };
+      device_list: {
+        Args: {
+          p_after?: string;
+          p_limit?: number;
+          p_status?: Database["public"]["Enums"]["device_status"];
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      device_register: {
+        Args: {
+          p_actor_user_id: string;
+          p_credential_digest: string;
+          p_credential_expires_at?: string;
+          p_credential_prefix: string;
+          p_manufacturer: string;
+          p_model: string;
+          p_name: string;
+          p_serial_number: string;
+          p_type: Database["public"]["Enums"]["device_type"];
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      device_revoke: {
+        Args: { p_device_id: string; p_expected_updated_at: string };
+        Returns: Json;
+      };
+      device_rotate_credential: {
+        Args: {
+          p_actor_user_id: string;
+          p_credential_digest: string;
+          p_credential_expires_at?: string;
+          p_credential_prefix: string;
+          p_device_id: string;
+        };
+        Returns: Json;
+      };
+      device_set_status: {
+        Args: {
+          p_device_id: string;
+          p_expected_updated_at: string;
+          p_status: Database["public"]["Enums"]["device_status"];
+        };
+        Returns: Json;
+      };
+      device_update: {
+        Args: {
+          p_device_id: string;
+          p_expected_updated_at: string;
+          p_manufacturer: string;
+          p_model: string;
+          p_name: string;
+          p_serial_number: string;
+          p_type: Database["public"]["Enums"]["device_type"];
+        };
+        Returns: Json;
+      };
       finalize_admitted_user: { Args: never; Returns: Json };
       inventory_import_cancel: {
         Args: { p_import_job_id: string };
@@ -2337,6 +2921,10 @@ export type Database = {
         | "damaged";
       card_finish: "unknown" | "nonfoil" | "foil" | "etched";
       deck_zone: "mainboard" | "sideboard" | "commander" | "companion" | "maybeboard";
+      device_run_status: "completed" | "failed" | "cancelled" | "partially_posted";
+      device_status: "active" | "suspended" | "revoked";
+      device_type: "talence_sorter" | "scanner" | "kiosk" | "third_party";
+      grant_permission: "inventory_read" | "inventory_write" | "run_summary_write";
       inventory_import_row_status: "matched" | "ambiguous" | "rejected" | "excluded";
       inventory_source:
         "manual" | "csv_import" | "device" | "transfer" | "reversal" | "admin_correction";
@@ -2480,6 +3068,10 @@ export const Constants = {
       ],
       card_finish: ["unknown", "nonfoil", "foil", "etched"],
       deck_zone: ["mainboard", "sideboard", "commander", "companion", "maybeboard"],
+      device_run_status: ["completed", "failed", "cancelled", "partially_posted"],
+      device_status: ["active", "suspended", "revoked"],
+      device_type: ["talence_sorter", "scanner", "kiosk", "third_party"],
+      grant_permission: ["inventory_read", "inventory_write", "run_summary_write"],
       inventory_import_row_status: ["matched", "ambiguous", "rejected", "excluded"],
       inventory_source: [
         "manual",

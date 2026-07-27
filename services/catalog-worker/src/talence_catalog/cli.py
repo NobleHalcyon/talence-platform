@@ -23,7 +23,17 @@ from talence_catalog.provider.scryfall import (
     ProviderUnavailableError,
     ScryfallProvider,
 )
-from talence_catalog.store import CatalogStoreError
+from talence_catalog.snapshot import (
+    LocalSnapshotStorage,
+    SnapshotGenerationError,
+    SnapshotPublishOutcome,
+    SnapshotStorage,
+    SnapshotStorageError,
+    SupabaseSnapshotStorage,
+    publish_active_catalog_snapshot,
+)
+from talence_catalog.snapshot.source import CatalogSnapshotSourceError
+from talence_catalog.store import CatalogSnapshotStaleError, CatalogStoreError
 from talence_catalog.timestamps import stale_after_timestamp
 
 FIXTURE_OBSERVED_AT = "2026-07-26T12:00:00Z"
@@ -110,6 +120,13 @@ def build_parser() -> argparse.ArgumentParser:
         "status",
         help="Report worker capabilities and database catalog status when configured.",
     )
+    subcommands.add_parser(
+        "snapshot-publish",
+        help=(
+            "Build the active catalog SQLite snapshot, upload it immutably, "
+            "then publish its database manifest pointer."
+        ),
+    )
     return parser
 
 
@@ -119,6 +136,8 @@ def entrypoint(argv: Sequence[str] | None = None) -> int:
         config = WorkerConfig.from_environment()
         if arguments.command == "status":
             return _status(config)
+        if arguments.command == "snapshot-publish":
+            return _snapshot_publish(config)
         if arguments.command == "validate":
             return _validate(
                 arguments.cards,
@@ -170,6 +189,9 @@ def entrypoint(argv: Sequence[str] | None = None) -> int:
     except (
         CatalogImportError,
         CatalogStoreError,
+        CatalogSnapshotSourceError,
+        SnapshotGenerationError,
+        SnapshotStorageError,
         ConfigurationError,
         DownloadEmptyError,
         DownloadSizeExceededError,
@@ -254,10 +276,62 @@ def _status(config: WorkerConfig) -> int:
     return 0
 
 
+def _snapshot_publish(config: WorkerConfig) -> int:
+    database_url = _required_database_url(config)
+    if config.snapshot_storage_backend == "local":
+        if config.snapshot_storage_root is None:
+            raise ConfigurationError(
+                "TALENCE_SNAPSHOT_STORAGE_ROOT is required when "
+                "TALENCE_SNAPSHOT_STORAGE_BACKEND=local."
+            )
+        storage: SnapshotStorage = LocalSnapshotStorage(
+            config.snapshot_storage_root,
+            bucket=config.snapshot_storage_bucket,
+        )
+        with PostgresCatalogStore.connect(database_url) as store:
+            outcome = _publish_snapshot(store, storage, config)
+    else:
+        if config.supabase_url is None or config.supabase_secret_key is None:
+            raise ConfigurationError(
+                "SUPABASE_URL and SUPABASE_SECRET_KEY are required when "
+                "TALENCE_SNAPSHOT_STORAGE_BACKEND=supabase."
+            )
+        with (
+            SupabaseSnapshotStorage(
+                config.supabase_url,
+                config.supabase_secret_key,
+                bucket=config.snapshot_storage_bucket,
+                timeout_seconds=config.snapshot_storage_timeout_seconds,
+            ) as storage,
+            PostgresCatalogStore.connect(database_url) as store,
+        ):
+            outcome = _publish_snapshot(store, storage, config)
+    _print_json(outcome.as_dict())
+    return 0
+
+
+def _publish_snapshot(
+    store: PostgresCatalogStore,
+    storage: SnapshotStorage,
+    config: WorkerConfig,
+) -> SnapshotPublishOutcome:
+    return publish_active_catalog_snapshot(
+        store=store,
+        storage=storage,
+        api_contract_version=config.snapshot_api_contract_version,
+        minimum_client_version=config.snapshot_minimum_client_version,
+        temporary_directory=config.temporary_directory,
+        source_batch_size=config.snapshot_batch_size,
+        sqlite_batch_size=config.snapshot_batch_size,
+        maximum_snapshot_bytes=config.snapshot_maximum_bytes,
+    )
+
+
 def _required_database_url(config: WorkerConfig) -> str:
     if config.database_url is None:
         raise ConfigurationError(
-            "TALENCE_DATABASE_URL is required for fixture-import and live-import; "
+            "TALENCE_DATABASE_URL is required for fixture-import, live-import, "
+            "and snapshot-publish; "
             "use fixture-import --dry-run for an offline validation."
         )
     return config.database_url
@@ -269,7 +343,15 @@ def _cli_error_code(error: Exception) -> str:
     if isinstance(error, NormalizationError):
         return "normalization_failed"
     if isinstance(error, CatalogStoreError):
+        if isinstance(error, CatalogSnapshotStaleError):
+            return "snapshot_stale"
         return "database_failed"
+    if isinstance(error, CatalogSnapshotSourceError):
+        return "snapshot_source_failed"
+    if isinstance(error, SnapshotGenerationError):
+        return "snapshot_generation_failed"
+    if isinstance(error, SnapshotStorageError):
+        return "snapshot_storage_failed"
     if isinstance(
         error,
         (

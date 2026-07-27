@@ -52,6 +52,18 @@ Phase 4 adds deck construction and analysis:
 - `20260726043000_*` applies least-privilege grants, workspace RLS, and
   collection/deck-source deletion coordination.
 
+Phase 5 adds the device and robot-catalog boundary:
+
+- `20260727050000_*` creates devices, private credentials, collection grants,
+  immutable sync batches/run summaries, snapshots, idempotency records,
+  feature policies, usage windows, and immutable-write guards;
+- `20260727051000_*` creates snapshot publication and human device
+  administration/credential/grant functions;
+- `20260727052000_*` creates device authentication, quota, manifest, inventory,
+  atomic ledger mutation, and run-summary functions;
+- `20260727053000_*` applies least-privilege grants, column-bounded human reads,
+  and default-deny workspace RLS.
+
 Create later immutable, ordered files with:
 
 ```powershell

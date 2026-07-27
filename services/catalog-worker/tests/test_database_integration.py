@@ -18,6 +18,9 @@ from talence_catalog.importer import (
     run_fixture_import,
     run_live_import,
 )
+from talence_catalog.integration_safety import (
+    require_disposable_local_supabase_database,
+)
 from talence_catalog.provider.scryfall import BulkDataDescriptor, ScryfallProvider
 
 OBSERVED_AT = "2026-07-26T12:00:00Z"
@@ -54,6 +57,7 @@ def test_real_fixture_promotion_replay_and_failure_preservation(
     database_url = os.environ.get("TALENCE_DATABASE_URL")
     if database_url is None:
         pytest.skip("TALENCE_DATABASE_URL is not configured for local integration.")
+    require_disposable_local_supabase_database(database_url)
     config = WorkerConfig.from_environment(
         {
             "TALENCE_DATABASE_URL": database_url,

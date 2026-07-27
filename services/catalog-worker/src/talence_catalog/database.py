@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from typing import Any
 
 import psycopg
 from psycopg import Connection
+from psycopg.types.json import Jsonb
 
 from talence_catalog.download import DownloadResult
 from talence_catalog.models import (
@@ -19,7 +21,12 @@ from talence_catalog.models import (
     Printing,
 )
 from talence_catalog.provider.scryfall import BulkDataDescriptor
+from talence_catalog.snapshot.source import (
+    CatalogGenerationReader,
+    postgres_catalog_generation,
+)
 from talence_catalog.store import (
+    CatalogSnapshotStaleError,
     CatalogStoreError,
     CatalogSyncDisabledError,
     CatalogValidationError,
@@ -27,6 +34,8 @@ from talence_catalog.store import (
     ImportValidation,
     PromotionResult,
     QueuedNoopCompletion,
+    SnapshotPublication,
+    SnapshotPublicationRequest,
     SourceFileRegistration,
 )
 
@@ -606,6 +615,73 @@ class PostgresCatalogStore:
             operation="read catalog worker status",
         )
 
+    @contextmanager
+    def snapshot_generation(
+        self,
+        *,
+        batch_size: int,
+    ) -> Iterator[CatalogGenerationReader]:
+        try:
+            with postgres_catalog_generation(
+                self._connection,
+                batch_size=batch_size,
+            ) as generation:
+                yield generation
+        except psycopg.Error as error:
+            raise CatalogStoreError(
+                "Unable to read one active catalog generation for a snapshot."
+            ) from error
+
+    def publish_snapshot(
+        self,
+        request: SnapshotPublicationRequest,
+    ) -> SnapshotPublication:
+        payload = self._call_json(
+            """
+            SELECT app_private.catalog_publish_snapshot(
+              p_expected_import_id => %(expected_import_id)s::uuid,
+              p_expected_catalog_version => %(expected_catalog_version)s,
+              p_snapshot_schema_version => %(snapshot_schema_version)s,
+              p_storage_path => %(storage_path)s,
+              p_sha256 => %(sha256)s,
+              p_byte_size => %(byte_size)s,
+              p_record_counts => %(record_counts)s::jsonb,
+              p_minimum_client_version => %(minimum_client_version)s,
+              p_generated_at => %(generated_at)s::timestamptz,
+              p_api_contract_version => %(api_contract_version)s
+            )
+            """,
+            {
+                "expected_import_id": request.expected_import_id,
+                "expected_catalog_version": request.expected_catalog_version,
+                "snapshot_schema_version": request.snapshot_schema_version,
+                "storage_path": request.storage_path,
+                "sha256": request.sha256,
+                "byte_size": request.byte_size,
+                "record_counts": Jsonb(dict(request.record_counts)),
+                "minimum_client_version": request.minimum_client_version,
+                "generated_at": request.generated_at,
+                "api_contract_version": request.api_contract_version,
+            },
+            operation="publish catalog snapshot",
+        )
+        publication = SnapshotPublication(
+            snapshot_id=_required_text(payload, "snapshot_id"),
+            version=_required_text(payload, "version"),
+            status=_required_text(payload, "status"),
+            published_at=_required_text(payload, "published_at"),
+            current_snapshot_id=_required_text(payload, "current_snapshot_id"),
+            previous_snapshot_id=_optional_text(payload.get("previous_snapshot_id")),
+            replayed=_required_bool(payload, "replayed"),
+        )
+        if (
+            publication.version != request.expected_catalog_version
+            or publication.status != "succeeded"
+            or publication.current_snapshot_id != publication.snapshot_id
+        ):
+            raise CatalogStoreError("Snapshot publication returned an invalid result.")
+        return publication
+
     def _call_json(
         self,
         statement: str,
@@ -620,6 +696,10 @@ class PostgresCatalogStore:
             if error.diag.message_primary == "talence_catalog_sync_disabled":
                 raise CatalogSyncDisabledError(
                     "Catalog synchronization is disabled by the database incident switch."
+                ) from error
+            if error.diag.message_primary == "talence_catalog_snapshot_stale":
+                raise CatalogSnapshotStaleError(
+                    "The active catalog changed before snapshot publication."
                 ) from error
             raise CatalogStoreError(f"Unable to {operation}.") from error
         if row is None or not isinstance(row[0], dict):

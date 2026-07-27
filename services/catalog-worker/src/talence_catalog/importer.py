@@ -531,7 +531,7 @@ def _validate_promotion_result(
 def status_payload(store: CatalogStore | None) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "worker_version": __version__,
-        "phase": 2,
+        "phase": 5,
         "capabilities": {
             "fixture_import": True,
             "fixture_network_access": False,
@@ -540,7 +540,10 @@ def status_payload(store: CatalogStore | None) -> dict[str, Any]:
             "bounded_batch_staging": True,
             "postgres_staging": True,
             "catalog_promotion": True,
-            "snapshot_artifact_upload": False,
+            "snapshot_sqlite_generation": True,
+            "snapshot_artifact_upload": True,
+            "snapshot_manifest_publication": True,
+            "snapshot_reference_client": True,
         },
         "database_configured": store is not None,
     }

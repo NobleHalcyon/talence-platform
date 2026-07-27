@@ -1,8 +1,10 @@
 # Talence Catalog Worker
 
 Python 3.13 worker for Talence's trusted Scryfall catalog and current-price
-pipeline. Phase 2 supports fixture and live imports through the same
-PostgreSQL staging, validation, and atomic-promotion boundary.
+pipeline. Fixture and live imports share the same PostgreSQL staging,
+validation, and atomic-promotion boundary. Phase 5 can export the active
+generation into the canonical robot SQLite schema, upload the immutable
+artifact, and atomically publish its manifest.
 
 ## Safety properties
 
@@ -32,6 +34,23 @@ PostgreSQL staging, validation, and atomic-promotion boundary.
 - Promotion is one advisory-locked database transaction. A download, parse,
   validation, or promotion failure leaves the previously active catalog
   unchanged.
+- Snapshot generation holds the same catalog advisory lock in a read-only,
+  repeatable-read transaction and streams rows in primary-key order.
+- Snapshot metadata uses the combined cards-and-sets catalog identity. A
+  forced re-promotion of the same source therefore produces identical bytes.
+- The generated SQLite file must pass `quick_check`, foreign-key validation,
+  schema-version, record-count, FTS, and polymorphic external-ID checks before
+  upload.
+- Snapshot artifacts use the immutable
+  `mtg/<catalog-version>/catalog.sqlite` path in the private
+  `catalog-snapshots` bucket. An existing object is accepted only when its
+  complete byte size and SHA-256 match.
+- Artifact upload completes before the database publication RPC. A stale
+  catalog generation or publication failure preserves the prior database
+  pointer, while an exact retry reuses the uploaded bytes.
+- The reference robot client verifies size, SHA-256, SQLite integrity,
+  snapshot metadata, and a bounded cloud printing-ID sample before switching
+  its local current pointer; it retains the prior compatible snapshot.
 - Failures for admin-queued work are persisted even when discovery, set
   normalization, download, or source registration fails before the queue item
   can be claimed. Failure-recording errors are surfaced to the operator.
@@ -121,10 +140,42 @@ next queued request:
 talence-catalog status
 ```
 
+Publish the active catalog to a local immutable artifact root:
+
+```powershell
+$env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+$env:TALENCE_SNAPSHOT_STORAGE_BACKEND = "local"
+$env:TALENCE_SNAPSHOT_STORAGE_ROOT = "C:\talence-snapshots"
+talence-catalog snapshot-publish
+```
+
+For the private production bucket, use the server-only Supabase project URL
+and secret key:
+
+```powershell
+$env:TALENCE_SNAPSHOT_STORAGE_BACKEND = "supabase"
+$env:SUPABASE_URL = "https://project-ref.supabase.co"
+$env:SUPABASE_SECRET_KEY = "<worker secret key>"
+talence-catalog snapshot-publish
+```
+
+The upload is create-only and is verified by downloading and hashing the
+private object before the database pointer is published. Never expose the
+database URL or Supabase secret key to browser code.
+
+Snapshot `generated_at` is the catalog provider-observation timestamp encoded
+in the catalog-version identity. It is intentionally independent of the
+worker's mutable download wall clock so rebuilding the same version remains
+byte-identical. Snapshot price `ingested_at` uses the same reproducible
+catalog-generation timestamp; price `observed_at` remains the provider
+observation carried by each price row.
+
 ## Configuration
 
-`TALENCE_DATABASE_URL` is the only required live/fixture-promotion secret. The
-remaining settings are non-secret operational bounds:
+`TALENCE_DATABASE_URL` is required for live import, fixture promotion, and
+snapshot publication. A production snapshot publication also requires
+`SUPABASE_URL` and `SUPABASE_SECRET_KEY`. The remaining settings are
+non-secret operational bounds:
 
 - `TALENCE_CATALOG_USER_AGENT`
 - `TALENCE_CATALOG_MAX_DOWNLOAD_BYTES`
@@ -136,9 +187,34 @@ remaining settings are non-secret operational bounds:
 - `TALENCE_CATALOG_BATCH_SIZE`
 - `TALENCE_CATALOG_PRICE_STALE_AFTER_HOURS` (default `36`)
 - `TALENCE_CATALOG_TEMP_DIRECTORY`
+- `TALENCE_SNAPSHOT_STORAGE_BACKEND` (`local` or `supabase`; default `local`)
+- `TALENCE_SNAPSHOT_STORAGE_ROOT` (required for the local adapter)
+- `TALENCE_SNAPSHOT_STORAGE_BUCKET` (must remain `catalog-snapshots` for
+  publication)
+- `TALENCE_SNAPSHOT_API_CONTRACT_VERSION` (default `v1`)
+- `TALENCE_SNAPSHOT_MINIMUM_CLIENT_VERSION` (default `0.1.0`)
+- `TALENCE_SNAPSHOT_MAX_BYTES` (default and maximum `1073741824`)
+- `TALENCE_SNAPSHOT_BATCH_SIZE` (default `5000`)
+- `TALENCE_SNAPSHOT_STORAGE_TIMEOUT_SECONDS` (default `120`)
 
-The database URL and future artifact-storage credentials are worker-only and
-must never use a browser-visible environment variable.
+The database URL and artifact-storage credentials are worker-only and must
+never use a browser-visible environment variable.
+
+## Local snapshot integration
+
+After the local Supabase migrations have been reset and started, run the
+named snapshot integration path from the repository root:
+
+```powershell
+$env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+.\.venv\Scripts\python.exe -m pytest services\catalog-worker\tests\test_snapshot_database_integration.py -m integration
+```
+
+The test hard-refuses hosted, hostname-based, nonstandard-port, and
+non-`postgres` database targets. It promotes the fixture catalog, generates
+and publishes the populated SQLite artifact, samples cloud/edge printing IDs,
+replays publication, then force-promotes the same source and proves the
+artifact bytes remain identical.
 
 ## GitHub workflow gate
 
@@ -148,7 +224,3 @@ secret wiring, and has no schedule. Enabling it requires the product owner's
 human setup gate: configure protected worker secrets, approve the first live
 import, then deliberately remove the job guard and add the chosen daily
 schedule.
-
-SQLite snapshot population/upload remains Phase 5. The existing snapshot
-schema and integrity helpers are retained but are not presented as a Phase 2
-capability.

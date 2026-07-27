@@ -4,11 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm run build --workspace @talence/contracts",
     "dev": "next dev",
+    "prebuild": "npm run build --workspace @talence/contracts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "pretypecheck": "npm run build --workspace @talence/contracts",
     "typecheck": "tsc --noEmit",
+    "pretest": "npm run build --workspace @talence/contracts",
     "test": "vitest run --configLoader native --pool=threads --no-file-parallelism",
     "test:watch": "vitest --configLoader native --pool=threads --no-file-parallelism",
     "test:e2e": "playwright test"
@@ -16,6 +20,7 @@
   "dependencies": {
     "@supabase/ssr": "0.12.3",
     "@supabase/supabase-js": "2.110.8",
+    "@talence/contracts": "0.1.0",
     "@talence/domain": "0.0.0",
     "@talence/ui": "0.0.0",
     "next": "16.2.12",

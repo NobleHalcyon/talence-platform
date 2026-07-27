@@ -9,7 +9,9 @@ inventory ledger, balances, valuation, history, private CSV staging, and
 least-privilege Storage policies. Phase 4 adds version-pinned deck formats,
 workspace-scoped decks, immutable revisions, finite collection ownership,
 valuation, validation, bounded import/export, and default-deny deck RLS.
-Device objects arrive through ordered migrations in Phase 5.
+Phase 5 adds workspace-scoped devices, private digest-only credentials,
+collection grants, immutable sync/run records, quotas, published robot
+snapshots, stable device API functions, and default-deny device RLS.
 
 The local stack is development-only. It uses local credentials and captures
 email in the local SMTP viewer; do not expose it to a network or treat its settings as
@@ -37,7 +39,7 @@ may not inherit the Docker CLI directory. If `supabase test db` reports that it
 cannot run Docker, prepend the local install for that PowerShell process:
 
 ```powershell
-$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"
+$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\Docker\Docker\resources\bin"
 $env:PATH = "$talenceDockerBin;$env:PATH"
 npm run test:supabase
 ```

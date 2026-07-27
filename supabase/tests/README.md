@@ -45,6 +45,14 @@ of bounded issue detail. The bounds suite exercises a
 failures with explicit detail truncation, a 2,000-line resolver request, and a
 50-deck list page that uses set-based ownership summaries.
 
+The Phase 5 suites contain 128 pgTAP assertions: 43 for schema and deterministic
+snapshot publication, 26 for device administration/credentials/grants, 36 for
+device API inventory/run/snapshot behavior, and 23 for two-workspace RLS. They
+cover digest-only credential storage, lifecycle/grant enforcement,
+replay/conflict behavior, unknown printing errors, bounded metadata/quota
+state, immutable history, least privilege, and catalog-version timestamp
+normalization.
+
 Storage authorization and true multi-session races require the local services
 and are covered separately:
 
@@ -76,12 +84,16 @@ These scenarios prove immutable revision coherence, post-wait lifecycle and
 entry revalidation, canonical collection locking, one deterministic validation
 cache row, and rejection rather than mixed-generation revision evidence.
 
+A true multi-session Phase 5 device/snapshot harness is intentionally still
+outstanding at the partial Phase 5 checkpoint. Do not infer its coverage from
+the transactional pgTAP suites; see `IMPLEMENTATION_PROGRESS.md`.
+
 If the Supabase CLI cannot discover Docker from the current VS Code process
 after a per-user Docker Desktop install, prepend its CLI directory for the
 current PowerShell process:
 
 ```powershell
-$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"
+$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\Docker\Docker\resources\bin"
 $env:PATH = "$talenceDockerBin;$env:PATH"
 npm run test:supabase
 ```

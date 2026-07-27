@@ -1,0 +1,232 @@
+.stack {
+  display: grid;
+  gap: var(--space-24);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.statusNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.statusLink {
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-standard);
+  padding: var(--space-8) var(--space-12);
+  text-decoration: none;
+}
+
+.statusLink:hover,
+.statusLink:focus-visible,
+.statusLinkActive {
+  color: var(--color-navy);
+  border-color: var(--color-navy);
+  background: var(--color-surface-subtle);
+}
+
+.deviceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: var(--space-16);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deviceCard {
+  display: grid;
+  align-content: start;
+  gap: var(--space-12);
+  height: 100%;
+}
+
+.cardHeader,
+.sectionHeader,
+.credentialHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.deviceName {
+  color: var(--color-text);
+  font-size: var(--font-size-20);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.deviceNameLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.deviceNameLink:hover,
+.deviceNameLink:focus-visible {
+  color: var(--color-navy);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.muted,
+.meta,
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-14);
+  margin: 0;
+}
+
+.metaList {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 0.45fr) minmax(0, 1fr);
+  gap: var(--space-12);
+  align-items: start;
+}
+
+.metaRow dt {
+  color: var(--color-text-muted);
+}
+
+.metaRow dd {
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.form,
+.formGrid {
+  display: grid;
+  gap: var(--space-16);
+}
+
+.formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fullField {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.secretPanel {
+  display: grid;
+  gap: var(--space-16);
+  border: 2px solid var(--color-warning);
+}
+
+.secret {
+  display: block;
+  width: 100%;
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-standard);
+  padding: var(--space-12);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-14);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr);
+  gap: var(--space-24);
+  align-items: start;
+}
+
+.detailColumn {
+  display: grid;
+  gap: var(--space-24);
+}
+
+.credentialList,
+.grantList {
+  display: grid;
+  gap: var(--space-12);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.credential {
+  display: grid;
+  gap: var(--space-8);
+  border-block-start: 1px solid var(--color-border);
+  padding-block-start: var(--space-12);
+}
+
+.credential:first-child {
+  border-block-start: 0;
+  padding-block-start: 0;
+}
+
+.prefix {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-14);
+}
+
+.grantMatrix {
+  display: grid;
+  gap: var(--space-16);
+}
+
+.grantRow {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) repeat(3, minmax(7rem, 0.65fr));
+  gap: var(--space-12);
+  align-items: center;
+  border-block-start: 1px solid var(--color-border);
+  padding-block-start: var(--space-12);
+}
+
+.grantRow:first-child {
+  border-block-start: 0;
+  padding-block-start: 0;
+}
+
+.permissionDenied {
+  max-width: 46rem;
+}
+
+@media (max-width: 760px) {
+  .formGrid,
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .grantRow {
+    grid-template-columns: 1fr;
+  }
+
+  .metaRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .actions > * {
+    flex: 1 1 100%;
+  }
+}

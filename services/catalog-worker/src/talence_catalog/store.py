@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from talence_catalog.download import DownloadResult
 from talence_catalog.models import NormalizedBatch
 from talence_catalog.provider.scryfall import BulkDataDescriptor
+
+if TYPE_CHECKING:
+    from talence_catalog.snapshot.source import CatalogGenerationReader
 
 
 class CatalogStoreError(RuntimeError):
@@ -19,6 +23,10 @@ class CatalogSyncDisabledError(CatalogStoreError):
 
 class CatalogValidationError(CatalogStoreError):
     """Raised when database validation rejects staged catalog rows."""
+
+
+class CatalogSnapshotStaleError(CatalogStoreError):
+    """Raised when the active catalog changed after snapshot generation."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +66,31 @@ class PromotionResult:
     active_import_id: str
     catalog_version: str
     counts: Mapping[str, int]
+
+
+@dataclass(frozen=True, slots=True)
+class SnapshotPublicationRequest:
+    expected_import_id: str
+    expected_catalog_version: str
+    snapshot_schema_version: int
+    storage_path: str
+    sha256: str
+    byte_size: int
+    record_counts: Mapping[str, int]
+    minimum_client_version: str
+    generated_at: str
+    api_contract_version: str
+
+
+@dataclass(frozen=True, slots=True)
+class SnapshotPublication:
+    snapshot_id: str
+    version: str
+    status: str
+    published_at: str
+    current_snapshot_id: str
+    previous_snapshot_id: str | None
+    replayed: bool
 
 
 class CatalogStore(Protocol):
@@ -122,3 +155,18 @@ class CatalogStore(Protocol):
     ) -> None: ...
 
     def status(self) -> Mapping[str, object]: ...
+
+
+class SnapshotCatalogStore(Protocol):
+    """Trusted generation read and atomic manifest-publication boundary."""
+
+    def snapshot_generation(
+        self,
+        *,
+        batch_size: int,
+    ) -> AbstractContextManager[CatalogGenerationReader]: ...
+
+    def publish_snapshot(
+        self,
+        request: SnapshotPublicationRequest,
+    ) -> SnapshotPublication: ...

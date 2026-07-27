@@ -48,7 +48,9 @@ smtp_port = 54325
 
 [storage]
 enabled = true
-file_size_limit = "50MiB"
+# The private catalog-snapshots bucket has its own 1 GiB object ceiling.
+# Inventory imports retain their much smaller bucket-level limit.
+file_size_limit = "1GiB"
 
 [auth]
 enabled = true

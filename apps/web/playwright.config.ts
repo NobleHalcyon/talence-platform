@@ -1,7 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { PREVIEW_DEVICE_ID } from "./features/devices/preview-constants";
+
 const port = 3100;
 const baseURL = `http://127.0.0.1:${port}`;
+const readinessURL = `${baseURL}/app/devices/${PREVIEW_DEVICE_ID}`;
 const browserChannel = process.env.PLAYWRIGHT_CHANNEL;
 const channelOverride = browserChannel ? { channel: browserChannel } : {};
 
@@ -33,7 +36,7 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: "",
       TALENCE_ENABLE_STATIC_APP_PREVIEW: "true",
     },
-    url: baseURL,
+    url: readinessURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -1,17 +1,16 @@
 # Talence implementation status and restart handoff
 
-Last updated: 2026-07-26
+Last updated: 2026-07-27
 
 Branch: `greenfield/platform-v1`
 
-Current implementation milestone: Phase 4 complete; Phase 5 is next
+Current implementation milestone: partial Phase 5 checkpoint
 
-Checkpoint state: Phases 0-3 are committed. Phase 4 implementation and its
-clean database, concurrency, generated-type, root CI, production-build, Edge
-desktop/mobile, and repository-hygiene validation matrix are complete. This
-document is part of the prescribed Phase 4 checkpoint
-`phase 4: collection-aware deck builder`; resolve its SHA from `git log` after
-the commit is created.
+Checkpoint state: Phases 0-4 are committed. The commit containing this document
+is the validated partial Phase 5 work-unit checkpoint
+`phase 5 checkpoint: device API and snapshot foundations`. It is not the
+prescribed final Phase 5 checkpoint. Live boundary composition and true Phase 5
+multi-session race coverage remain; Phase 6 has not started.
 
 Remote actions: none; nothing was pushed, merged, or deployed
 
@@ -24,11 +23,14 @@ Committed lineage:
 - Phase 1: `56cece3` - `phase 1: invite-only identity and workspace foundation`
 - Phase 2: `2cc652c` - `phase 2: canonical catalog pricing and browse`
 - Phase 3: `d819a17` - `phase 3: auditable collection inventory`
-- Phase 4: this checkpoint - `phase 4: collection-aware deck builder`
+- Phase 4: `905deaf` - `phase 4: collection-aware deck builder`
+- Phase 5 work unit: this commit -
+  `phase 5 checkpoint: device API and snapshot foundations`
 
 Detailed architecture, file groups, routes, functions, policies, and test
-evidence are in the corresponding `docs/dev-logs/phase-*.md` files. Phase 4
-starts from `d819a17`; Phase 5 must start from the Phase 4 checkpoint.
+evidence are in the corresponding `docs/dev-logs/phase-*.md` files. The exact
+partial Phase 5 resume state is in `IMPLEMENTATION_PROGRESS.md` and
+`RESTART_HANDOFF.md`.
 
 ## Completed from the master build prompt
 
@@ -135,8 +137,31 @@ starts from `d819a17`; Phase 5 must start from the Phase 4 checkpoint.
 - clean pgTAP, multi-session race, Vitest, root CI, production-build, and Edge
   desktop/mobile coverage.
 
-The validated Phase 3 tree is committed at `d819a17`. Phase 4 is complete in
-this prescribed checkpoint; Phase 5 has not started.
+### Phase 5 checkpointed work unit
+
+- workspace-scoped devices, digest-only credentials, explicit collection
+  grants, immutable sync batches and run summaries, catalog snapshots,
+  idempotency records, feature policies, and usage windows;
+- owner/admin device administration, credential lifecycle, grant replacement,
+  bounded reads, default-deny RLS, and least-privilege function grants;
+- atomic device inventory batches through the Phase 3 immutable ledger,
+  idempotent run summaries, quota consumption, and deterministic snapshot
+  publication with current/previous compatibility;
+- all six canonical `/api/v1/device` routes with strict Bearer authentication,
+  bounded canonical requests/responses, safe request IDs/errors, and prohibited
+  robot-state rejection;
+- responsive device registration/list/detail/grant/lifecycle UI with one-time
+  credential display;
+- deterministic populated SQLite generation, FTS, integrity/checksum/size
+  verification, immutable local/Supabase Storage abstractions, publication, and
+  reference installation;
+- database, web, worker, production-build, guarded local integration, and
+  desktop/mobile preview validation.
+
+The checkpoint deliberately does not claim full Phase 5 completion. The live
+Auth/RPC/RLS/HTTP/Storage composition, true Phase 5 race harness, live contract
+conformance, and two compatibility edges are listed precisely in
+`IMPLEMENTATION_PROGRESS.md`. Phase 6 has not started.
 
 ## Current architecture state
 
@@ -196,12 +221,42 @@ this prescribed checkpoint; Phase 5 has not started.
   generation, and query fields.
 - The responsive editor uses shared semantic components and CSS Modules; every
   action has a click/tap control.
-- Device credentials, `/api/v1/device`, and robot snapshots remain Phase 5
-  work. There is still no remote motion control or cloud robot execution state.
+- Device credentials remain independent from human Auth: only a server-peppered
+  HMAC digest is stored and the raw credential is shown once. The six
+  `/api/v1/device` routes and deterministic robot snapshot foundation are
+  implemented in the partial Phase 5 checkpoint.
+- Snapshot generation is reproducible for one catalog version. Provider
+  observation is normalized to version second precision; mutable worker
+  download/promotion times do not alter immutable artifact bytes.
+- There is still no remote motion control or cloud robot execution state.
 
 ## Current verification evidence
 
-The following evidence is green for the current Phase 4 tree:
+The partial Phase 5 checkpoint has the following green evidence:
+
+- blank local database reset through all four Phase 5 migrations;
+- database lint with zero warnings;
+- 27 pgTAP files and 746 assertions, including 128 Phase 5 assertions;
+- current generated database types;
+- complete root CI, with 38 web files/223 tests, all other workspace/admin
+  suites, 81 ordinary worker tests, Python quality/type checks, contracts, and
+  production build;
+- two guarded worker PostgreSQL integration tests passing twice consecutively
+  on the same local database, including forced catalog import clocks one hour
+  apart, deterministic artifact replay, integrity, and cloud/edge sampled-ID
+  parity;
+- Phase 3 Storage/inventory and Phase 4 deck concurrency regressions passing;
+- device preview Playwright 4/4 in desktop and mobile Chromium on two
+  consecutive fully parallel runs;
+- final repository hygiene and secret/artifact checks.
+
+The worker integration exposed and fixed a real reproducibility defect:
+mutable download and price-ingestion timestamps could previously change the
+SQLite bytes for an unchanged catalog version. Snapshot generation now uses
+the immutable provider observation encoded in the version and covers
+fractional-source normalization.
+
+Historical Phase 4 evidence remains green:
 
 - a blank `supabase db reset --local --no-seed` completed through all ordered
   migrations, including all five Phase 4 migrations;
@@ -276,11 +331,16 @@ Historical Phase 1-3 evidence remains in the corresponding phase logs,
 including the Phase 3 163/163 targeted pgTAP assertions and guarded
 Storage/concurrency harness.
 
-## Phase 4 checkpoint result
+## Partial Phase 5 checkpoint result
 
-Implementation validation and repository hygiene passed. This document is
-included in the prescribed local checkpoint
-`phase 4: collection-aware deck builder`; resolve its SHA from `git log`.
+The coherent device/database/API/snapshot foundation and its current validation
+passed. This document is included in
+`phase 5 checkpoint: device API and snapshot foundations`; resolve its SHA from
+`git log`.
+
+This subject is intentionally different from the prescribed final Phase 5
+subject because the integration and concurrency work in
+`IMPLEMENTATION_PROGRESS.md` remains.
 
 ## Restart procedure
 
@@ -300,31 +360,32 @@ npm run test:supabase:phase3-integration
 npm run test:supabase:phase4-concurrency
 npm run db:types
 npm run db:types:check
+$env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+.\.venv\Scripts\python.exe -m pytest services\catalog-worker\tests -m integration
 npm run ci
-$env:PLAYWRIGHT_CHANNEL = "msedge"
-npm run test:e2e
+npm run test:e2e --workspace @talence/web -- devices-preview.spec.ts
 git diff --check
 ```
 
-Expected branch: `greenfield/platform-v1`. The latest completed checkpoint is
-the commit with subject `phase 4: collection-aware deck builder`. Phase 5 work
-may leave the worktree dirty until its own checkpoint is created.
+Expected branch: `greenfield/platform-v1`. The latest commit is the partial
+Phase 5 checkpoint with subject
+`phase 5 checkpoint: device API and snapshot foundations`; resolve its SHA from
+`git log -1 --oneline`.
 
 Docker Desktop is installed per-user. If a VS Code process does not inherit its
 PATH, reopen the integrated terminal or temporarily run:
 
 ```powershell
-$env:Path = "C:\Users\judge\AppData\Local\Programs\DockerDesktop\resources\bin;$env:Path"
+$env:Path = "C:\Users\judge\AppData\Local\Programs\Docker\Docker\resources\bin;C:\Users\judge\AppData\Local\Programs\DockerDesktop\resources\bin;$env:Path"
 ```
 
 When `supabase/config.toml` changes, use `npx supabase stop` followed by
 `npx supabase start`; a database reset alone does not recreate Auth container
 environment variables.
 
-The Phase 4 commands and final hygiene audit above are green. The Phase 4
-concurrency harness mutates its disposable local database; reset before a later
-transactional pgTAP rerun. Do not push, merge, or deploy without fresh explicit
-authorization.
+The integration and concurrency harnesses mutate the disposable local
+database; reset before a later transactional pgTAP rerun. Do not push, merge,
+or deploy without fresh explicit authorization.
 
 ## Route handoff
 
@@ -370,32 +431,32 @@ and no-horizontal-overflow checks on desktop and Pixel 7 viewports.
 
 ## Phase 5 handoff
 
-Implement devices, the stable device API, and robot catalog snapshots:
+The database, administration, stable API, and snapshot/reference-client
+foundations above are checkpointed. Continue only these remaining Phase 5
+items:
 
-1. Add workspace-scoped devices, digest-only rotatable/revocable credentials,
-   collection grants, immutable sync batches/run summaries, catalog snapshots,
-   quotas, and default-deny RLS.
-2. Reuse `app_private.apply_inventory_transaction_core(...)` for device
-   inventory batches; add a device authorization/idempotency wrapper rather
-   than a second ledger implementation.
-3. Implement the canonical Bearer-only `/api/v1/device` surface for identity,
-   heartbeat, manifest, granted inventory, idempotent inventory batches, and
-   idempotent run summaries. Reject motion/checkpoint state and never log
-   credentials, signed URLs, digests, or full bodies.
-4. Extend the Python worker from an empty SQLite shell to a deterministic,
-   integrity-checked snapshot of one active catalog generation. Upload the
-   immutable private artifact before publishing the database pointer and keep
-   current/previous compatible artifacts.
-5. Replace the device placeholder routes with owner/admin registration,
-   one-time credential acknowledgement, rotation/revocation, lifecycle,
-   collection grants, last-seen, and installed-catalog UI.
-6. Add database, contract, API, worker, multi-session race, and desktop/mobile
-   tests. Checkpoint exactly:
+1. Add a true multi-session device concurrency harness for inventory
+   idempotency/conflict, run idempotency/external IDs, lifecycle/grant/
+   credential races, quota first use/exhaustion, and snapshot
+   publication/promotion races.
+2. Add a guarded live-local issuance-to-device integration across admitted
+   human setup, one-time credential, real Auth/RPC/RLS, all six HTTP routes,
+   grant enforcement, replay/conflict, unknown printing, revoke, and suspend.
+3. Exercise the real local private Supabase Storage bucket from create-only
+   worker upload through signed manifest and reference-client installation,
+   retaining the previous compatible snapshot.
+4. Validate live responses against the canonical OpenAPI/JSON Schema and add a
+   non-preview device administration Playwright flow.
+5. Implement numeric prerelease SemVer ordering or reject prerelease minimums;
+   bind signed URLs to the configured Storage origin/bucket or document and
+   test the deliberate broader contract.
+6. Rerun the complete clean matrix/hygiene audit and checkpoint exactly:
    `phase 5: device API and robot catalog snapshot`.
 
-Preserve the Phase 3 inventory ledger as the only balance authority, keep
-device credentials independent from human Auth, and store no robot execution
-or motion-control state in the cloud.
+The authoritative remaining-work list and restart sequence are in
+`IMPLEMENTATION_PROGRESS.md` and `RESTART_HANDOFF.md`. Preserve the Phase 3
+ledger as the only balance authority and keep all robot motion/execution state
+off cloud.
 
 ## Manual production setup still remaining
 
@@ -439,6 +500,17 @@ Phase 4 production activation remains human-controlled:
   exports, missing/unpriced presentation, and safe error/request-ID behavior;
 - keep format changes append-only and require explicit review before repinning
   existing decks.
+
+Phase 5 production activation remains human-controlled:
+
+- configure the server-only credential pepper and worker database/Storage
+  credentials;
+- apply the reviewed migrations and private `catalog-snapshots` bucket to
+  hosted development;
+- choose feature-policy limits and signed-URL lifetime;
+- run the first reviewed snapshot upload/publication and device fixture flow;
+- complete the remaining live integration/concurrency items before calling the
+  phase production-ready.
 
 Before private-beta production activation:
 
