@@ -166,6 +166,7 @@ export async function loadCollectionListWithClient(
   defaultCollectionId: string | null,
   cursor: string | null = null,
   status: "active" | "archived" | null = null,
+  limit = 40,
 ): Promise<CollectionLoadResult<CollectionListPage>> {
   return rpcLoad(
     client,
@@ -174,7 +175,7 @@ export async function loadCollectionListWithClient(
       p_workspace_id: workspaceId,
       p_include_archived: includeArchived,
       p_after: cursor,
-      p_limit: 40,
+      p_limit: limit,
       p_status: status,
     },
     (value) => parseCollectionListPage(value, defaultCollectionId),
@@ -185,6 +186,7 @@ export async function loadCollectionList(
   includeArchived: boolean,
   cursor: string | null = null,
   status: "active" | "archived" | null = null,
+  limit = 40,
 ): Promise<CollectionLoadResult<CollectionListPage>> {
   const scoped = await currentScope();
   if (!scoped.ok) return scoped.result;
@@ -219,6 +221,7 @@ export async function loadCollectionList(
     scoped.scope.defaultCollectionId,
     cursor,
     status,
+    limit,
   );
 }
 

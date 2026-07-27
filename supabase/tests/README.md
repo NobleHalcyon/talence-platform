@@ -34,21 +34,51 @@ distinct matched import rows outside the timed section, commits through
 `inventory_import_commit`, forces deferred invariants, verifies all lines and
 balances, and enforces a generous five-second local ceiling.
 
-Storage authorization and true multi-session races require the local API and
-are covered separately:
+The Phase 4 suites contain 182 pgTAP assertions across schema/grants, immutable
+format versions, optimistic deck mutations, exact inactive-pin preservation,
+finite oracle and preferred-printing allocation, valuation provenance,
+version-pinned validation, bounded import resolution, deterministic export,
+two-workspace RLS, lifecycle guards, and deck/catalog generation-lock
+contracts. Validation totals include an exact unknown-legality count independent
+of bounded issue detail. The bounds suite exercises a
+2,000-entry replacement/revision, a maximum-note snapshot, 2,000 validation
+failures with explicit detail truncation, a 2,000-line resolver request, and a
+50-deck list page that uses set-based ownership summaries.
+
+Storage authorization and true multi-session races require the local services
+and are covered separately:
 
 ```powershell
 npm run test:supabase:phase3-integration
+npm run test:supabase:phase4-concurrency
 ```
 
-That harness verifies exact private object access and cleanup ordering, plus
-identical/conflicting idempotency races and distinct-key updates to the same
-previously absent balance. It refuses non-loopback database/API targets by
-default. A deliberate hosted test run requires the explicit
+The Phase 3 harness verifies exact private object access and cleanup ordering,
+plus identical/conflicting idempotency races and distinct-key updates to the
+same previously absent balance. It refuses non-loopback database/API targets
+by default. A deliberate hosted Phase 3 test run requires the explicit
 `TALENCE_ALLOW_HOSTED_PHASE3_INTEGRATION=1` opt-in in addition to the complete
-credential set. If the Supabase CLI cannot discover Docker from the current VS
-Code process after a per-user Docker Desktop install, prepend its CLI
-directory for the current PowerShell process:
+credential set.
+
+The PostgreSQL-only Phase 4 harness is unconditionally restricted to a
+disposable loopback database; it has no hosted opt-in. It covers:
+
+- two same-revision editor writes, with exactly one commit and one stale
+  rejection;
+- entry update/remove and remove/remove races after the winning entry vanishes;
+- an active-only mutation waiting behind archival;
+- collection deletion racing deck-source selection;
+- opposite caller source orders without deadlock or priority loss;
+- concurrent validation cache creation with one persisted result;
+- catalog promotion racing catalog-backed deck mutation.
+
+These scenarios prove immutable revision coherence, post-wait lifecycle and
+entry revalidation, canonical collection locking, one deterministic validation
+cache row, and rejection rather than mixed-generation revision evidence.
+
+If the Supabase CLI cannot discover Docker from the current VS Code process
+after a per-user Docker Desktop install, prepend its CLI directory for the
+current PowerShell process:
 
 ```powershell
 $talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"

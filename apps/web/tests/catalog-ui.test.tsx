@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import CatalogLoading from "@/app/(authenticated)/app/catalog/loading";
@@ -6,6 +7,7 @@ import {
   CatalogCardDetailView,
   CatalogPrintingDetailView,
 } from "@/components/catalog/catalog-detail";
+import { CatalogControls } from "@/components/catalog/catalog-controls";
 import { CatalogPageState } from "@/components/catalog/catalog-page-state";
 import {
   previewCatalogCardDetail,
@@ -96,7 +98,9 @@ describe("catalog UI states", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
+    const filterTrigger = screen.getByRole("button", { name: "Filters" });
+    expect(filterTrigger).toBeEnabled();
+    fireEvent.click(filterTrigger);
     const drawer = screen.getByRole("dialog", { name: "Filters" });
     expect(drawer).toBeVisible();
     expect(screen.getAllByLabelText("Language code")).toHaveLength(2);
@@ -104,6 +108,17 @@ describe("catalog UI states", () => {
       screen.getAllByText('English is the default. Enter "all" to include every language.'),
     ).toHaveLength(2);
     expect(drawer.querySelector('[name="lang"]')).toBeInTheDocument();
+  });
+
+  it("keeps the mobile filter trigger disabled in server markup until hydration", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(<CatalogControls query={defaultCatalogQuery("grid")} />);
+
+    const filterTrigger = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Filters",
+    );
+
+    expect(filterTrigger).toBeDisabled();
   });
 
   it("broadens preview results only through the explicit all-language sentinel", () => {

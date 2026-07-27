@@ -729,6 +729,477 @@ export type Database = {
           },
         ];
       };
+      deck_entries: {
+        Row: {
+          card_id: string;
+          created_at: string;
+          deck_id: string;
+          id: string;
+          notes: string | null;
+          preferred_finish: Database["public"]["Enums"]["card_finish"] | null;
+          preferred_printing_id: string | null;
+          quantity: number;
+          sort_order: number;
+          updated_at: string;
+          workspace_id: string;
+          zone: Database["public"]["Enums"]["deck_zone"];
+        };
+        Insert: {
+          card_id: string;
+          created_at?: string;
+          deck_id: string;
+          id?: string;
+          notes?: string | null;
+          preferred_finish?: Database["public"]["Enums"]["card_finish"] | null;
+          preferred_printing_id?: string | null;
+          quantity: number;
+          sort_order?: number;
+          updated_at?: string;
+          workspace_id: string;
+          zone: Database["public"]["Enums"]["deck_zone"];
+        };
+        Update: {
+          card_id?: string;
+          created_at?: string;
+          deck_id?: string;
+          id?: string;
+          notes?: string | null;
+          preferred_finish?: Database["public"]["Enums"]["card_finish"] | null;
+          preferred_printing_id?: string | null;
+          quantity?: number;
+          sort_order?: number;
+          updated_at?: string;
+          workspace_id?: string;
+          zone?: Database["public"]["Enums"]["deck_zone"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deck_entries_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "deck_entries_deck_fk";
+            columns: ["workspace_id", "deck_id"];
+            isOneToOne: false;
+            referencedRelation: "decks";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "deck_entries_preferred_printing_id_fkey";
+            columns: ["preferred_printing_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_printings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      deck_format_versions: {
+        Row: {
+          companion_consumes_sideboard: boolean;
+          companion_max: number;
+          created_at: string;
+          default_copy_limit: number;
+          effective_at: string;
+          enforce_color_identity: boolean;
+          format_code: string;
+          id: string;
+          legality_format_code: string;
+          maximum_commander: number;
+          maximum_deck_size: number | null;
+          maximum_mainboard: number | null;
+          minimum_commander: number;
+          minimum_deck_size: number;
+          minimum_mainboard: number;
+          restricted_copy_limit: number;
+          rules_metadata: Json;
+          scope_note: string;
+          sideboard_max: number;
+          version: number;
+          version_key: string;
+        };
+        Insert: {
+          companion_consumes_sideboard?: boolean;
+          companion_max?: number;
+          created_at?: string;
+          default_copy_limit: number;
+          effective_at: string;
+          enforce_color_identity?: boolean;
+          format_code: string;
+          id?: string;
+          legality_format_code: string;
+          maximum_commander?: number;
+          maximum_deck_size?: number | null;
+          maximum_mainboard?: number | null;
+          minimum_commander?: number;
+          minimum_deck_size: number;
+          minimum_mainboard: number;
+          restricted_copy_limit?: number;
+          rules_metadata?: Json;
+          scope_note: string;
+          sideboard_max: number;
+          version: number;
+          version_key: string;
+        };
+        Update: {
+          companion_consumes_sideboard?: boolean;
+          companion_max?: number;
+          created_at?: string;
+          default_copy_limit?: number;
+          effective_at?: string;
+          enforce_color_identity?: boolean;
+          format_code?: string;
+          id?: string;
+          legality_format_code?: string;
+          maximum_commander?: number;
+          maximum_deck_size?: number | null;
+          maximum_mainboard?: number | null;
+          minimum_commander?: number;
+          minimum_deck_size?: number;
+          minimum_mainboard?: number;
+          restricted_copy_limit?: number;
+          rules_metadata?: Json;
+          scope_note?: string;
+          sideboard_max?: number;
+          version?: number;
+          version_key?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deck_format_versions_format_code_fkey";
+            columns: ["format_code"];
+            isOneToOne: false;
+            referencedRelation: "deck_formats";
+            referencedColumns: ["code"];
+          },
+        ];
+      };
+      deck_formats: {
+        Row: {
+          active: boolean;
+          code: string;
+          created_at: string;
+          game_id: string;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          code: string;
+          created_at?: string;
+          game_id: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          code?: string;
+          created_at?: string;
+          game_id?: string;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deck_formats_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      deck_inventory_sources: {
+        Row: {
+          collection_id: string;
+          created_at: string;
+          deck_id: string;
+          priority: number;
+          workspace_id: string;
+        };
+        Insert: {
+          collection_id: string;
+          created_at?: string;
+          deck_id: string;
+          priority: number;
+          workspace_id: string;
+        };
+        Update: {
+          collection_id?: string;
+          created_at?: string;
+          deck_id?: string;
+          priority?: number;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deck_inventory_sources_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "deck_inventory_sources_deck_fk";
+            columns: ["workspace_id", "deck_id"];
+            isOneToOne: false;
+            referencedRelation: "decks";
+            referencedColumns: ["workspace_id", "id"];
+          },
+        ];
+      };
+      deck_revisions: {
+        Row: {
+          actor_user_id: string;
+          catalog_version: string | null;
+          content_hash: string;
+          created_at: string;
+          deck_id: string;
+          format_code: string;
+          id: string;
+          reason: string;
+          revision: number;
+          rules_version_id: string;
+          snapshot: Json;
+          workspace_id: string;
+        };
+        Insert: {
+          actor_user_id: string;
+          catalog_version?: string | null;
+          content_hash: string;
+          created_at?: string;
+          deck_id: string;
+          format_code: string;
+          id?: string;
+          reason: string;
+          revision: number;
+          rules_version_id: string;
+          snapshot: Json;
+          workspace_id: string;
+        };
+        Update: {
+          actor_user_id?: string;
+          catalog_version?: string | null;
+          content_hash?: string;
+          created_at?: string;
+          deck_id?: string;
+          format_code?: string;
+          id?: string;
+          reason?: string;
+          revision?: number;
+          rules_version_id?: string;
+          snapshot?: Json;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deck_revisions_deck_fk";
+            columns: ["workspace_id", "deck_id"];
+            isOneToOne: false;
+            referencedRelation: "decks";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "deck_revisions_rules_format_fk";
+            columns: ["rules_version_id", "format_code"];
+            isOneToOne: false;
+            referencedRelation: "deck_format_versions";
+            referencedColumns: ["id", "format_code"];
+          },
+          {
+            foreignKeyName: "deck_revisions_rules_version_id_fkey";
+            columns: ["rules_version_id"];
+            isOneToOne: false;
+            referencedRelation: "deck_format_versions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      deck_validation_runs: {
+        Row: {
+          catalog_version: string;
+          content_hash: string;
+          deck_id: string;
+          deck_revision_id: string;
+          evaluated_at: string;
+          evaluated_by_user_id: string;
+          format_code: string;
+          id: string;
+          result: Json;
+          revision: number;
+          rules_version_id: string;
+          workspace_id: string;
+        };
+        Insert: {
+          catalog_version: string;
+          content_hash: string;
+          deck_id: string;
+          deck_revision_id: string;
+          evaluated_at?: string;
+          evaluated_by_user_id: string;
+          format_code: string;
+          id?: string;
+          result: Json;
+          revision: number;
+          rules_version_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          catalog_version?: string;
+          content_hash?: string;
+          deck_id?: string;
+          deck_revision_id?: string;
+          evaluated_at?: string;
+          evaluated_by_user_id?: string;
+          format_code?: string;
+          id?: string;
+          result?: Json;
+          revision?: number;
+          rules_version_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "deck_validation_runs_deck_fk";
+            columns: ["workspace_id", "deck_id"];
+            isOneToOne: false;
+            referencedRelation: "decks";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "deck_validation_runs_revision_fk";
+            columns: ["deck_revision_id", "deck_id"];
+            isOneToOne: false;
+            referencedRelation: "deck_revisions";
+            referencedColumns: ["id", "deck_id"];
+          },
+          {
+            foreignKeyName: "deck_validation_runs_revision_number_fk";
+            columns: ["deck_id", "revision"];
+            isOneToOne: false;
+            referencedRelation: "deck_revisions";
+            referencedColumns: ["deck_id", "revision"];
+          },
+          {
+            foreignKeyName: "deck_validation_runs_rules_format_fk";
+            columns: ["rules_version_id", "format_code"];
+            isOneToOne: false;
+            referencedRelation: "deck_format_versions";
+            referencedColumns: ["id", "format_code"];
+          },
+          {
+            foreignKeyName: "deck_validation_runs_rules_version_id_fkey";
+            columns: ["rules_version_id"];
+            isOneToOne: false;
+            referencedRelation: "deck_format_versions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      decks: {
+        Row: {
+          archived_at: string | null;
+          cover_printing_id: string | null;
+          created_at: string;
+          created_by_user_id: string;
+          current_revision: number;
+          deleted_at: string | null;
+          description: string | null;
+          format_code: string;
+          format_version_id: string;
+          game_id: string;
+          id: string;
+          name: string;
+          notes: string | null;
+          slug: string;
+          status: Database["public"]["Enums"]["resource_status"];
+          tags: string[];
+          updated_at: string;
+          visibility: Database["public"]["Enums"]["visibility"];
+          workspace_id: string;
+        };
+        Insert: {
+          archived_at?: string | null;
+          cover_printing_id?: string | null;
+          created_at?: string;
+          created_by_user_id: string;
+          current_revision?: number;
+          deleted_at?: string | null;
+          description?: string | null;
+          format_code: string;
+          format_version_id: string;
+          game_id: string;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          slug: string;
+          status?: Database["public"]["Enums"]["resource_status"];
+          tags?: string[];
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["visibility"];
+          workspace_id: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          cover_printing_id?: string | null;
+          created_at?: string;
+          created_by_user_id?: string;
+          current_revision?: number;
+          deleted_at?: string | null;
+          description?: string | null;
+          format_code?: string;
+          format_version_id?: string;
+          game_id?: string;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          slug?: string;
+          status?: Database["public"]["Enums"]["resource_status"];
+          tags?: string[];
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["visibility"];
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "decks_cover_printing_id_fkey";
+            columns: ["cover_printing_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_printings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "decks_format_code_fkey";
+            columns: ["format_code"];
+            isOneToOne: false;
+            referencedRelation: "deck_formats";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "decks_format_version_fk";
+            columns: ["format_version_id", "format_code"];
+            isOneToOne: false;
+            referencedRelation: "deck_format_versions";
+            referencedColumns: ["id", "format_code"];
+          },
+          {
+            foreignKeyName: "decks_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "decks_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       games: {
         Row: {
           active: boolean;
@@ -1506,6 +1977,10 @@ export type Database = {
         Args: { p_collection_id: string; p_currency?: string };
         Returns: Json;
       };
+      calculate_deck_ownership: {
+        Args: { p_currency?: string; p_deck_id: string };
+        Returns: Json;
+      };
       catalog_card_detail: { Args: { p_card_id: string }; Returns: Json };
       catalog_printing_detail: {
         Args: { p_printing_id: string };
@@ -1625,6 +2100,144 @@ export type Database = {
         Returns: Json;
       };
       current_user_context: { Args: never; Returns: Json };
+      deck_archive: {
+        Args: { p_deck_id: string; p_expected_revision: number };
+        Returns: Json;
+      };
+      deck_card_printings: {
+        Args: {
+          p_after?: string;
+          p_card_id: string;
+          p_currency?: string;
+          p_deck_id: string;
+          p_limit?: number;
+        };
+        Returns: Json;
+      };
+      deck_catalog_search: {
+        Args: {
+          p_after?: string;
+          p_deck_id: string;
+          p_limit?: number;
+          p_query: string;
+        };
+        Returns: Json;
+      };
+      deck_create: {
+        Args: {
+          p_collection_ids?: string[];
+          p_description?: string;
+          p_format_code: string;
+          p_name: string;
+          p_notes?: string;
+          p_tags?: string[];
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      deck_delete: {
+        Args: { p_deck_id: string; p_expected_revision: number };
+        Returns: Json;
+      };
+      deck_detail: {
+        Args: { p_currency?: string; p_deck_id: string };
+        Returns: Json;
+      };
+      deck_duplicate: {
+        Args: {
+          p_deck_id: string;
+          p_expected_revision: number;
+          p_name?: string;
+        };
+        Returns: Json;
+      };
+      deck_entries_replace: {
+        Args: {
+          p_deck_id: string;
+          p_entries: Json;
+          p_expected_revision: number;
+        };
+        Returns: Json;
+      };
+      deck_entry_add: {
+        Args: {
+          p_card_id: string;
+          p_deck_id: string;
+          p_expected_revision: number;
+          p_notes?: string;
+          p_preferred_finish?: Database["public"]["Enums"]["card_finish"];
+          p_preferred_printing_id?: string;
+          p_quantity: number;
+          p_zone: Database["public"]["Enums"]["deck_zone"];
+        };
+        Returns: Json;
+      };
+      deck_entry_remove: {
+        Args: { p_entry_id: string; p_expected_revision: number };
+        Returns: Json;
+      };
+      deck_entry_update: {
+        Args: {
+          p_entry_id: string;
+          p_expected_revision: number;
+          p_notes: string;
+          p_preferred_finish: Database["public"]["Enums"]["card_finish"];
+          p_preferred_printing_id: string;
+          p_quantity: number;
+          p_zone: Database["public"]["Enums"]["deck_zone"];
+        };
+        Returns: Json;
+      };
+      deck_export: { Args: { p_deck_id: string }; Returns: Json };
+      deck_formats_list: { Args: never; Returns: Json };
+      deck_import_resolve: {
+        Args: { p_deck_id: string; p_names: Json };
+        Returns: Json;
+      };
+      deck_list: {
+        Args: {
+          p_after?: string;
+          p_include_archived?: boolean;
+          p_limit?: number;
+          p_status?: Database["public"]["Enums"]["resource_status"];
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      deck_restore: {
+        Args: { p_deck_id: string; p_expected_revision: number };
+        Returns: Json;
+      };
+      deck_revision_history: {
+        Args: { p_deck_id: string; p_limit?: number };
+        Returns: Json;
+      };
+      deck_sources_replace: {
+        Args: {
+          p_collection_ids: string[];
+          p_deck_id: string;
+          p_expected_revision: number;
+        };
+        Returns: Json;
+      };
+      deck_update: {
+        Args: {
+          p_cover_printing_id: string;
+          p_deck_id: string;
+          p_description: string;
+          p_expected_revision: number;
+          p_format_code: string;
+          p_format_version_id: string;
+          p_name: string;
+          p_notes: string;
+          p_tags: string[];
+        };
+        Returns: Json;
+      };
+      deck_validation_history: {
+        Args: { p_deck_id: string; p_limit?: number };
+        Returns: Json;
+      };
       finalize_admitted_user: { Args: never; Returns: Json };
       inventory_import_cancel: {
         Args: { p_import_job_id: string };
@@ -1712,6 +2325,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      validate_deck: { Args: { p_deck_id: string }; Returns: Json };
     };
     Enums: {
       card_condition:
@@ -1722,6 +2336,7 @@ export type Database = {
         | "heavily_played"
         | "damaged";
       card_finish: "unknown" | "nonfoil" | "foil" | "etched";
+      deck_zone: "mainboard" | "sideboard" | "commander" | "companion" | "maybeboard";
       inventory_import_row_status: "matched" | "ambiguous" | "rejected" | "excluded";
       inventory_source:
         "manual" | "csv_import" | "device" | "transfer" | "reversal" | "admin_correction";
@@ -1864,6 +2479,7 @@ export const Constants = {
         "damaged",
       ],
       card_finish: ["unknown", "nonfoil", "foil", "etched"],
+      deck_zone: ["mainboard", "sideboard", "commander", "companion", "maybeboard"],
       inventory_import_row_status: ["matched", "ambiguous", "rejected", "excluded"],
       inventory_source: [
         "manual",

@@ -4,15 +4,14 @@ Last updated: 2026-07-26
 
 Branch: `greenfield/platform-v1`
 
-Current implementation milestone: Phase 3 validated; checkpoint preparation
+Current implementation milestone: Phase 4 complete; Phase 5 is next
 
-Checkpoint state: Phases 0-2 are committed. Phase 3 implementation and its full
-local validation matrix are green: database reset/lint/tests, Storage and
-concurrency integration, generated types, root CI, production build, and the
-final Edge desktop/mobile run all pass. The final root hygiene audit also
-passes: no secrets, generated artifacts, unignored runtime data, conflicts, or
-unrelated scope were found, and `git diff --check` is clean. Only the prescribed
-local checkpoint commit remains.
+Checkpoint state: Phases 0-3 are committed. Phase 4 implementation and its
+clean database, concurrency, generated-type, root CI, production-build, Edge
+desktop/mobile, and repository-hygiene validation matrix are complete. This
+document is part of the prescribed Phase 4 checkpoint
+`phase 4: collection-aware deck builder`; resolve its SHA from `git log` after
+the commit is created.
 
 Remote actions: none; nothing was pushed, merged, or deployed
 
@@ -24,20 +23,12 @@ Committed lineage:
 - Phase 0: `211e438` - `phase 0: greenfield platform scaffold`
 - Phase 1: `56cece3` - `phase 1: invite-only identity and workspace foundation`
 - Phase 2: `2cc652c` - `phase 2: canonical catalog pricing and browse`
+- Phase 3: `d819a17` - `phase 3: auditable collection inventory`
+- Phase 4: this checkpoint - `phase 4: collection-aware deck builder`
 
-The required Phase 3 checkpoint is the commit containing this handoff and
-`docs/dev-logs/phase-3.md` with the exact subject:
-
-```text
-phase 3: auditable collection inventory
-```
-
-Its SHA is intentionally resolved after the commit with
-`git log -1 --oneline`; it is not embedded in the commit that defines it.
-
-Do not begin Phase 4 changes until that checkpoint is clean. Detailed Phase 3
-architecture, file groups, routes, functions, policies, test evidence, and the
-remaining validation checklist are in `docs/dev-logs/phase-3.md`.
+Detailed architecture, file groups, routes, functions, policies, and test
+evidence are in the corresponding `docs/dev-logs/phase-*.md` files. Phase 4
+starts from `d819a17`; Phase 5 must start from the Phase 4 checkpoint.
 
 ## Completed from the master build prompt
 
@@ -116,11 +107,38 @@ remaining validation checklist are in `docs/dev-logs/phase-3.md`.
 - pgTAP, true multi-session concurrency, local Auth/Storage integration,
   Vitest, build, lint, typecheck, and Playwright coverage.
 
-The validated and audited Phase 3 tree remains uncommitted only until the
-prescribed checkpoint is created. Phases 4-6 are not implemented by this
-checkpoint.
+### Phase 4 implemented surface
 
-## Phase 3 architecture state
+- seven append-only, versioned MTG format baselines for Standard, Pioneer,
+  Modern, Legacy, Vintage, Pauper, and Commander;
+- workspace-scoped decks, all five zones, oracle-card entries, optional exact
+  preferred printing/finish, ordered collection sources, immutable revisions,
+  and immutable validation evidence;
+- revision-guarded create, edit, duplicate, archive, restore, terminal delete,
+  source, entry, and bounded bulk-replacement functions;
+- deck/catalog generation locking, post-wait admission/lifecycle/entry checks,
+  sorted collection advisory locks, and inactive-identity preservation that
+  cannot be forged by an ordinary caller;
+- finite collection allocation without double-counting, separate exact
+  preferred-printing shortfall, exact-finish valuation, explicit unpriced
+  state, and provider/freshness evidence;
+- deterministic advisory validation pinned to the exact content hash, format
+  version, and catalog version, with full summary totals and bounded detailed
+  issues;
+- bounded catalog/printing browse, revision and validation history, text-import
+  resolution, and stable text/JSON export;
+- default-deny RLS for all seven exposed deck tables and function-mediated
+  writes;
+- `/app/decks`, responsive three-surface/compact-tab deck editor, all lifecycle
+  and click/tap controls, preferred-printing chooser, collection-source
+  selection, reviewed text import, and private no-store export;
+- clean pgTAP, multi-session race, Vitest, root CI, production-build, and Edge
+  desktop/mobile coverage.
+
+The validated Phase 3 tree is committed at `d819a17`. Phase 4 is complete in
+this prescribed checkpoint; Phase 5 has not started.
+
+## Current architecture state
 
 - Human authentication remains Supabase Auth through `@supabase/ssr`; there is
   still no public registration route, public `signUp`, Talence password store,
@@ -160,31 +178,49 @@ checkpoint.
 - The web uses semantic shared collection components, URL-backed views and
   filters, streamed CSV responses, and CSS Modules. No paid provider call runs
   in browser code.
-- Device credentials, `/api/v1/device`, robot snapshots, decks, and robot
-  execution remain later-phase work. Phase 3 adds no remote motion control and
-  no cloud robot execution state.
+- Deck entries are requirements, not inventory mutations. Ownership is a
+  deterministic finite projection over the Phase 3 ledger and never reserves
+  or changes physical balances.
+- Deck mutations lock the deck and catalog pointer, compare an exact revision
+  before and after waits, and append one coherent immutable revision.
+- Existing inactive catalog identities may be preserved only inside the exact
+  private transaction/backend context created by trusted mutations; new or
+  changed identities must be active.
+- Collection deletion and source selection serialize on the same canonical
+  advisory scope. Opposite source orders acquire UUID-sorted locks.
+- Validation is an advisory, versioned baseline. It never claims exhaustive
+  Comprehensive Rules, tournament-policy, partner/background, companion, or
+  card-specific exception coverage.
+- Deck list, detail, catalog browse, chooser, histories, import resolution, and
+  export are bounded. Opaque cursors bind the relevant deck revision, catalog
+  generation, and query fields.
+- The responsive editor uses shared semantic components and CSS Modules; every
+  action has a click/tap control.
+- Device credentials, `/api/v1/device`, and robot snapshots remain Phase 5
+  work. There is still no remote motion control or cloud robot execution state.
 
 ## Current verification evidence
 
-The following evidence is green for the current Phase 3 tree:
+The following evidence is green for the current Phase 4 tree:
 
 - a blank `supabase db reset --local --no-seed` completed through all ordered
-  migrations;
+  migrations, including all five Phase 4 migrations;
 - database lint completed with zero warnings;
-- the complete canonical pgTAP baseline passed: 16 files and 440/440
+- the complete canonical pgTAP baseline passed: 23 files and 622/622
   assertions;
-- Phase 3 pgTAP: 6 files and 163/163 assertions:
-  - schema/API/grant surface: 32;
-  - ledger/idempotency: 25;
-  - maximum-import performance: 5;
-  - transfer/reversal/lifecycle: 25;
-  - import/read/summary/export/retention: 50;
+- Phase 4 pgTAP passed 182/182 assertions:
+  - schema, formats, and surface: 36;
+  - lifecycle, revisions, and mutations: 30;
+  - preservation and browse contracts: 17;
+  - ownership, valuation, and sources: 31;
+  - validation versioning: 17;
+  - maximum bounds and resolver: 25;
   - two-workspace RLS: 26.
-- The final 5,000-row maximum import measurement was approximately 850 ms
-  against a five-second ceiling. The preceding query/ledger optimization
-  improved this path by about 33 times.
+- The maximum-entry/revision, maximum-note snapshot, 2,000-failure validation,
+  2,000-line resolver, and 50-deck list cases all remained inside their
+  published local budgets and storage bounds.
 - The schema/function-signature/grant catalog assertions match the intended
-  Phase 3 surface.
+  Phase 4 surface.
 - `npm run test:supabase:phase3-integration` passes:
   - exact editor Storage upload/download;
   - viewer read and wrong-path write denial;
@@ -198,45 +234,53 @@ The following evidence is green for the current Phase 3 tree:
 - The integration harness refuses non-loopback database or API targets unless
   `TALENCE_ALLOW_HOSTED_PHASE3_INTEGRATION=1` is set. The guarded local rerun
   passes, and a fake hosted-target refusal check passes.
-- The complete root `npm.cmd run ci` chain passes, including canonical-manifest
+- `npm run test:supabase:phase4-concurrency` passes:
+  - one winner and one stale rejection for same-revision writers;
+  - vanished entry update/remove and remove/remove reject after waiting;
+  - an archived deck rejects the waiting active-only mutation;
+  - collection delete/source selection has one coherent winner;
+  - opposite source orders both commit without deadlock or priority loss;
+  - concurrent validation returns one persisted cache row;
+  - catalog promotion finishes before identity validation, preventing a
+    mixed-generation revision.
+- The Phase 4 harness is unconditionally restricted to a disposable loopback
+  PostgreSQL database. A fake non-loopback target correctly fails with
+  `phase4_integration_requires_disposable_loopback_database`.
+- The complete root `npm run ci` chain passes, including canonical-manifest
   and architecture guards, formatting, lint, strict TypeScript, contracts,
   Python quality/type/tests, and the production build.
-- JavaScript/TypeScript tests total 174 passing:
-  - web Vitest: 23 files and 136 tests;
+- JavaScript/TypeScript tests total 217 passing:
+  - web Vitest: 30 files and 179 tests;
   - contracts: 7;
   - domain: 2;
   - UI: 11;
   - trusted administration: 18.
+- The focused Phase 4 web contract/UI slice passes 42/42 tests across seven
+  files.
 - Contract validation passes.
 - Python Ruff and strict mypy pass; pytest reports 49 passed and 1 expected
   environment-gated skip.
-- The final Next.js production build passes.
-- The final Playwright matrix on Edge is 10 passed and 2 intentional
-  project-specific skips. The HTTP CSV contract runs once because it is
-  viewport-independent; the existing catalog phone smoke runs only in the
-  mobile project.
+- The final Next.js production build passes and includes all deck list, editor,
+  import, and export routes.
+- The final Playwright matrix on Edge is 15 passed and 3 intentional
+  project-specific skips across desktop and Pixel 7 projects. The deck slice is
+  5 passed and 1 intentional mobile HTTP-export skip. The catalog hydration
+  regression also passes five serial mobile repetitions.
 - `npm run db:types` regenerated the database surface and
   `npm run db:types:check` passes.
 - Final hygiene audit: `git diff --check` is clean, and no secrets, generated
   artifacts, unignored runtime data, merge conflicts, or unrelated changes were
   found.
-- The Phase 1 `120_phase_1_workspace_rls_and_owner_invariants` regression was
-  updated to assert the Phase 3 database-owned default-collection archive
-  guard.
 
-Historical Phase 2 evidence remains in `docs/dev-logs/phase-2.md`: 152/152
-targeted Phase 2 pgTAP assertions, 277/277 full baseline assertions, 86 web
-tests, 50 worker tests, and the responsive browser matrix. Phase 1 history
-remains in `docs/dev-logs/phase-1.md`.
+Historical Phase 1-3 evidence remains in the corresponding phase logs,
+including the Phase 3 163/163 targeted pgTAP assertions and guarded
+Storage/concurrency harness.
 
-## Final root step before the Phase 3 checkpoint
+## Phase 4 checkpoint result
 
-Implementation validation and repository hygiene are green. If the tree is
-unchanged, create the prescribed local checkpoint commit containing both
-handoff documents.
-
-The current document intentionally does not claim that the checkpoint commit
-has been created.
+Implementation validation and repository hygiene passed. This document is
+included in the prescribed local checkpoint
+`phase 4: collection-aware deck builder`; resolve its SHA from `git log`.
 
 ## Restart procedure
 
@@ -246,13 +290,14 @@ From a fresh PowerShell terminal:
 Set-Location C:\Users\judge\talence-platform
 git branch --show-current
 git status --short
-git log -4 --oneline
+git log -5 --oneline
 docker version
 npx supabase start
 npx supabase db reset --local --no-seed
 npm run db:lint
 npm run test:supabase
 npm run test:supabase:phase3-integration
+npm run test:supabase:phase4-concurrency
 npm run db:types
 npm run db:types:check
 npm run ci
@@ -261,9 +306,9 @@ npm run test:e2e
 git diff --check
 ```
 
-Expected branch: `greenfield/platform-v1`. The latest committed checkpoint is
-Phase 2 at `2cc652c`; a dirty Phase 3 worktree is expected until the checkpoint
-is created.
+Expected branch: `greenfield/platform-v1`. The latest completed checkpoint is
+the commit with subject `phase 4: collection-aware deck builder`. Phase 5 work
+may leave the worktree dirty until its own checkpoint is created.
 
 Docker Desktop is installed per-user. If a VS Code process does not inherit its
 PATH, reopen the integrated terminal or temporarily run:
@@ -276,22 +321,14 @@ When `supabase/config.toml` changes, use `npx supabase stop` followed by
 `npx supabase start`; a database reset alone does not recreate Auth container
 environment variables.
 
-If the tree is unchanged, the validation commands and final hygiene audit above
-are already green. Create the commit containing these handoff documents
-exactly:
-
-```text
-phase 3: auditable collection inventory
-```
-
-Resolve its SHA afterward with `git log -1 --oneline`; no pre-commit SHA edit is
-required.
-
-Do not push, merge, deploy, or start Phase 4 before the local checkpoint exists.
+The Phase 4 commands and final hygiene audit above are green. The Phase 4
+concurrency harness mutates its disposable local database; reset before a later
+transactional pgTAP rerun. Do not push, merge, or deploy without fresh explicit
+authorization.
 
 ## Route handoff
 
-The Phase 3 browser surface is:
+The Phase 3 collection surface remains:
 
 - `/app/collections` - active/archived list, pagination, create form, and
   lifecycle permissions;
@@ -313,27 +350,52 @@ quantity editing, structured/gallery/analytical switches, history/reversal
 dialog, exact-line detail, staged matched/ambiguous/rejected CSV rows, safe
 export, and no-horizontal-overflow checks on desktop and Pixel 7 viewports.
 
-## Phase 4 handoff
+The Phase 4 deck surface is:
 
-After the Phase 3 checkpoint, implement the collection-aware deck builder:
+- `/app/decks` - bounded active/archived/all list, create, duplicate, archive,
+  restore, and terminal delete;
+- `/app/decks/[deckId]` - responsive catalog, five-zone editor, source/settings,
+  ownership, valuation, validation, lifecycle, history evidence, and
+  preferred-printing picker;
+- `/app/decks/[deckId]/import` - bounded parse, resolve, explicit review, and
+  atomic replacement;
+- `/app/decks/[deckId]/export` - private no-store plain-text attachment;
+- `/app/decks/[deckId]/export?format=json` - private no-store stable JSON
+  attachment.
 
-1. Add versioned format/rule configuration for Standard, Pioneer, Modern,
-   Legacy, Vintage, Pauper, and Commander.
-2. Add workspace-scoped decks, immutable revisions, zones, exact entries, and
-   source/import provenance.
-3. Enforce allocation without double-counting owned copies across deck zones;
-   maybeboard does not consume allocated inventory.
-4. Add deterministic validation bound to a catalog/rule version, with advisory
-   warnings where legality, companion, or pairing data is incomplete.
-5. Report ownership shortfall separately from preferred-printing shortfall and
-   value only the exact selected finishes.
-6. Add bounded text import, responsive editor, revisions, filters, and
-   workspace/RLS/transactional tests.
-7. Validate and checkpoint exactly:
-   `phase 4: collection-aware deck builder`.
+Deterministic preview mode covers deck list filters and lifecycle, all three
+editor surfaces, all five zones, finite and preferred ownership, missing and
+unpriced state, validation summaries and truncation, import review, exports,
+and no-horizontal-overflow checks on desktop and Pixel 7 viewports.
 
-Preserve Phase 3 ledger APIs as the single inventory authority; deck allocation
-must not mutate physical balances.
+## Phase 5 handoff
+
+Implement devices, the stable device API, and robot catalog snapshots:
+
+1. Add workspace-scoped devices, digest-only rotatable/revocable credentials,
+   collection grants, immutable sync batches/run summaries, catalog snapshots,
+   quotas, and default-deny RLS.
+2. Reuse `app_private.apply_inventory_transaction_core(...)` for device
+   inventory batches; add a device authorization/idempotency wrapper rather
+   than a second ledger implementation.
+3. Implement the canonical Bearer-only `/api/v1/device` surface for identity,
+   heartbeat, manifest, granted inventory, idempotent inventory batches, and
+   idempotent run summaries. Reject motion/checkpoint state and never log
+   credentials, signed URLs, digests, or full bodies.
+4. Extend the Python worker from an empty SQLite shell to a deterministic,
+   integrity-checked snapshot of one active catalog generation. Upload the
+   immutable private artifact before publishing the database pointer and keep
+   current/previous compatible artifacts.
+5. Replace the device placeholder routes with owner/admin registration,
+   one-time credential acknowledgement, rotation/revocation, lifecycle,
+   collection grants, last-seen, and installed-catalog UI.
+6. Add database, contract, API, worker, multi-session race, and desktop/mobile
+   tests. Checkpoint exactly:
+   `phase 5: device API and robot catalog snapshot`.
+
+Preserve the Phase 3 inventory ledger as the only balance authority, keep
+device credentials independent from human Auth, and store no robot execution
+or motion-control state in the cloud.
 
 ## Manual production setup still remaining
 
@@ -362,7 +424,24 @@ Phase 3 production activation remains human-controlled:
   transfer, reversal, valuation provenance, and export with non-production
   data;
 - retain no source CSV, report, credential, snapshot, or local database
-  artifact in source control;
+  artifact in source control.
+
+Phase 4 production activation remains human-controlled:
+
+- apply the five migrations and regenerated types to hosted development through
+  the reviewed deployment workflow;
+- verify the seven seeded format baselines, RLS roles, lifecycle permissions,
+  revision conflicts, collection-source guards, and catalog-promotion locking
+  with non-production workspaces;
+- import an active catalog with legality and current-price evidence before
+  evaluating ownership, value, and advisory validation acceptance;
+- verify desktop and compact deck editing, reviewed text import, private
+  exports, missing/unpriced presentation, and safe error/request-ID behavior;
+- keep format changes append-only and require explicit review before repinning
+  existing decks.
+
+Before private-beta production activation:
+
 - complete Phase 6 backup/restore, monitoring, quota, incident, security, and
   deployment controls before private-beta production activation.
 

@@ -27,6 +27,7 @@
     "test:python": "node scripts/python.mjs -m pytest services/catalog-worker/tests",
     "test:supabase": "npx supabase test db",
     "test:supabase:phase3-integration": "node supabase/tests/integration/phase3-storage-concurrency.mjs",
+    "test:supabase:phase4-concurrency": "node supabase/tests/integration/phase4-deck-concurrency.mjs",
     "db:lint": "npx supabase db lint --local --schema public,app_private,app_api --level warning --fail-on warning",
     "db:types": "node scripts/generate-database-types.mjs",
     "db:types:check": "node scripts/generate-database-types.mjs --check",

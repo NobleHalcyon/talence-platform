@@ -6,8 +6,10 @@ preference, game, and default-collection foundation. Phase 2 adds the global
 catalog/current-price schema, private import lifecycle, bounded browse/admin
 RPCs, and read-only admitted-user RLS. Phase 3 adds collections, the immutable
 inventory ledger, balances, valuation, history, private CSV staging, and
-least-privilege Storage policies. Deck and device objects arrive through
-ordered migrations in later phases.
+least-privilege Storage policies. Phase 4 adds version-pinned deck formats,
+workspace-scoped decks, immutable revisions, finite collection ownership,
+valuation, validation, bounded import/export, and default-deny deck RLS.
+Device objects arrive through ordered migrations in Phase 5.
 
 The local stack is development-only. It uses local credentials and captures
 email in the local SMTP viewer; do not expose it to a network or treat its settings as
@@ -202,3 +204,49 @@ The integration harness proves exact editor-only object access, denied
 overwrite/upsert/delete paths, service cleanup after cancellation, same-key
 replay/conflict races, and distinct-key updates against the same previously
 absent balance without a lost update.
+
+## Phase 4 deck database
+
+The Phase 4 migrations add seven append-only format baselines, workspace-scoped
+decks and oracle-level entries, ordered collection inventory sources, immutable
+revision snapshots, and version-keyed validation evidence. The exposed deck
+tables use default-deny RLS. Ordinary authenticated roles receive the intended
+workspace/admission-scoped reads and bounded RPC execution, but no direct
+mutation grant.
+
+Every deck mutation derives the human actor, checks the workspace role, locks
+the deck and active catalog generation, compares an exact expected revision,
+and records one immutable revision in the same transaction. Entry identities,
+preferred printings, and collection sources are revalidated after waits.
+Collection lifecycle and deck-source changes use canonical advisory-lock
+ordering, preventing a deleted collection from becoming a source and avoiding
+opposite-order deadlocks.
+
+Ownership allocation consumes each physical copy at most once across
+commander, companion, mainboard, and sideboard; maybeboard reports availability
+without reserving inventory. Preferred-printing shortfall and exact-finish
+valuation remain separate. Missing observations are nullable, never zero, and
+priced amounts retain provider and freshness evidence.
+
+Validation is deterministic evidence pinned to the exact deck content hash,
+format version, and catalog version. Bounded issue detail includes an explicit
+truncation marker while complete severity and unknown-legality totals remain
+available. Import resolution and all list/search/history surfaces publish
+bounded work and cursor contracts.
+
+Run the complete database and multi-session validation from a disposable local
+stack:
+
+```powershell
+npx supabase db reset --local --no-seed
+npm run db:lint
+npm run test:supabase
+npm run test:supabase:phase3-integration
+npm run test:supabase:phase4-concurrency
+npm run db:types
+npm run db:types:check
+```
+
+The Phase 4 harness always refuses a non-loopback PostgreSQL target. It mutates
+its disposable database with unique fixtures, so reset before rerunning the
+transactional pgTAP suite.

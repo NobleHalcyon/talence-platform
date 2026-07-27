@@ -34,6 +34,24 @@ Phase 3 adds collection and inventory state:
   ledger guards, deferred pair/reversal invariants, and exact private Storage
   policies.
 
+Phase 4 adds deck construction and analysis:
+
+- `20260726040000_*` creates append-only format rules, workspace-scoped decks,
+  entries, ordered inventory sources, immutable revisions/validation runs, and
+  lifecycle/preservation invariants;
+- `20260726041000_*` creates optimistic-revision mutations, canonical content
+  hashing, bounded snapshots, exact inactive-pin preservation, canonical
+  multi-source lock ordering, and deck-before-catalog generation locks that
+  serialize catalog-backed writes with promotion;
+- `20260726042000_*` creates finite oracle/preferred-printing ownership,
+  set-based list summaries, version-bound catalog/printing reads, bounded
+  import resolution, coherent locked ownership reads, history, and
+  deterministic exports;
+- `20260726042100_*` creates persisted, version-pinned advisory validation,
+  exact pre-truncation legality totals, and coherent detail composition;
+- `20260726043000_*` applies least-privilege grants, workspace RLS, and
+  collection/deck-source deletion coordination.
+
 Create later immutable, ordered files with:
 
 ```powershell
@@ -55,4 +73,5 @@ npx supabase db reset --local --no-seed
 npm run db:lint
 npm run test:supabase
 npm run test:supabase:phase3-integration
+npm run test:supabase:phase4-concurrency
 ```

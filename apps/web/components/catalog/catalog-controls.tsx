@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   Button,
@@ -22,6 +22,18 @@ import {
 import type { CatalogSearchQuery } from "@/features/catalog/types";
 
 import styles from "./catalog.module.css";
+
+function subscribeToHydration(): () => void {
+  return () => undefined;
+}
+
+function clientHydrationSnapshot(): boolean {
+  return true;
+}
+
+function serverHydrationSnapshot(): boolean {
+  return false;
+}
 
 function HiddenQueryFields({ query, exclude }: { query: CatalogSearchQuery; exclude: string[] }) {
   const parameters = catalogQueryToSearchParams(query, { cursor: null });
@@ -223,6 +235,11 @@ function FilterFields({ query, prefix }: { query: CatalogSearchQuery; prefix: st
 
 export function CatalogControls({ query }: { query: CatalogSearchQuery }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    clientHydrationSnapshot,
+    serverHydrationSnapshot,
+  );
   const filterCount = activeFilterCount(query);
 
   return (
@@ -268,7 +285,12 @@ export function CatalogControls({ query }: { query: CatalogSearchQuery }) {
       </form>
 
       <div className={styles.mobileFilterTrigger}>
-        <Button variant="secondary" onClick={() => setDrawerOpen(true)} aria-expanded={drawerOpen}>
+        <Button
+          variant="secondary"
+          disabled={!hydrated}
+          onClick={() => setDrawerOpen(true)}
+          aria-expanded={drawerOpen}
+        >
           Filters{filterCount > 0 ? ` (${filterCount})` : ""}
         </Button>
       </div>
