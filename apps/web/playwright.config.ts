@@ -27,6 +27,12 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "",
+      NEXT_PUBLIC_SUPABASE_URL: "",
+      TALENCE_ENABLE_STATIC_APP_PREVIEW: "true",
+    },
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

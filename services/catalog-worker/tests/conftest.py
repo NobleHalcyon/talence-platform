@@ -32,6 +32,11 @@ def cards_fixture_path() -> Path:
 
 
 @pytest.fixture
+def sets_fixture_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "fixtures" / "scryfall" / "sets.json"
+
+
+@pytest.fixture
 def canonical_snapshot_schema_path() -> Path:
     return (
         Path(__file__).resolve().parents[3]

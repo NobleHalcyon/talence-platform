@@ -2,7 +2,7 @@
 
 Production provisioning is intentionally human-controlled. No production
 project, credential, email provider, CAPTCHA secret, push, or deployment was
-changed by Phase 1.
+changed by Phases 1 or 2.
 
 ## Phase 1 private-beta identity checklist
 
@@ -186,16 +186,192 @@ Before admitting real users, verify:
 - recovery remains generic for malformed, unknown, and provider-rejected email;
 - browser bundles contain no secret key or direct database URL.
 
+## Phase 2 catalog and pricing checklist
+
+Complete the import lifecycle in a hosted development project before touching
+production. A fixture import proves plumbing; it is not production catalog
+data.
+
+### 1. Apply and verify the catalog database
+
+Apply all committed migrations to an empty/local database and then to hosted
+development. Regenerate and verify the public database type contract:
+
+```powershell
+npx supabase db reset
+npm run db:lint
+npm run db:types
+npm run db:types:check
+npm run test:supabase
+```
+
+The Phase 2 migrations add public catalog identity, price, source/import/state
+tables and private import staging. Keep `app_private` and `app_api` absent from
+the exposed Data API schema list.
+
+Verify that:
+
+- anonymous, inactive, and suspended users cannot read catalog data;
+- active admitted users can read only active catalog identity;
+- current prices and catalog operational state have no direct authenticated
+  table grant and are returned only by bounded RPCs;
+- ordinary users cannot insert, update, or delete any catalog row;
+- only the trusted worker can use `app_private` staging/import functions;
+- admin status/queue RPCs require service role plus an active
+  `platform_admin` actor.
+
+The pgTAP performance suite seeds 50,000 deterministic printings, asserts the
+full-text GIN plan and exact result, and applies a five-second local ceiling.
+Recheck hosted query plans and latency with production-like statistics; the
+local ceiling is a regression guard, not a hosted-service SLA.
+
+Immediately close the database import gate in a newly migrated hosted project
+until the controlled import window:
+
+```sql
+update public.catalog_state
+set sync_enabled = false
+where singleton_id = 1;
+```
+
+Run that statement only in the intended hosted project with a trusted database
+role. Do not expose `catalog_state` as a browser-writable setting.
+
+### 2. Provision the worker environment
+
+Use a protected operator or worker environment, never a browser or
+`NEXT_PUBLIC_` variable:
+
+```powershell
+$env:TALENCE_DATABASE_URL = "<direct PostgreSQL worker URL>"
+$env:TALENCE_CATALOG_USER_AGENT = "Talence-Catalog-Worker/0.2 (+https://your-domain.example/contact)"
+$env:TALENCE_CATALOG_MAX_DOWNLOAD_BYTES = "2000000000"
+$env:TALENCE_CATALOG_REQUEST_TIMEOUT_SECONDS = "30"
+$env:TALENCE_CATALOG_MAXIMUM_ATTEMPTS = "4"
+$env:TALENCE_CATALOG_RETRY_BASE_SECONDS = "0.5"
+$env:TALENCE_CATALOG_METADATA_MINIMUM_INTERVAL_SECONDS = "0.11"
+$env:TALENCE_CATALOG_BATCH_SIZE = "1000"
+$env:TALENCE_CATALOG_PRICE_STALE_AFTER_HOURS = "36"
+```
+
+Replace the contact URL with a monitored real contact/reference. Use the hosted
+provider's protected direct or pooler PostgreSQL connection appropriate for a
+long-running worker and enforce TLS according to that provider's current
+instructions. Do not put the database URL on a command line, in Vercel browser
+variables, workflow source, logs, or repository files.
+
+`TALENCE_CATALOG_TEMP_DIRECTORY` is optional. If set, provision enough private
+ephemeral space for the bounded bulk file and ensure cleanup/monitoring. The
+worker does not require `SUPABASE_SECRET_KEY` for the Phase 2 import path.
+
+### 3. Prove fixture behavior without provider traffic
+
+Install the Python 3.13 package in the protected environment and run:
+
+```powershell
+talence-catalog validate
+talence-catalog fixture-import --dry-run
+```
+
+Both commands are offline and perform no database write. Against the hosted
+development database, deliberately open the database gate, promote the fixture,
+and inspect status:
+
+```sql
+update public.catalog_state
+set sync_enabled = true
+where singleton_id = 1;
+```
+
+```powershell
+talence-catalog fixture-import
+talence-catalog status
+```
+
+Confirm representative single-face, multi-face, foreign-language, token,
+missing-price, zero-price, and multiple-finish observations. Repeat the same
+fixture import and verify it returns an unchanged-source no-op. Use `--force`
+only when deliberately testing replay.
+
+Close the hosted-development database gate again if no worker is expected to
+run.
+
+### 4. Perform the first live import manually
+
+Do not enable the web queue or GitHub live job for the first provider import.
+Choose a monitored maintenance window, open the database gate, and run:
+
+```powershell
+talence-catalog live-import --trigger-type manual
+talence-catalog status
+```
+
+The worker must select exactly Scryfall `all_cards`, accept bulk bytes only from
+the official download host, and stop rather than promote when its size,
+normalization, relational validation, or live-count floors fail.
+
+After success, verify:
+
+- active set/card/printing/face/legality/external-ID counts are plausible;
+- source SHA, consumed-set dependency SHA, observed time, active catalog
+  version, and import record are present;
+- a second unforced run is a no-op only for the same active source identity;
+- an unforced queued run with the active provider/set identity completes
+  replay-safely without downloading the bulk file, while a forced or changed
+  queue proceeds to download;
+- catalog search, all filters, all sort modes, and cursor navigation work;
+- an omitted `lang` filters to English, `lang=all` deliberately includes all
+  languages, and another valid language code selects only that language;
+- card, printing, and set detail render multi-face and foreign/token examples;
+- missing prices say `Price unavailable`, explicit zero remains visible, and
+  provider/finish/currency/observed/ingested/stale data are present;
+- direct provider images load without a transformation or application proxy;
+- the prior catalog remains active after an intentionally failed candidate in
+  a non-production rehearsal.
+- closing `catalog_state.sync_enabled` during a non-production import blocks the
+  next heartbeat or promotion, records stable `sync_disabled` failure, and
+  preserves the prior active catalog.
+
+Close `catalog_state.sync_enabled` if continued imports are not yet approved.
+
+### 5. Deliberately enable admin queueing and scheduling
+
+The web queue has two gates:
+
+1. `public.catalog_state.sync_enabled=true` permits import/queue functions.
+2. Server-only `FEATURE_CATALOG_SYNC_ENABLED=true` permits the admin action.
+
+Set the Vercel feature variable only after a protected worker can claim queued
+rows. The `/app/admin/catalog` request only queues work; it does not dispatch or
+run the import. With the repository as committed, an operator claims a queued
+UUID explicitly:
+
+```powershell
+talence-catalog live-import --queued-import-id "<queued-run-uuid>" --trigger-type manual
+```
+
+`.github/workflows/catalog-sync.yml` intentionally has no schedule or secret
+wiring, and its live job is guarded by `if: false`. After the first manual live
+import, production acceptance, alerting, and cost controls:
+
+1. store the worker database URL and user-agent through protected repository or
+   environment secrets;
+2. limit workflow/environment access and require the chosen approval;
+3. remove the explicit live-job guard;
+4. add the reviewed daily cron;
+5. test queue claiming, failure alerting, stale-lease recovery, and emergency
+   closure of both sync gates.
+
+Do not enable web queueing while no dispatcher/operator will claim rows.
+
 ## Later-phase production work
 
 The following remain intentionally pending until their implementation phases:
 
-1. Create private import and immutable catalog-artifact Storage buckets with
+1. Create private import and immutable catalog-artifact/snapshot Storage buckets with
    MIME, size, retention, and signed-URL policies.
-2. Configure catalog-worker secrets and keep live catalog sync disabled until a
-   fixture import and first live manual import are reviewed.
-3. Configure device API quotas, credential pepper, and snapshot controls.
-4. Enable Vercel Spend Management and Supabase cost controls.
-5. Complete backup/restore and incident-response rehearsals.
-6. Perform the Phase 6 security, accessibility, performance, and deployment
+2. Configure device API quotas, credential pepper, and snapshot controls.
+3. Enable Vercel Spend Management and Supabase cost controls.
+4. Complete backup/restore and incident-response rehearsals.
+5. Perform the Phase 6 security, accessibility, performance, and deployment
    acceptance review.

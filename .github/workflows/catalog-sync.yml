@@ -2,15 +2,22 @@ name: Catalog sync
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Catalog worker action
+        required: true
+        default: fixture-validate
+        type: choice
+        options:
+          - fixture-validate
+          - live-import-disabled
 
 permissions:
   contents: read
 
 jobs:
-  phase-0-readiness:
-    # Phase 2 replaces this deliberately disabled readiness job with the
-    # fixture/live import and promotion workflow.
-    if: ${{ false }}
+  fixture-validation:
+    if: ${{ inputs.mode == 'fixture-validate' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -21,5 +28,25 @@ jobs:
           cache: pip
           cache-dependency-path: services/catalog-worker/pyproject.toml
       - run: python -m pip install -e "./services/catalog-worker"
-      - name: Report Phase 0 worker capabilities
-        run: talence-catalog status
+      - name: Validate fixture import without network or database writes
+        run: talence-catalog fixture-import --dry-run
+
+  live-import-disabled:
+    # Human setup gate: keep disabled until protected worker secrets, the first
+    # live-import approval, and the private-beta schedule are configured.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: services/catalog-worker/pyproject.toml
+      - run: python -m pip install -e "./services/catalog-worker"
+      - name: Live import remains disabled and has no secret wiring
+        run: talence-catalog live-import
+
+# Intentionally no schedule. Add the approved daily cron only after the first
+# operator-reviewed live import succeeds and production cost controls are set.

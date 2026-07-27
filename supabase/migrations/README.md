@@ -8,6 +8,17 @@ Phase 1 begins the immutable migration sequence:
   helpers, finalization, and owner/default-resource invariant triggers;
 - `20260726012000_*` applies least-privilege grants and default-deny RLS.
 
+Phase 2 continues it:
+
+- `20260726020000_*` creates catalog, price, source/import provenance, active
+  state, search indexes, and private staging tables;
+- `20260726021000_*` creates worker lease, validation, failure, cleanup,
+  dependency-validated queued no-op replay, in-flight sync-switch enforcement,
+  and transactional-promotion functions;
+- `20260726022000_*` creates bounded browse/detail/status and admin queue RPCs;
+- `20260726023000_*` applies catalog least-privilege grants and default-deny
+  RLS.
+
 Create later immutable, ordered files with:
 
 ```powershell

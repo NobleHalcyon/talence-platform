@@ -22,6 +22,13 @@ export const DATABASE_FUNCTIONS = {
   adminPrepareInvitedUser: "admin_prepare_invited_user",
   adminRecordInvitedUserError: "admin_record_invited_user_error",
   adminRevokeInvitedUser: "admin_revoke_invited_user",
+  catalogSearch: "catalog_search",
+  catalogCardDetail: "catalog_card_detail",
+  catalogPrintingDetail: "catalog_printing_detail",
+  catalogSetDetail: "catalog_set_detail",
+  catalogStatus: "catalog_status",
+  adminCatalogStatus: "admin_catalog_status",
+  adminQueueCatalogSync: "admin_queue_catalog_sync",
 } as const;
 
 export interface FinalizedAdmission {

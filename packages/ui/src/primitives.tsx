@@ -334,7 +334,7 @@ function formatMoney(amount: string, currency: string): string {
   }
 }
 
-function formatObservedAt(value: string): string {
+function formatInstant(value: string): string {
   const instant = new Date(value);
   if (Number.isNaN(instant.getTime())) {
     return value;
@@ -354,7 +354,8 @@ export function PriceDisplay({ observation, now }: PriceDisplayProps) {
     return <span className={styles.priceMeta}>Price unavailable</span>;
   }
 
-  const observedLabel = formatObservedAt(state.observation.observedAt);
+  const observedLabel = formatInstant(state.observation.observedAt);
+  const ingestedLabel = formatInstant(state.observation.ingestedAt);
 
   return (
     <span className={styles.price}>
@@ -364,6 +365,9 @@ export function PriceDisplay({ observation, now }: PriceDisplayProps) {
       <span className={styles.priceMeta}>
         {state.observation.provider} estimate ·{" "}
         <time dateTime={state.observation.observedAt}>observed {observedLabel} UTC</time>
+      </span>
+      <span className={styles.priceMeta}>
+        <time dateTime={state.observation.ingestedAt}>ingested {ingestedLabel} UTC</time>
       </span>
       {state.stale ? <span className={styles.priceStale}>Estimate may be stale</span> : null}
     </span>

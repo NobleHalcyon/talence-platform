@@ -54,6 +54,7 @@ class Printing:
     oversized: bool
     variation: bool
     finishes: tuple[CardFinish, ...]
+    color_identity: tuple[str, ...]
     frame_effects: tuple[str, ...]
     border_color: str | None
     artist: str | None
@@ -110,6 +111,7 @@ class PriceObservation:
     amount: Decimal
     observed_at: str
     ingested_at: str
+    stale_after: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +135,32 @@ class NormalizedCatalog:
     legalities: tuple[Legality, ...]
     external_ids: tuple[ExternalIdentifier, ...]
     prices: tuple[PriceObservation, ...]
+
+    def record_counts(self) -> dict[str, int]:
+        return {
+            "cards_seen": self.cards_seen,
+            "sets": len(self.sets),
+            "oracle_cards": len(self.oracle_cards),
+            "printings": len(self.printings),
+            "faces": len(self.faces),
+            "legalities": len(self.legalities),
+            "external_ids": len(self.external_ids),
+            "prices": len(self.prices),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizedBatch:
+    """One bounded, internally deduplicated staging unit."""
+
+    cards_seen: int = 0
+    sets: tuple[CatalogSet, ...] = ()
+    oracle_cards: tuple[OracleCard, ...] = ()
+    printings: tuple[Printing, ...] = ()
+    faces: tuple[Face, ...] = ()
+    legalities: tuple[Legality, ...] = ()
+    external_ids: tuple[ExternalIdentifier, ...] = ()
+    prices: tuple[PriceObservation, ...] = ()
 
     def record_counts(self) -> dict[str, int]:
         return {

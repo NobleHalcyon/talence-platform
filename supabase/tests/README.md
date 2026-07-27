@@ -16,6 +16,15 @@ The Phase 1 suites cover hook admission, verified-email/metadata finalization,
 replay safety, trusted invitation transitions, inactive profiles, active
 defaults, final-owner constraints, and RLS with multiple users/workspaces. Tests
 must not require hosted credentials, production data, or live network access.
+The Phase 2 suites cover schema/grants, representative layouts and languages,
+dependency-aware replay, worker lease recovery, truncation guards, promotion
+rollback, bounded search/cursors/filters, freshness, admin queue shape, and
+catalog RLS/write denial. They also prove the in-flight catalog-sync kill switch,
+service-role-only queued no-op completion and replay, printing-level
+color-identity preservation for non-oracle objects, and a 50,000-printing
+generated search corpus. `240_phase_2_catalog_search_performance.test.sql`
+asserts an index-backed plan and a five-second bound against the actual catalog
+query function; fixture construction time is outside that measured bound.
 
 Naming convention:
 

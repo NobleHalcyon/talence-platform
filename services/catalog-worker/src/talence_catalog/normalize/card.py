@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-import unicodedata
 from collections.abc import Mapping
 from decimal import Decimal, InvalidOperation
 from typing import Any, Literal, cast
@@ -30,11 +28,9 @@ class NormalizationError(ValueError):
 
 
 def normalize_search_name(value: str) -> str:
-    casefolded = unicodedata.normalize("NFKD", value.casefold())
-    without_marks = "".join(
-        character for character in casefolded if not unicodedata.combining(character)
+    punctuation_insensitive = "".join(
+        character if character.isalnum() else " " for character in value.lower()
     )
-    punctuation_insensitive = re.sub(r"[^\w]+", " ", without_marks, flags=re.UNICODE)
     return " ".join(punctuation_insensitive.split())
 
 
@@ -43,6 +39,8 @@ def normalize_card(
     *,
     observed_at: str,
     ingested_at: str,
+    stale_after: str | None = None,
+    catalog_set: CatalogSet | None = None,
 ) -> NormalizedCard:
     printing_id = _uuid_text(raw.get("id"), "card.id")
     set_id = _uuid_text(raw.get("set_id"), "card.set_id")
@@ -56,19 +54,25 @@ def normalize_card(
     oversized = _boolean(raw, "oversized", default=False)
     layout = _optional_text(raw.get("layout"))
 
-    catalog_set = CatalogSet(
-        set_id=set_id,
-        code=_required_text(raw, "set").casefold(),
-        name=_required_text(raw, "set_name"),
-        set_type=_optional_text(raw.get("set_type")),
-        released_at=_optional_text(raw.get("released_at")),
-        parent_set_id=None,
-        card_count=None,
-        digital=digital,
-        foil_only=False,
-        nonfoil_only=False,
-        icon_svg_uri=None,
-    )
+    card_set_code = _required_text(raw, "set").casefold()
+    if catalog_set is None:
+        catalog_set = CatalogSet(
+            set_id=set_id,
+            code=card_set_code,
+            name=_required_text(raw, "set_name"),
+            set_type=_optional_text(raw.get("set_type")),
+            released_at=_optional_text(raw.get("released_at")),
+            parent_set_id=None,
+            card_count=None,
+            digital=digital,
+            foil_only=False,
+            nonfoil_only=False,
+            icon_svg_uri=None,
+        )
+    elif catalog_set.set_id != set_id or catalog_set.code.casefold() != card_set_code:
+        raise NormalizationError(
+            "Card set identity does not match authoritative Scryfall set metadata."
+        )
 
     oracle_card = (
         OracleCard(
@@ -107,6 +111,10 @@ def normalize_card(
         oversized=oversized,
         variation=_boolean(raw, "variation", default=False),
         finishes=finishes,
+        color_identity=_string_tuple(
+            raw.get("color_identity"),
+            "card.color_identity",
+        ),
         frame_effects=_string_tuple(raw.get("frame_effects"), "card.frame_effects"),
         border_color=_optional_text(raw.get("border_color")),
         artist=_optional_text(raw.get("artist")),
@@ -126,7 +134,13 @@ def normalize_card(
         faces=_normalize_faces(raw, printing_id),
         legalities=_normalize_legalities(raw, oracle_id),
         external_ids=_normalize_external_ids(raw, printing_id, set_id, oracle_id),
-        prices=_normalize_prices(raw, printing_id, observed_at, ingested_at),
+        prices=_normalize_prices(
+            raw,
+            printing_id,
+            observed_at,
+            ingested_at,
+            stale_after,
+        ),
     )
 
 
@@ -289,6 +303,7 @@ def _normalize_prices(
     printing_id: str,
     observed_at: str,
     ingested_at: str,
+    stale_after: str | None,
 ) -> tuple[PriceObservation, ...]:
     raw_prices = raw.get("prices", {})
     if not isinstance(raw_prices, Mapping):
@@ -319,6 +334,7 @@ def _normalize_prices(
                 amount=amount,
                 observed_at=observed_at,
                 ingested_at=ingested_at,
+                stale_after=stale_after,
             )
         )
     return tuple(observations)

@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from talence_catalog.normalize import NormalizationError, normalize_catalog_file
+from talence_catalog.normalize.card import normalize_search_name
 
 OBSERVED_AT = "2026-07-26T12:00:00Z"
 INGESTED_AT = "2026-07-26T12:05:00Z"
@@ -12,11 +13,14 @@ INGESTED_AT = "2026-07-26T12:05:00Z"
 
 def test_representative_fixture_normalizes_without_network(
     cards_fixture_path: Path,
+    sets_fixture_path: Path,
 ) -> None:
     catalog = normalize_catalog_file(
         cards_fixture_path,
         observed_at=OBSERVED_AT,
         ingested_at=INGESTED_AT,
+        sets_path=sets_fixture_path,
+        stale_after="2026-07-28T00:00:00Z",
     )
 
     assert catalog.record_counts() == {
@@ -29,6 +33,9 @@ def test_representative_fixture_normalizes_without_network(
         "external_ids": 14,
         "prices": 7,
     }
+    magic_2010 = next(catalog_set for catalog_set in catalog.sets if catalog_set.code == "m10")
+    assert magic_2010.card_count == 249
+    assert magic_2010.icon_svg_uri == "https://svgs.scryfall.io/sets/m10.svg"
 
     japanese = next(printing for printing in catalog.printings if printing.language == "ja")
     assert japanese.printed_name == "稲妻"
@@ -48,6 +55,7 @@ def test_representative_fixture_normalizes_without_network(
         if printing.printing_id == "78b13296-28d0-4186-b0d8-65a3db74651e"
     )
     assert token.oracle_card_id is None
+    assert token.color_identity == ("B", "R")
     assert token.default_browse is False
     assert all(price.printing_id != token.printing_id for price in catalog.prices)
 
@@ -58,10 +66,16 @@ def test_representative_fixture_normalizes_without_network(
     )
     assert foil_bolt.amount == Decimal("4.00")
     assert foil_bolt.observed_at == OBSERVED_AT
+    assert foil_bolt.stale_after == "2026-07-28T00:00:00Z"
+
+
+def test_search_normalization_matches_database_unicode_and_punctuation_rules() -> None:
+    assert normalize_search_name("Æther_Gust — Test!") == "æther gust test"
 
 
 def test_conflicting_oracle_identity_is_rejected(
     cards_fixture_path: Path,
+    sets_fixture_path: Path,
     tmp_path: Path,
 ) -> None:
     cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
@@ -74,6 +88,7 @@ def test_conflicting_oracle_identity_is_rejected(
             conflicting,
             observed_at=OBSERVED_AT,
             ingested_at=INGESTED_AT,
+            sets_path=sets_fixture_path,
         )
 
 

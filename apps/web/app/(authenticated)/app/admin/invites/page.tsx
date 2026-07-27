@@ -8,6 +8,7 @@ import {
   InlineAlert,
   Panel,
   StatusBadge,
+  Tabs,
   TextInput,
 } from "@talence/ui";
 
@@ -106,6 +107,14 @@ export default async function AdminInvitesPage({
       description="Issue, inspect, resend, and revoke private-beta admission through trusted server operations."
       constrained
     >
+      <Tabs
+        label="Administration"
+        items={[
+          { href: "/app/admin/invites", label: "Invitations", active: true },
+          { href: "/app/admin/catalog", label: "Catalog" },
+          { href: "/app/admin/operations", label: "Operations" },
+        ]}
+      />
       <div className={formStyles.status}>
         <AuthStatus status={query.status} requestId={query.request_id} />
       </div>

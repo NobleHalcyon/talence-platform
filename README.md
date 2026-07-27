@@ -117,7 +117,7 @@ npm run test:e2e
 
 `npm run ci` runs the local checks that do not require Docker or a browser
 download. GitHub Actions starts a clean local Supabase stack, checks generated
-database types, lints all Phase 1 schemas, and runs pgTAP.
+database types, lints all committed schemas, and runs pgTAP.
 
 ## Environment contract
 
@@ -131,8 +131,8 @@ Browser-exposed variables are limited to:
 - `NEXT_PUBLIC_APP_ORIGIN`
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
 
-The Supabase secret key, database URL, device credential pepper, and
-catalog-worker configuration are server/worker-only. They must never use a
+The Supabase secret key, direct worker database URL, device credential pepper,
+and catalog-worker configuration are server/worker-only. They must never use a
 `NEXT_PUBLIC_` prefix. The Turnstile secret is configured in Supabase Auth, not
 in the web application; only its site key is browser-visible.
 
@@ -166,11 +166,64 @@ server-readable email templates, production CAPTCHA, SMTP, Auth/WAF rate
 limits, exact redirect URLs, and environment values are documented in
 [`docs/operations/production-setup.md`](docs/operations/production-setup.md).
 
-## Catalog worker safety
+## Catalog and current pricing
+
+Phase 2 adds a system-written global catalog with normalized sets, oracle cards,
+printings, faces, legalities, external IDs, and finish-specific current price
+observations. Active admitted users can browse the active catalog; anonymous
+users and ordinary catalog writes are denied. Price and operational state are
+returned through bounded RPCs so provider and freshness stay attached.
+
+Authenticated routes include:
+
+- `/app/catalog` for URL-addressable search, filters, deterministic sort,
+  cursor pagination, English-by-default browsing, explicit `lang=all`
+  broadening, and table/grid views;
+- `/app/catalog/cards/[cardId]`, `/app/catalog/printings/[printingId]`, and
+  `/app/catalog/sets/[setCode]` for detail;
+- `/app/admin/catalog` for platform-admin status and queueing.
+
+Search stays in PostgreSQL full-text/trigram indexes. Images use direct provider
+URLs without application transformations or proxies. Missing price observations
+render `Price unavailable`; an explicit provider zero remains a valid
+observation. Representative-volume tests seed 50,000 printings and assert the
+full-text GIN plan, exact result, and bounded execution time.
+
+## Catalog worker safety and local commands
 
 Tests use committed fixtures and do not call Scryfall. Live catalog work runs
 only from the Python CLI or the disabled-by-default manual GitHub workflow.
 Bulk files, generated SQLite snapshots, and local credentials are ignored.
+
+From the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m talence_catalog validate
+.\.venv\Scripts\python.exe -m talence_catalog fixture-import --dry-run
+$env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+.\.venv\Scripts\python.exe -m talence_catalog fixture-import
+.\.venv\Scripts\python.exe -m talence_catalog status
+```
+
+Live mode additionally requires a real contact-bearing
+`TALENCE_CATALOG_USER_AGENT`. It selects exactly Scryfall `all_cards`, restricts
+bulk bytes to the official download host, streams through SHA/size guards,
+normalizes in bounded batches, and promotes only after database validation.
+Unchanged active sources are no-ops and failure preserves the previous active
+catalog.
+
+An unforced queued run may complete without downloading bulk bytes only after
+the database confirms its discovered provider/set identity still matches the
+active source; forced or changed work proceeds normally. Printing-level
+provider color identity is preserved even for non-oracle objects.
+
+The database `catalog_state.sync_enabled` switch governs import and queue
+functions. The server-only `FEATURE_CATALOG_SYNC_ENABLED` switch independently
+governs web queueing. Keep the web switch off until a protected worker can claim
+queued runs. Heartbeats and promotion recheck the database switch, so closing it
+in flight fails the run and preserves the active catalog. See
+[`services/catalog-worker/README.md`](services/catalog-worker/README.md) and the
+[`Phase 2 dev log`](docs/dev-logs/phase-2.md).
 
 ## Device boundary
 

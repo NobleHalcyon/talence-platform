@@ -199,7 +199,7 @@
     "type_line": "Token Creature — Goblin Shaman",
     "oracle_text": "Whenever this creature attacks, create a Treasure token.",
     "colors": ["R"],
-    "color_identity": ["R"],
+    "color_identity": ["B", "R"],
     "keywords": [],
     "legalities": {},
     "reserved": false,

@@ -1,0 +1,174 @@
+.countGrid,
+.operationGrid,
+.importSection {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.countGrid {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.countPanel {
+  display: grid;
+  gap: var(--tl-space-1);
+}
+
+.countPanel span {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+  text-transform: capitalize;
+}
+
+.countPanel strong {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-24);
+  font-variant-numeric: tabular-nums;
+}
+
+.sourcePanel,
+.queuePanel {
+  display: grid;
+  align-content: start;
+  gap: var(--tl-space-4);
+}
+
+.sourcePanel header,
+.queuePanel header,
+.importSection > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tl-space-2);
+}
+
+.sourcePanel h2,
+.queuePanel h2,
+.importSection h2,
+.sourcePanel p,
+.queuePanel p,
+.importSection p {
+  margin: 0;
+}
+
+.sourcePanel h2,
+.queuePanel h2,
+.importSection h2 {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+}
+
+.queuePanel p,
+.importSection p {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-14);
+}
+
+.sourcePanel dl {
+  display: grid;
+  gap: var(--tl-space-2);
+  margin: 0;
+}
+
+.sourcePanel dl div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.45fr) minmax(0, 1fr);
+  gap: var(--tl-space-3);
+  border-block-start: 1px solid var(--tl-color-border);
+  padding-block-start: var(--tl-space-2);
+}
+
+.sourcePanel dt {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.sourcePanel dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: var(--tl-font-size-14);
+}
+
+.queueForm {
+  display: grid;
+  justify-items: start;
+  gap: var(--tl-space-3);
+}
+
+.importSection > header {
+  display: grid;
+  justify-content: start;
+  gap: var(--tl-space-1);
+}
+
+.emptyImport {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-14);
+}
+
+.errorSummary {
+  display: block;
+  max-width: 24rem;
+  margin-block-start: var(--tl-space-1);
+  color: var(--tl-color-text-muted);
+  white-space: normal;
+}
+
+@media (min-width: 64rem) {
+  .operationGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 39.999rem) {
+  .importTable.importTable {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .importTable.importTable table,
+  .importTable.importTable tbody {
+    display: block;
+    min-width: 0;
+  }
+
+  .importTable.importTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .importTable.importTable tr {
+    display: grid;
+    gap: var(--tl-space-2);
+    margin-block-end: var(--tl-space-3);
+    border: 1px solid var(--tl-color-border);
+    border-radius: var(--tl-radius);
+    background: var(--tl-color-surface);
+    padding: var(--tl-space-3);
+  }
+
+  .importTable.importTable td {
+    display: grid;
+    grid-template-columns: minmax(5rem, 0.4fr) minmax(0, 1fr);
+    gap: var(--tl-space-2);
+    width: 100%;
+    height: auto;
+    border: 0;
+    padding: 0;
+    white-space: normal;
+  }
+
+  .importTable.importTable td::before {
+    content: attr(data-label);
+    color: var(--tl-color-text-muted);
+    font-size: var(--tl-font-size-12);
+    font-weight: var(--tl-font-weight-semibold);
+  }
+}
