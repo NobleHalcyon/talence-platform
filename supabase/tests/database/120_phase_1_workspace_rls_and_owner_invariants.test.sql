@@ -346,28 +346,18 @@ set
   archived_at = null
 where id = current_setting('test.workspace_a')::uuid;
 
-update public.collections
-set
-  status = 'archived',
-  archived_at = statement_timestamp()
-where workspace_id = current_setting('test.workspace_a')::uuid;
-
 select throws_ok(
   $$
-    update public.profiles
-    set default_collection_id = default_collection_id
-    where user_id = '40000000-0000-4000-8000-000000000001'
+    update public.collections
+    set
+      status = 'archived',
+      archived_at = statement_timestamp()
+    where workspace_id = current_setting('test.workspace_a')::uuid
   $$,
-  '23514',
-  'talence_default_collection_inaccessible',
-  'an archived collection cannot remain a selected default'
+  '55000',
+  'talence_collection_is_profile_default',
+  'Phase 3 prevents a selected default collection from being archived'
 );
-
-update public.collections
-set
-  status = 'active',
-  archived_at = null
-where workspace_id = current_setting('test.workspace_a')::uuid;
 
 create function pg_temp.try_ownerless_active_workspace()
 returns void

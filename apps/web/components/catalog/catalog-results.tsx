@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import Link from "next/link";
 
 import {
@@ -11,6 +13,7 @@ import {
 } from "@talence/ui";
 
 import { persistCatalogViewAction } from "@/features/catalog/actions";
+import { AddToCollection } from "@/components/collections/add-to-collection";
 import {
   ALL_CATALOG_LANGUAGES,
   catalogHref,
@@ -232,32 +235,44 @@ function FinishBadges({ item }: { item: CatalogSearchItem }) {
 function CatalogGrid({ items, from }: { items: CatalogSearchItem[]; from: string }) {
   return (
     <div className={styles.cardGrid} aria-label="Catalog results">
-      {items.map((item) => (
-        <article className={styles.catalogCard} key={item.printingId}>
-          <CardImage
-            className={styles.gridImage}
-            alt={`${item.name} card image`}
-            faces={faceImages(item)}
-          />
-          <div className={styles.catalogCardBody}>
-            <div>
-              <h2 className={styles.catalogCardTitle}>
-                <Link href={detailsHref(item, from)}>{item.name}</Link>
-              </h2>
-              {item.printedName && item.printedName !== item.name ? (
-                <p className={styles.printedName}>{item.printedName}</p>
-              ) : null}
-              <p className={styles.printingMeta}>
-                <Link href={`/app/catalog/sets/${item.set.code}`}>{item.set.code}</Link> ·{" "}
-                <Link href={printingHref(item, from)}>#{item.collectorNumber}</Link> ·{" "}
-                {item.language.toUpperCase()}
-              </p>
+      {items.map((item) => {
+        const addAttemptId = randomUUID();
+        const addOccurredAt = new Date().toISOString();
+        return (
+          <article className={styles.catalogCard} key={item.printingId}>
+            <CardImage
+              className={styles.gridImage}
+              alt={`${item.name} card image`}
+              faces={faceImages(item)}
+            />
+            <div className={styles.catalogCardBody}>
+              <div>
+                <h2 className={styles.catalogCardTitle}>
+                  <Link href={detailsHref(item, from)}>{item.name}</Link>
+                </h2>
+                {item.printedName && item.printedName !== item.name ? (
+                  <p className={styles.printedName}>{item.printedName}</p>
+                ) : null}
+                <p className={styles.printingMeta}>
+                  <Link href={`/app/catalog/sets/${item.set.code}`}>{item.set.code}</Link> ·{" "}
+                  <Link href={printingHref(item, from)}>#{item.collectorNumber}</Link> ·{" "}
+                  {item.language.toUpperCase()}
+                </p>
+              </div>
+              <FinishBadges item={item} />
+              <PriceDisplay observation={item.bestPrice} />
+              <AddToCollection
+                printingId={item.printingId}
+                name={item.name}
+                finishes={item.finishes}
+                attemptId={addAttemptId}
+                occurredAt={addOccurredAt}
+                compact
+              />
             </div>
-            <FinishBadges item={item} />
-            <PriceDisplay observation={item.bestPrice} />
-          </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -277,41 +292,53 @@ function CatalogTable({ items, from }: { items: CatalogSearchItem[]; from: strin
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.printingId}>
-              <td data-label="Card">
-                <div className={styles.tableIdentity}>
-                  <CardImage
-                    className={styles.tableImage}
-                    alt={`${item.name} card image`}
-                    faces={faceImages(item).slice(0, 1)}
-                  />
-                  <span>
-                    <Link className={styles.primaryLink} href={detailsHref(item, from)}>
-                      {item.name}
-                    </Link>
-                    <span className={styles.secondaryText}>
-                      {item.typeLine ?? "Type unavailable"}
+          {items.map((item) => {
+            const addAttemptId = randomUUID();
+            const addOccurredAt = new Date().toISOString();
+            return (
+              <tr key={item.printingId}>
+                <td data-label="Card">
+                  <div className={styles.tableIdentity}>
+                    <CardImage
+                      className={styles.tableImage}
+                      alt={`${item.name} card image`}
+                      faces={faceImages(item).slice(0, 1)}
+                    />
+                    <span>
+                      <Link className={styles.primaryLink} href={detailsHref(item, from)}>
+                        {item.name}
+                      </Link>
+                      <span className={styles.secondaryText}>
+                        {item.typeLine ?? "Type unavailable"}
+                      </span>
                     </span>
-                  </span>
-                </div>
-              </td>
-              <td data-label="Printing">
-                <Link className={styles.primaryLink} href={printingHref(item, from)}>
-                  {item.set.code} #{item.collectorNumber}
-                </Link>
-                <span className={styles.secondaryText}>{item.set.name}</span>
-              </td>
-              <td data-label="Language">{item.language.toUpperCase()}</td>
-              <td data-label="Rarity">{item.rarity ?? "Unavailable"}</td>
-              <td data-label="Finishes">
-                <FinishBadges item={item} />
-              </td>
-              <td data-label="Estimate">
-                <PriceDisplay observation={item.bestPrice} />
-              </td>
-            </tr>
-          ))}
+                  </div>
+                </td>
+                <td data-label="Printing">
+                  <Link className={styles.primaryLink} href={printingHref(item, from)}>
+                    {item.set.code} #{item.collectorNumber}
+                  </Link>
+                  <span className={styles.secondaryText}>{item.set.name}</span>
+                </td>
+                <td data-label="Language">{item.language.toUpperCase()}</td>
+                <td data-label="Rarity">{item.rarity ?? "Unavailable"}</td>
+                <td data-label="Finishes">
+                  <FinishBadges item={item} />
+                </td>
+                <td data-label="Estimate">
+                  <PriceDisplay observation={item.bestPrice} />
+                  <AddToCollection
+                    printingId={item.printingId}
+                    name={item.name}
+                    finishes={item.finishes}
+                    attemptId={addAttemptId}
+                    occurredAt={addOccurredAt}
+                    compact
+                  />
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </DataTable>

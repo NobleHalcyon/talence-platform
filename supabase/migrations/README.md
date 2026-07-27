@@ -19,6 +19,21 @@ Phase 2 continues it:
 - `20260726023000_*` applies catalog least-privilege grants and default-deny
   RLS.
 
+Phase 3 adds collection and inventory state:
+
+- `20260726030000_*` creates collection lifecycle, immutable ledger, exact
+  balance, import staging, idempotency-request, and supporting enum/index
+  structures;
+- `20260726031000_*` creates atomic apply, transfer, and compensating-reversal
+  functions with exact replay and conflict handling;
+- `20260726032000_*` creates bounded collection, inventory, valuation,
+  analytics, history, line-detail, and export reads;
+- `20260726033000_*` creates resumable CSV staging, deterministic resolution,
+  atomic import commit/cancel, stale-job expiry, and retention coordination;
+- `20260726034000_*` applies least-privilege grants, default-deny RLS, immutable
+  ledger guards, deferred pair/reversal invariants, and exact private Storage
+  policies.
+
 Create later immutable, ordered files with:
 
 ```powershell
@@ -36,7 +51,8 @@ Every migration must:
 Validate the full sequence locally with:
 
 ```powershell
-npx supabase db reset
-npx supabase db lint --local --level warning
-npx supabase test db
+npx supabase db reset --local --no-seed
+npm run db:lint
+npm run test:supabase
+npm run test:supabase:phase3-integration
 ```

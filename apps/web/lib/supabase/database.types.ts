@@ -608,6 +608,7 @@ export type Database = {
       collections: {
         Row: {
           archived_at: string | null;
+          cover_printing_id: string | null;
           created_at: string;
           created_by_user_id: string;
           deleted_at: string | null;
@@ -623,6 +624,7 @@ export type Database = {
         };
         Insert: {
           archived_at?: string | null;
+          cover_printing_id?: string | null;
           created_at?: string;
           created_by_user_id: string;
           deleted_at?: string | null;
@@ -638,6 +640,7 @@ export type Database = {
         };
         Update: {
           archived_at?: string | null;
+          cover_printing_id?: string | null;
           created_at?: string;
           created_by_user_id?: string;
           deleted_at?: string | null;
@@ -652,6 +655,13 @@ export type Database = {
           workspace_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "collections_cover_printing_id_fkey";
+            columns: ["cover_printing_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_printings";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "collections_game_id_fkey";
             columns: ["game_id"];
@@ -751,6 +761,410 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      inventory_balances: {
+        Row: {
+          collection_id: string;
+          condition: Database["public"]["Enums"]["card_condition"];
+          created_at: string;
+          finish: Database["public"]["Enums"]["card_finish"];
+          last_transaction_id: string;
+          printing_id: string;
+          quantity: number;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          collection_id: string;
+          condition: Database["public"]["Enums"]["card_condition"];
+          created_at?: string;
+          finish: Database["public"]["Enums"]["card_finish"];
+          last_transaction_id: string;
+          printing_id: string;
+          quantity: number;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          collection_id?: string;
+          condition?: Database["public"]["Enums"]["card_condition"];
+          created_at?: string;
+          finish?: Database["public"]["Enums"]["card_finish"];
+          last_transaction_id?: string;
+          printing_id?: string;
+          quantity?: number;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_balances_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "inventory_balances_last_transaction_fk";
+            columns: ["last_transaction_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_transactions";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+          {
+            foreignKeyName: "inventory_balances_printing_id_fkey";
+            columns: ["printing_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_printings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      inventory_import_jobs: {
+        Row: {
+          ambiguous_rows: number;
+          cancelled_at: string | null;
+          collection_id: string;
+          committed_transaction_id: string | null;
+          completed_at: string | null;
+          created_at: string;
+          created_by_user_id: string;
+          excluded_rows: number;
+          failure_code: string | null;
+          failure_detail: Json;
+          file_sha256: string;
+          file_size: number;
+          id: string;
+          matched_rows: number;
+          original_filename: string;
+          parser_version: string;
+          purge_after: string;
+          purged_at: string | null;
+          rejected_rows: number;
+          staging_completed_at: string | null;
+          status: Database["public"]["Enums"]["job_status"];
+          storage_bucket: string;
+          storage_path: string;
+          total_rows: number;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          ambiguous_rows?: number;
+          cancelled_at?: string | null;
+          collection_id: string;
+          committed_transaction_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by_user_id: string;
+          excluded_rows?: number;
+          failure_code?: string | null;
+          failure_detail?: Json;
+          file_sha256: string;
+          file_size: number;
+          id?: string;
+          matched_rows?: number;
+          original_filename: string;
+          parser_version: string;
+          purge_after?: string;
+          purged_at?: string | null;
+          rejected_rows?: number;
+          staging_completed_at?: string | null;
+          status?: Database["public"]["Enums"]["job_status"];
+          storage_bucket?: string;
+          storage_path: string;
+          total_rows?: number;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          ambiguous_rows?: number;
+          cancelled_at?: string | null;
+          collection_id?: string;
+          committed_transaction_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by_user_id?: string;
+          excluded_rows?: number;
+          failure_code?: string | null;
+          failure_detail?: Json;
+          file_sha256?: string;
+          file_size?: number;
+          id?: string;
+          matched_rows?: number;
+          original_filename?: string;
+          parser_version?: string;
+          purge_after?: string;
+          purged_at?: string | null;
+          rejected_rows?: number;
+          staging_completed_at?: string | null;
+          status?: Database["public"]["Enums"]["job_status"];
+          storage_bucket?: string;
+          storage_path?: string;
+          total_rows?: number;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_import_jobs_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "inventory_import_jobs_committed_transaction_fk";
+            columns: ["committed_transaction_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_transactions";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+        ];
+      };
+      inventory_import_rows: {
+        Row: {
+          collection_id: string;
+          condition: Database["public"]["Enums"]["card_condition"] | null;
+          created_at: string;
+          error_code: string | null;
+          error_detail: Json;
+          finish: Database["public"]["Enums"]["card_finish"] | null;
+          id: string;
+          import_job_id: string;
+          quantity: number | null;
+          raw_collector_number: string | null;
+          raw_condition: string | null;
+          raw_data: Json;
+          raw_finish: string | null;
+          raw_language: string | null;
+          raw_name: string | null;
+          raw_quantity: string | null;
+          raw_scryfall_id: string | null;
+          raw_set_code: string | null;
+          resolution_source: string | null;
+          resolved_printing_id: string | null;
+          row_hash: string;
+          row_number: number;
+          status: Database["public"]["Enums"]["inventory_import_row_status"];
+          suggested_printing_ids: string[];
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          collection_id: string;
+          condition?: Database["public"]["Enums"]["card_condition"] | null;
+          created_at?: string;
+          error_code?: string | null;
+          error_detail?: Json;
+          finish?: Database["public"]["Enums"]["card_finish"] | null;
+          id?: string;
+          import_job_id: string;
+          quantity?: number | null;
+          raw_collector_number?: string | null;
+          raw_condition?: string | null;
+          raw_data: Json;
+          raw_finish?: string | null;
+          raw_language?: string | null;
+          raw_name?: string | null;
+          raw_quantity?: string | null;
+          raw_scryfall_id?: string | null;
+          raw_set_code?: string | null;
+          resolution_source?: string | null;
+          resolved_printing_id?: string | null;
+          row_hash: string;
+          row_number: number;
+          status: Database["public"]["Enums"]["inventory_import_row_status"];
+          suggested_printing_ids?: string[];
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          collection_id?: string;
+          condition?: Database["public"]["Enums"]["card_condition"] | null;
+          created_at?: string;
+          error_code?: string | null;
+          error_detail?: Json;
+          finish?: Database["public"]["Enums"]["card_finish"] | null;
+          id?: string;
+          import_job_id?: string;
+          quantity?: number | null;
+          raw_collector_number?: string | null;
+          raw_condition?: string | null;
+          raw_data?: Json;
+          raw_finish?: string | null;
+          raw_language?: string | null;
+          raw_name?: string | null;
+          raw_quantity?: string | null;
+          raw_scryfall_id?: string | null;
+          raw_set_code?: string | null;
+          resolution_source?: string | null;
+          resolved_printing_id?: string | null;
+          row_hash?: string;
+          row_number?: number;
+          status?: Database["public"]["Enums"]["inventory_import_row_status"];
+          suggested_printing_ids?: string[];
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_import_rows_job_fk";
+            columns: ["import_job_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_import_jobs";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+          {
+            foreignKeyName: "inventory_import_rows_resolved_printing_id_fkey";
+            columns: ["resolved_printing_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_printings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      inventory_transaction_lines: {
+        Row: {
+          client_line_ids: string[];
+          collection_id: string;
+          condition: Database["public"]["Enums"]["card_condition"];
+          created_at: string;
+          finish: Database["public"]["Enums"]["card_finish"];
+          id: string;
+          line_number: number;
+          printing_id: string;
+          quantity_after: number;
+          quantity_before: number;
+          quantity_delta: number;
+          transaction_id: string;
+          workspace_id: string;
+        };
+        Insert: {
+          client_line_ids: string[];
+          collection_id: string;
+          condition: Database["public"]["Enums"]["card_condition"];
+          created_at?: string;
+          finish: Database["public"]["Enums"]["card_finish"];
+          id?: string;
+          line_number: number;
+          printing_id: string;
+          quantity_after: number;
+          quantity_before: number;
+          quantity_delta: number;
+          transaction_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          client_line_ids?: string[];
+          collection_id?: string;
+          condition?: Database["public"]["Enums"]["card_condition"];
+          created_at?: string;
+          finish?: Database["public"]["Enums"]["card_finish"];
+          id?: string;
+          line_number?: number;
+          printing_id?: string;
+          quantity_after?: number;
+          quantity_before?: number;
+          quantity_delta?: number;
+          transaction_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transaction_lines_printing_id_fkey";
+            columns: ["printing_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_printings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inventory_transaction_lines_transaction_fk";
+            columns: ["transaction_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_transactions";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+        ];
+      };
+      inventory_transactions: {
+        Row: {
+          actor_user_id: string | null;
+          collection_id: string;
+          committed_at: string;
+          device_id: string | null;
+          external_reference: string | null;
+          id: string;
+          idempotency_key: string;
+          import_job_id: string | null;
+          metadata: Json;
+          note: string | null;
+          occurred_at: string;
+          reverses_transaction_id: string | null;
+          source: Database["public"]["Enums"]["inventory_source"];
+          transfer_direction: Database["public"]["Enums"]["inventory_transfer_direction"] | null;
+          transfer_group_id: string | null;
+          workspace_id: string;
+        };
+        Insert: {
+          actor_user_id?: string | null;
+          collection_id: string;
+          committed_at?: string;
+          device_id?: string | null;
+          external_reference?: string | null;
+          id?: string;
+          idempotency_key: string;
+          import_job_id?: string | null;
+          metadata?: Json;
+          note?: string | null;
+          occurred_at: string;
+          reverses_transaction_id?: string | null;
+          source: Database["public"]["Enums"]["inventory_source"];
+          transfer_direction?: Database["public"]["Enums"]["inventory_transfer_direction"] | null;
+          transfer_group_id?: string | null;
+          workspace_id: string;
+        };
+        Update: {
+          actor_user_id?: string | null;
+          collection_id?: string;
+          committed_at?: string;
+          device_id?: string | null;
+          external_reference?: string | null;
+          id?: string;
+          idempotency_key?: string;
+          import_job_id?: string | null;
+          metadata?: Json;
+          note?: string | null;
+          occurred_at?: string;
+          reverses_transaction_id?: string | null;
+          source?: Database["public"]["Enums"]["inventory_source"];
+          transfer_direction?: Database["public"]["Enums"]["inventory_transfer_direction"] | null;
+          transfer_group_id?: string | null;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_collection_fk";
+            columns: ["workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["workspace_id", "id"];
+          },
+          {
+            foreignKeyName: "inventory_transactions_import_job_fk";
+            columns: ["import_job_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_import_jobs";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+          {
+            foreignKeyName: "inventory_transactions_reverses_fk";
+            columns: ["reverses_transaction_id", "workspace_id", "collection_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_transactions";
+            referencedColumns: ["id", "workspace_id", "collection_id"];
+          },
+        ];
       };
       platform_user_roles: {
         Row: {
@@ -1076,6 +1490,22 @@ export type Database = {
         Args: { p_actor_user_id: string; p_invited_user_id: string };
         Returns: Json;
       };
+      apply_inventory_transaction: {
+        Args: {
+          p_collection_id: string;
+          p_external_reference?: string;
+          p_idempotency_key: string;
+          p_lines: Json;
+          p_metadata?: Json;
+          p_note?: string;
+          p_occurred_at: string;
+        };
+        Returns: Json;
+      };
+      calculate_collection_summary: {
+        Args: { p_collection_id: string; p_currency?: string };
+        Returns: Json;
+      };
       catalog_card_detail: { Args: { p_card_id: string }; Returns: Json };
       catalog_printing_detail: {
         Args: { p_printing_id: string };
@@ -1108,11 +1538,194 @@ export type Database = {
       };
       catalog_set_detail: { Args: { p_set_code: string }; Returns: Json };
       catalog_status: { Args: never; Returns: Json };
+      collection_analytics: {
+        Args: {
+          p_collection_id: string;
+          p_condition?: Database["public"]["Enums"]["card_condition"];
+          p_currency?: string;
+          p_finish?: Database["public"]["Enums"]["card_finish"];
+          p_query?: string;
+          p_set_code?: string;
+        };
+        Returns: Json;
+      };
+      collection_archive: {
+        Args: { p_collection_id: string; p_expected_updated_at: string };
+        Returns: Json;
+      };
+      collection_create: {
+        Args: {
+          p_cover_printing_id?: string;
+          p_description?: string;
+          p_name: string;
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      collection_delete: {
+        Args: { p_collection_id: string; p_expected_updated_at: string };
+        Returns: Json;
+      };
+      collection_detail: {
+        Args: { p_collection_id: string; p_currency?: string };
+        Returns: Json;
+      };
+      collection_inventory_export: {
+        Args: { p_after?: string; p_collection_id: string; p_limit?: number };
+        Returns: Json;
+      };
+      collection_inventory_page: {
+        Args: {
+          p_after?: string;
+          p_collection_id: string;
+          p_condition?: Database["public"]["Enums"]["card_condition"];
+          p_currency?: string;
+          p_finish?: Database["public"]["Enums"]["card_finish"];
+          p_limit?: number;
+          p_query?: string;
+          p_set_code?: string;
+          p_sort?: string;
+        };
+        Returns: Json;
+      };
+      collection_list: {
+        Args: {
+          p_after?: string;
+          p_include_archived?: boolean;
+          p_limit?: number;
+          p_status?: Database["public"]["Enums"]["resource_status"];
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      collection_restore: {
+        Args: { p_collection_id: string; p_expected_updated_at: string };
+        Returns: Json;
+      };
+      collection_transaction_history: {
+        Args: { p_after?: string; p_collection_id: string; p_limit?: number };
+        Returns: Json;
+      };
+      collection_transaction_lines: {
+        Args: {
+          p_after_line_number?: number;
+          p_limit?: number;
+          p_transaction_id: string;
+        };
+        Returns: Json;
+      };
+      collection_update: {
+        Args: {
+          p_collection_id: string;
+          p_cover_printing_id: string;
+          p_description: string;
+          p_expected_updated_at: string;
+          p_name: string;
+        };
+        Returns: Json;
+      };
       current_user_context: { Args: never; Returns: Json };
       finalize_admitted_user: { Args: never; Returns: Json };
+      inventory_import_cancel: {
+        Args: { p_import_job_id: string };
+        Returns: Json;
+      };
+      inventory_import_commit: {
+        Args: {
+          p_idempotency_key: string;
+          p_import_job_id: string;
+          p_note?: string;
+          p_occurred_at: string;
+        };
+        Returns: Json;
+      };
+      inventory_import_create: {
+        Args: {
+          p_collection_id: string;
+          p_file_sha256: string;
+          p_file_size: number;
+          p_idempotency_key: string;
+          p_original_filename: string;
+          p_parser_version: string;
+        };
+        Returns: Json;
+      };
+      inventory_import_error_report: {
+        Args: {
+          p_after_row_number?: number;
+          p_import_job_id: string;
+          p_limit?: number;
+        };
+        Returns: Json;
+      };
+      inventory_import_expire_stale: {
+        Args: { p_before?: string; p_limit?: number };
+        Returns: Json;
+      };
+      inventory_import_mark_purged: {
+        Args: { p_import_job_id: string; p_purged_at?: string };
+        Returns: Json;
+      };
+      inventory_import_preview: {
+        Args: {
+          p_after_row_number?: number;
+          p_import_job_id: string;
+          p_limit?: number;
+        };
+        Returns: Json;
+      };
+      inventory_import_resolve_row: {
+        Args: {
+          p_import_job_id: string;
+          p_printing_id?: string;
+          p_resolution: string;
+          p_row_number: number;
+        };
+        Returns: Json;
+      };
+      inventory_import_retention_candidates: {
+        Args: { p_before?: string; p_limit?: number };
+        Returns: Json;
+      };
+      inventory_import_stage_rows: {
+        Args: { p_complete?: boolean; p_import_job_id: string; p_rows: Json };
+        Returns: Json;
+      };
+      reverse_inventory_transaction: {
+        Args: {
+          p_idempotency_key: string;
+          p_note?: string;
+          p_occurred_at: string;
+          p_transaction_id: string;
+        };
+        Returns: Json;
+      };
+      transfer_inventory: {
+        Args: {
+          p_destination_collection_id: string;
+          p_idempotency_key: string;
+          p_lines: Json;
+          p_metadata?: Json;
+          p_note?: string;
+          p_occurred_at: string;
+          p_source_collection_id: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
+      card_condition:
+        | "unknown"
+        | "near_mint"
+        | "lightly_played"
+        | "moderately_played"
+        | "heavily_played"
+        | "damaged";
       card_finish: "unknown" | "nonfoil" | "foil" | "etched";
+      inventory_import_row_status: "matched" | "ambiguous" | "rejected" | "excluded";
+      inventory_source:
+        "manual" | "csv_import" | "device" | "transfer" | "reversal" | "admin_correction";
+      inventory_transfer_direction: "out" | "in";
       invite_status: "draft" | "sent" | "accepted" | "revoked" | "expired" | "failed";
       job_status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
       membership_role: "owner" | "admin" | "editor" | "viewer";
@@ -1242,7 +1855,25 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      card_condition: [
+        "unknown",
+        "near_mint",
+        "lightly_played",
+        "moderately_played",
+        "heavily_played",
+        "damaged",
+      ],
       card_finish: ["unknown", "nonfoil", "foil", "etched"],
+      inventory_import_row_status: ["matched", "ambiguous", "rejected", "excluded"],
+      inventory_source: [
+        "manual",
+        "csv_import",
+        "device",
+        "transfer",
+        "reversal",
+        "admin_correction",
+      ],
+      inventory_transfer_direction: ["out", "in"],
       invite_status: ["draft", "sent", "accepted", "revoked", "expired", "failed"],
       job_status: ["queued", "running", "succeeded", "failed", "cancelled"],
       membership_role: ["owner", "admin", "editor", "viewer"],

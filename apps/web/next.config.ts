@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
     // Canon requires direct provider-CDN delivery without paid image proxying.
     unoptimized: true,
   },
+  experimental: {
+    serverActions: {
+      // Multipart overhead needs a small margin above the independently
+      // enforced 2 MiB inventory CSV file ceiling.
+      bodySizeLimit: "3mb",
+    },
+  },
 };
 
 export default nextConfig;

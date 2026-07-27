@@ -4,8 +4,10 @@ This directory is the version-controlled local Supabase project for Talence.
 Phase 1 contains the invite-only admission, profile, workspace, membership,
 preference, game, and default-collection foundation. Phase 2 adds the global
 catalog/current-price schema, private import lifecycle, bounded browse/admin
-RPCs, and read-only admitted-user RLS. Inventory-ledger, deck, and device
-objects arrive through ordered migrations in later phases.
+RPCs, and read-only admitted-user RLS. Phase 3 adds collections, the immutable
+inventory ledger, balances, valuation, history, private CSV staging, and
+least-privilege Storage policies. Deck and device objects arrive through
+ordered migrations in later phases.
 
 The local stack is development-only. It uses local credentials and captures
 email in the local SMTP viewer; do not expose it to a network or treat its settings as
@@ -25,6 +27,16 @@ npx supabase start
 npx supabase db reset
 npm run db:lint
 npm run db:types:check
+npm run test:supabase
+```
+
+For a per-user Docker Desktop installation, a newly restarted VS Code process
+may not inherit the Docker CLI directory. If `supabase test db` reports that it
+cannot run Docker, prepend the local install for that PowerShell process:
+
+```powershell
+$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"
+$env:PATH = "$talenceDockerBin;$env:PATH"
 npm run test:supabase
 ```
 
@@ -138,3 +150,55 @@ actual catalog query function to finish within five seconds.
 Production gate ordering, the first manual live import, queue claiming, and the
 disabled workflow/schedule are documented in
 `docs/operations/production-setup.md`.
+
+## Phase 3 collection and inventory database
+
+The Phase 3 migrations add:
+
+- exact balances keyed by collection, printing, finish, and condition;
+- immutable transaction headers and lines plus private canonical request
+  hashes;
+- atomic human mutations, paired transfers, and compensating reversals;
+- collection list/detail/inventory/summary/analytics/history/export RPCs;
+- bounded import jobs and staged rows with explicit
+  matched/ambiguous/rejected/excluded state;
+- atomic import commit/cancel, stale-job expiration, and service-coordinated
+  retention;
+- default-deny inventory RLS and exact private `inventory-imports` Storage
+  policies.
+
+Ordinary authenticated sessions receive bounded function access but no direct
+write privilege on balances or committed history. The trusted transaction
+functions lock exact balance keys, enforce expected prior quantities, reject a
+negative result, and store one result for each normalized idempotency request.
+Existing inventory can still be reduced, moved, or compensated after a catalog
+identity becomes inactive, while arbitrary positive additions to inactive
+identity remain denied.
+
+Structured, gallery, and analytical collection views share the same positive
+balance relation and normalized query, set, finish, and condition filters.
+Analytical totals and every grouping are computed only from that filtered
+relation.
+
+The import bucket is private. An admitted editor may insert the exact
+workspace/job `source.csv` object once and read that authorized object. Ordinary
+update/upsert/delete is denied. Before staging completion and commit, database
+functions recheck object owner, byte count, MIME type, SHA-256, job identity,
+and parser version. A service process first expires abandoned jobs, later
+deletes eligible Storage objects, and only then marks their database staging
+purged.
+
+Run the complete database, Storage, and two-session concurrency validation from
+the repository root:
+
+```powershell
+npx supabase db reset --local --no-seed
+npm run db:lint
+npm run test:supabase
+npm run test:supabase:phase3-integration
+```
+
+The integration harness proves exact editor-only object access, denied
+overwrite/upsert/delete paths, service cleanup after cancellation, same-key
+replay/conflict races, and distinct-key updates against the same previously
+absent balance without a lost update.

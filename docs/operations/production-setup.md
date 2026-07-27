@@ -364,12 +364,88 @@ import, production acceptance, alerting, and cost controls:
 
 Do not enable web queueing while no dispatcher/operator will claim rows.
 
+## Phase 3 collection inventory and import checklist
+
+Complete this rehearsal in hosted development before accepting private-beta
+inventory. Do not use production collections for the first import, transfer,
+reversal, or retention run.
+
+### 1. Apply schema and verify the authorization surface
+
+Apply the ordered Phase 3 migrations, regenerate database types, and run the
+complete local database/Storage/concurrency validation documented in
+`docs/dev-logs/phase-3.md`.
+
+In hosted development, verify:
+
+- anonymous, inactive, and suspended users cannot read collection data;
+- a viewer can read an authorized active collection but cannot mutate it or
+  inspect private import staging;
+- an editor can create inventory transactions and imports but cannot soft-delete
+  a collection;
+- an owner can manage collection lifecycle, subject to default, positive
+  inventory, and nonterminal-import guards;
+- direct authenticated insert/update/delete on balances and committed history
+  fails;
+- retention/expiry RPCs are service-role-only;
+- `app_private` and `app_api` remain absent from the Data API schema list.
+
+### 2. Verify private import Storage
+
+Confirm the `inventory-imports` bucket is private with a 2 MiB object limit.
+Use an admitted editor and an actual hosted Auth session to prove:
+
+- only the exact `<workspace-id>/<import-job-id>/source.csv` path is accepted;
+- owner, MIME type, byte count, SHA-256, job ID, and parser-version metadata
+  match the database job;
+- the editor can read the exact authorized source object;
+- another workspace and a viewer cannot read it;
+- update, upsert, arbitrary-path insert, and delete fail.
+
+Never grant ordinary users object deletion to simplify cleanup. The source
+object is evidence for the staged import and remains insert-once.
+
+### 3. Rehearse inventory and CSV behavior
+
+With representative single-face, multi-face, foreign-language, foil, etched,
+zero-price, and missing-price printings:
+
+- add, reduce, remove, and transfer exact physical variants;
+- replay an identical idempotency key and then prove a changed body conflicts;
+- submit concurrent changes and verify neither quantity nor history is lost;
+- provoke an expected-quantity conflict and confirm the UI shows the current
+  state;
+- reverse a normal change and a paired transfer without editing prior history;
+- deactivate a referenced catalog identity in non-production and verify owned
+  copies remain reducible/transferable/reversible while new arbitrary additions
+  stay denied;
+- upload matched, ambiguous, rejected, and name-only suggestion rows;
+- confirm ambiguity cannot commit until explicitly resolved or excluded;
+- download the safe error report and a formula-cell-resistant inventory export;
+- confirm value, unpriced quantity, provider, finish, currency, observed time,
+  ingestion time, and stale state.
+
+### 4. Operate import expiry and retention
+
+Run a protected service process on a reviewed schedule:
+
+1. call `inventory_import_expire_stale(...)` to move abandoned queued/running
+   jobs into terminal cancellation;
+2. page `inventory_import_retention_candidates(...)`;
+3. delete each exact private Storage object with the service role;
+4. call `inventory_import_mark_purged(...)` only after object deletion.
+
+Keep the default raw/staging retention at 30 days unless a shorter reviewed
+policy is adopted. Monitor expired, failed, cancelled, committed, and purged
+counts plus retained bytes. Rehearse interruption between object deletion and
+the idempotent database mark so the next run recovers safely.
+
 ## Later-phase production work
 
 The following remain intentionally pending until their implementation phases:
 
-1. Create private import and immutable catalog-artifact/snapshot Storage buckets with
-   MIME, size, retention, and signed-URL policies.
+1. Create the immutable catalog-artifact/snapshot Storage bucket with MIME,
+   size, retention, and signed-URL policies.
 2. Configure device API quotas, credential pepper, and snapshot controls.
 3. Enable Vercel Spend Management and Supabase cost controls.
 4. Complete backup/restore and incident-response rehearsals.

@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import Link from "next/link";
 
 import {
@@ -18,6 +20,7 @@ import type {
   CatalogSearchItem,
   CatalogSetDetail,
 } from "@/features/catalog/types";
+import { AddToCollection } from "@/components/collections/add-to-collection";
 
 import { CatalogFreshnessSummary } from "./catalog-results";
 import styles from "./catalog.module.css";
@@ -315,6 +318,8 @@ export function CatalogPrintingDetailView({
 }) {
   const item = detail.printing;
   const providerHref = safeExternalHref(item.providerUri);
+  const addAttemptId = randomUUID();
+  const addOccurredAt = new Date().toISOString();
 
   return (
     <div className={styles.detailStack}>
@@ -349,6 +354,13 @@ export function CatalogPrintingDetailView({
               Open provider record
             </ButtonLink>
           ) : null}
+          <AddToCollection
+            printingId={item.printingId}
+            name={item.name}
+            finishes={item.finishes}
+            attemptId={addAttemptId}
+            occurredAt={addOccurredAt}
+          />
         </Panel>
       </div>
 

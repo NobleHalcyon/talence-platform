@@ -189,6 +189,43 @@ render `Price unavailable`; an explicit provider zero remains a valid
 observation. Representative-volume tests seed 50,000 printings and assert the
 full-text GIN plan, exact result, and bounded execution time.
 
+## Collections and auditable inventory
+
+Phase 3 adds private workspace collections, exact physical balances, immutable
+inventory transactions and lines, paired transfers, compensating reversals,
+finish-specific valuation, analytical groupings, bounded CSV import, and safe
+CSV export.
+
+Authenticated routes include:
+
+- `/app/collections` for collection creation, active/archived management, and
+  constrained owner-only soft deletion;
+- `/app/collections/[collectionId]` for structured, gallery, and analytical
+  inventory views plus exact quantity editing and transfers;
+- `/app/collections/[collectionId]/history` and
+  `/app/collections/[collectionId]/history/[transactionId]` for immutable
+  headers and complete paged lines;
+- `/app/collections/[collectionId]/import` for private
+  upload/stage/review/resolve/commit;
+- private error-report and canonical export download routes.
+
+Every quantity change crosses a PostgreSQL transaction function. Identical
+idempotent replays return the committed result, conflicting replays fail, stale
+client quantities are explicit conflicts, and no balance can become negative.
+Ordinary sessions have no direct balance or committed-history write grant.
+
+Imports are limited to UTF-8 CSV files no larger than 2 MiB and 5,000 data
+rows. The web stages no more than 500 rows or 512 KiB of serialized UTF-8 JSON
+per call. Provider printing identity or exact set/collector/language may match
+automatically; name-only candidates always require review. The private source
+object is insert-once/read-only to the admitted editor and is purged later by a
+service-coordinated retention process.
+
+Valuation uses only the exact finish observation and always carries provider,
+currency, observation/ingestion times, and stale state. Missing observations
+remain explicitly unpriced. See the
+[`Phase 3 dev log`](docs/dev-logs/phase-3.md).
+
 ## Catalog worker safety and local commands
 
 Tests use committed fixtures and do not call Scryfall. Live catalog work runs

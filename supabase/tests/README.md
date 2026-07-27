@@ -26,6 +26,39 @@ generated search corpus. `240_phase_2_catalog_search_performance.test.sql`
 asserts an index-backed plan and a five-second bound against the actual catalog
 query function; fixture construction time is outside that measured bound.
 
+The Phase 3 suites contain 163 pgTAP assertions: 32 for schema/API surface, 25
+for ledger/idempotency invariants, 5 for maximum-import performance, 25 for
+transfer/reversal/lifecycle invariants, 50 for import/read/export/retention
+behavior, and 26 for two-workspace RLS. The performance suite constructs 5,000
+distinct matched import rows outside the timed section, commits through
+`inventory_import_commit`, forces deferred invariants, verifies all lines and
+balances, and enforces a generous five-second local ceiling.
+
+Storage authorization and true multi-session races require the local API and
+are covered separately:
+
+```powershell
+npm run test:supabase:phase3-integration
+```
+
+That harness verifies exact private object access and cleanup ordering, plus
+identical/conflicting idempotency races and distinct-key updates to the same
+previously absent balance. It refuses non-loopback database/API targets by
+default. A deliberate hosted test run requires the explicit
+`TALENCE_ALLOW_HOSTED_PHASE3_INTEGRATION=1` opt-in in addition to the complete
+credential set. If the Supabase CLI cannot discover Docker from the current VS
+Code process after a per-user Docker Desktop install, prepend its CLI
+directory for the current PowerShell process:
+
+```powershell
+$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"
+$env:PATH = "$talenceDockerBin;$env:PATH"
+npm run test:supabase
+```
+
+`run-pgtap.mjs` remains a diagnostic direct-PostgreSQL runner; the canonical
+validation is the Supabase CLI command above.
+
 Naming convention:
 
 - `000_*` — local-stack/test harness checks;

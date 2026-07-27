@@ -28,3 +28,7 @@ export function useWorkspaceContext(): BrowserWorkspaceContext {
   }
   return context;
 }
+
+export function useOptionalWorkspaceContext(): BrowserWorkspaceContext | null {
+  return useContext(WorkspaceContext);
+}
