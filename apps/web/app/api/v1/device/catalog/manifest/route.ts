@@ -15,6 +15,7 @@ import {
   snapshotDownloadsEnabled,
 } from "@/features/devices/config";
 import { DATABASE_FUNCTIONS } from "@/lib/database/contracts";
+import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -67,7 +68,15 @@ export async function GET(request: Request): Promise<Response> {
           "The catalog snapshot download could not be signed. Retry later.",
         );
       }
-      if (!isSafeSnapshotSignedUrl(signedUrl)) {
+      const supabase = getPublicSupabaseConfig();
+      if (
+        !supabase ||
+        !isSafeSnapshotSignedUrl(signedUrl, {
+          projectUrl: supabase.url,
+          bucket: source.storageBucket,
+          objectPath: source.storagePath,
+        })
+      ) {
         throw invalidDeviceRpcResponse();
       }
       download = {

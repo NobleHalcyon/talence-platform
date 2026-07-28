@@ -17,6 +17,10 @@ from talence_catalog.versioning import validate_catalog_version
 DEFAULT_SNAPSHOT_BUCKET = "catalog-snapshots"
 
 
+def _is_loopback_hostname(hostname: str | None) -> bool:
+    return hostname in {"localhost", "127.0.0.1", "::1"}
+
+
 @dataclass(frozen=True, slots=True)
 class StoredArtifact:
     storage_path: str
@@ -130,8 +134,12 @@ class SupabaseSnapshotStorage:
         client: httpx.Client | None = None,
     ) -> None:
         parsed_project_url = urlparse(project_url)
+        secure_or_local = parsed_project_url.scheme == "https" or (
+            parsed_project_url.scheme == "http"
+            and _is_loopback_hostname(parsed_project_url.hostname)
+        )
         if (
-            parsed_project_url.scheme != "https"
+            not secure_or_local
             or parsed_project_url.hostname is None
             or parsed_project_url.username is not None
             or parsed_project_url.password is not None
@@ -139,7 +147,9 @@ class SupabaseSnapshotStorage:
             or parsed_project_url.query
             or parsed_project_url.fragment
         ):
-            raise ValueError("Supabase Storage project URL must use HTTPS.")
+            raise ValueError(
+                "Supabase Storage project URL must use HTTPS, except for loopback development."
+            )
         if not secret_key:
             raise ValueError("Supabase Storage secret key must be non-empty.")
         if timeout_seconds <= 0:

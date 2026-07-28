@@ -29,6 +29,10 @@ class SnapshotDownloadError(RuntimeError):
     """Safe reference-device snapshot update failure."""
 
 
+def _is_safe_remote_origin(scheme: str, hostname: str | None) -> bool:
+    return scheme == "https" or (scheme == "http" and hostname in {"localhost", "127.0.0.1", "::1"})
+
+
 @dataclass(frozen=True, slots=True)
 class SnapshotDownloadDescription:
     version: str
@@ -63,17 +67,20 @@ class SnapshotDownloadDescription:
         ):
             raise ValueError("Snapshot minimum client version is invalid.")
         parsed = urlparse(self.url)
-        if parsed.scheme not in {"file", "https"}:
+        if parsed.scheme not in {"file", "http", "https"}:
             raise ValueError("Snapshot download URL must use file:// or HTTPS.")
         if parsed.scheme == "file" and (parsed.netloc or parsed.query or parsed.fragment):
             raise ValueError("Snapshot fixture URL must be a local file.")
-        if parsed.scheme == "https" and (
-            parsed.hostname is None
+        if parsed.scheme in {"http", "https"} and (
+            not _is_safe_remote_origin(parsed.scheme, parsed.hostname)
+            or parsed.hostname is None
             or parsed.username is not None
             or parsed.password is not None
             or parsed.fragment
         ):
-            raise ValueError("Snapshot HTTPS URL has an invalid authority.")
+            raise ValueError(
+                "Snapshot download URL must use HTTPS, except for loopback development."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,13 +156,15 @@ class HttpSnapshotDownloader:
     ) -> None:
         parsed = urlparse(url)
         if (
-            parsed.scheme != "https"
+            not _is_safe_remote_origin(parsed.scheme, parsed.hostname)
             or parsed.hostname is None
             or parsed.username is not None
             or parsed.password is not None
             or parsed.fragment
         ):
-            raise SnapshotDownloadError("Remote snapshot URL must use HTTPS.")
+            raise SnapshotDownloadError(
+                "Remote snapshot URL must use HTTPS, except for loopback development."
+            )
         try:
             with self._client.stream("GET", url) as response:
                 if not response.is_success:

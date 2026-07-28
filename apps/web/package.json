@@ -15,7 +15,8 @@
     "pretest": "npm run build --workspace @talence/contracts",
     "test": "vitest run --configLoader native --pool=threads --no-file-parallelism",
     "test:watch": "vitest --configLoader native --pool=threads --no-file-parallelism",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:phase5-live": "playwright test --config playwright.phase5.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
@@ -28,12 +29,15 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "12.1.0",
     "@playwright/test": "1.62.0",
     "@testing-library/jest-dom": "7.0.0",
     "@testing-library/react": "16.3.2",
     "@types/node": "24.13.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "eslint": "9.39.5",
     "eslint-config-next": "16.2.12",
     "jsdom": "29.1.1",

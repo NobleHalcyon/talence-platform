@@ -261,3 +261,29 @@ def test_http_reference_downloader_enforces_streamed_size_guard(tmp_path: Path) 
         )
 
     assert not destination.exists()
+
+
+def test_reference_client_allows_only_loopback_http_for_local_signed_urls(
+    tmp_path: Path,
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    canonical_snapshot_schema_path: Path,
+) -> None:
+    artifact, _ = _build_snapshot(
+        tmp_path / "catalog.sqlite",
+        cards_fixture_path,
+        sets_fixture_path,
+        canonical_snapshot_schema_path,
+        identity_sha256="a" * 64,
+    )
+    local = replace(
+        _description(artifact),
+        url="http://127.0.0.1:54321/storage/v1/object/sign/catalog?token=local",
+    )
+    assert local.url.startswith("http://127.0.0.1")
+
+    with pytest.raises(ValueError, match="HTTPS"):
+        replace(
+            local,
+            url="http://storage.example.test/catalog?token=unsafe",
+        )

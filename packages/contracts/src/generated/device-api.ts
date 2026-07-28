@@ -220,8 +220,10 @@ export interface components {
         };
         InventoryPageResponse: {
             data: components["schemas"]["InventoryBalance"][];
-            meta: components["schemas"]["Meta"] & {
-                next_cursor?: string | null;
+            meta: {
+                /** Format: uuid */
+                request_id: string;
+                next_cursor: string | null;
             };
         };
         RunCounts: {

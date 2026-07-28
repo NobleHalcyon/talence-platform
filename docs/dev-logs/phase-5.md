@@ -6,30 +6,32 @@ Branch: `greenfield/platform-v1`
 
 Starting checkpoint: `905deaf phase 4: collection-aware deck builder`
 
-Partial work-unit checkpoint subject:
+Foundation checkpoint:
 
 ```text
-phase 5 checkpoint: device API and snapshot foundations
+6557191 phase 5 checkpoint: device API and snapshot foundations
 ```
 
-Required final Phase 5 checkpoint subject:
+Final Phase 5 checkpoint subject:
 
 ```text
 phase 5: device API and robot catalog snapshot
 ```
 
-Checkpoint SHA: resolve the partial checkpoint from `git log` after commit
+Checkpoint SHA: resolve the final checkpoint from `git log` after commit
 
 ## Current status
 
-The database/device authorization, Next.js administration and stable API, and
-Python catalog-snapshot/reference-client foundations form one coherent,
-validated checkpoint. Phase 5 is not complete because live boundary composition
-and true multi-session Phase 5 race coverage remain.
+Phase 5 is fully implemented and validated. Database/device authorization,
+Next.js administration and all six stable machine routes, deterministic
+snapshot generation, real private Storage, the robot reference client,
+multi-session concurrency, and live Auth/RLS/RPC/HTTP contract composition are
+complete.
 
-The prescribed final Phase 5 checkpoint has not been created. Phase 6 has not
-started. No remote repository action, hosted migration, Storage mutation,
-deployment, or paid-service call occurred.
+The commit containing this log is the prescribed final Phase 5 checkpoint.
+Resolve its SHA after commit. Phase 6 has not started. No remote repository
+action, hosted migration, hosted Storage mutation, deployment, or paid-service
+call occurred.
 
 ## Files changed
 
@@ -39,6 +41,7 @@ Database and generated surface:
 - `supabase/migrations/20260727051000_phase_5_snapshot_and_device_admin_functions.sql`;
 - `supabase/migrations/20260727052000_phase_5_device_api_inventory_and_runs.sql`;
 - `supabase/migrations/20260727053000_phase_5_device_rls_grants.sql`;
+- `supabase/migrations/20260727054000_phase_5_semver_compatibility.sql`;
 - `supabase/config.toml`;
 - `apps/web/lib/supabase/database.types.ts`;
 - `apps/web/lib/database/contracts.ts`.
@@ -55,6 +58,11 @@ Web application:
 - `apps/web/.env.example`, `apps/web/package.json`, and `package-lock.json`.
 - `apps/web/playwright.config.ts` to compile the dynamic device-detail preview
   before parallel browser workers begin.
+- `apps/web/playwright.phase5.config.ts` and
+  `apps/web/e2e/phase5-live-device.spec.ts` for guarded non-preview Auth,
+  administration, all-route, Storage, and contract composition.
+- Canonical and copied `device-api.openapi.yaml`, generated `device-api.ts`,
+  and `MANIFEST.json` for the corrected sealed inventory-page metadata schema.
 
 Catalog worker:
 
@@ -72,6 +80,13 @@ Tests and handoff:
   `apps/web/e2e/devices-preview.spec.ts`;
 - worker snapshot, Storage, reference-client, integration-safety, and guarded
   PostgreSQL integration suites;
+- `services/catalog-worker/tests/test_snapshot_storage_integration.py` for real
+  local private Storage publication/sign/download/install retention;
+- `supabase/tests/integration/phase5-device-concurrency.mjs` and
+  `supabase/tests/database/540_phase_5_semver_compatibility.test.sql`;
+- `scripts/lib/local-supabase.mjs`,
+  `scripts/run-phase5-storage-integration.mjs`, and the root Phase 5 validation
+  commands;
 - `IMPLEMENTATION_PROGRESS.md`, `IMPLEMENTATION_STATUS.md`,
   `RESTART_HANDOFF.md`, and this log.
 
@@ -131,7 +146,8 @@ The service-only surface includes:
 - `device_api_inventory_page`;
 - `apply_device_inventory_batch`;
 - `device_api_create_run_summary`;
-- `app_private.catalog_publish_snapshot`.
+- `app_private.catalog_publish_snapshot`;
+- `app_private.device_semver_gte`.
 
 Inventory batches normalize and hash bounded lines, require an explicit write
 grant, serialize first use of a device/idempotency identity, and call the Phase
@@ -142,6 +158,11 @@ Snapshot publication holds the catalog-promotion lock, verifies the exact
 active import and artifact metadata, rejects stale promotion, preserves the
 previous compatible snapshot, and treats same-version changed bytes as a
 conflict.
+
+SemVer compatibility follows SemVer 2.0 precedence, ignores build metadata,
+compares arbitrary-size numeric identifiers numerically, orders numeric
+prerelease identifiers below non-numeric identifiers, and rejects invalid
+leading zeroes.
 
 ### Authorization
 
@@ -195,6 +216,11 @@ Human routes:
 - `/app/devices`;
 - `/app/devices/[deviceId]`.
 
+Manifest signing accepts only the exact configured Supabase origin, private
+bucket, and immutable version path, with a required Storage token and no URL
+credentials or fragments. HTTPS is mandatory except for guarded loopback
+development.
+
 No route starts physical motion, and prohibited execution/checkpoint metadata
 is rejected.
 
@@ -227,6 +253,13 @@ checksum, size, SQLite integrity, cloud identity, and current/previous pointer.
 It keeps the previous local snapshot until the replacement verifies and uses
 bounded retry behavior for interrupted downloads.
 
+The real local Storage integration publishes two generations to the private
+bucket, verifies immutable replay and changed-byte rejection, signs both
+objects through Storage, installs them with the reference client, compares
+sampled cloud printing IDs, proves anonymous public access is denied, and
+retains the prior installed version. HTTP is permitted only for loopback test
+services; hosted project and download URLs remain HTTPS-only.
+
 ## Validation record
 
 Green checkpoint commands:
@@ -238,36 +271,45 @@ npm run test:supabase
 npm run db:types
 npm run db:types:check
 $env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-.\.venv\Scripts\python.exe -m pytest services\catalog-worker\tests -m integration
+.\.venv\Scripts\python.exe -m pytest services\catalog-worker\tests\test_database_integration.py services\catalog-worker\tests\test_snapshot_database_integration.py -q
 npm run test:supabase:phase3-integration
 npm run test:supabase:phase4-concurrency
-npm run ci
+npm run test:phase5:local
 npm run test:e2e --workspace @talence/web -- devices-preview.spec.ts
+npm run ci
 git diff --check
 ```
 
 Results:
 
-- blank migration reset: pass through all four Phase 5 migrations;
+- blank migration reset: pass through all five Phase 5 migrations;
 - database lint: zero warnings;
-- pgTAP: 27 files, 746 assertions, all pass;
-- Phase 5 pgTAP: 128 assertions (43 + 26 + 36 + 23);
+- pgTAP: 28 files, 754 assertions, all pass;
+- the SemVer compatibility migration adds eight focused assertions;
 - generated database types: current;
-- guarded worker integration: 2/2 pass twice consecutively on one local
-  database, with forced import clocks one hour apart;
+- guarded worker/PostgreSQL integration: 2/2 pass;
 - Phase 3 Storage/inventory concurrency regression: pass;
 - Phase 4 deck concurrency regression: pass;
+- Phase 5 multi-session concurrency: pass across inventory and run identities,
+  lifecycle/credential/grant ordering, quota serialization, and snapshot
+  create/replay/stale promotion/previous-pointer behavior;
+- real private Storage integration: 1/1 pass in 63.05 seconds;
+- live non-preview Auth/admin/API/OpenAPI/JSON Schema integration: 1/1 pass;
+- canonical manifest, copied contracts, OpenAPI 3.1, three JSON Schemas,
+  generated types, and SQLite schema validation: pass;
 - root CI: pass;
 - web Vitest: 38 files, 223 tests;
-- Python ordinary suite: 81 pass, two expected integration skips;
+- contracts/domain/UI/admin: 7/2/11/18 tests pass;
+- Python ordinary suite: 83 pass, three expected environment-gated integration
+  skips; the three guarded local integration paths pass separately;
 - production Next.js build: pass with all six device API routes;
-- device preview Playwright: 4/4 across desktop and mobile Chromium on two
-  consecutive fully parallel runs after the readiness fix.
+- device preview Playwright: 4/4 across desktop and mobile Chromium;
+- `git diff --check`: pass.
 
-The checkpoint audit found and fixed a real snapshot-rebuild defect: mutable
-download and price-ingestion timestamps previously changed SQLite bytes for an
-unchanged catalog version. The regression now proves deterministic replay
-across deliberately different clocks and repeated runs.
+The foundation audit fixed a snapshot-rebuild defect where mutable download and
+price-ingestion timestamps could alter bytes for one catalog version. The final
+live audit also fixed an OpenAPI composition defect where sealed base metadata
+made `next_cursor` impossible. Both have direct regressions.
 
 ## Manual setup
 
@@ -283,33 +325,14 @@ Nothing in this checkpoint performs hosted setup.
 
 ## Deviations and open blockers
 
-- This is a partial Phase 5 checkpoint, not the prescribed full-phase commit.
-- The canonical granted inventory read endpoint was optional in the master
-  prompt after mandatory endpoints; it is implemented.
-- Current HTTP route/action tests mock Auth, RPC, and Storage boundaries.
-- Current Supabase Storage adapter tests use mocked HTTP; the database snapshot
-  integration uses the local filesystem adapter.
-- No true multi-session Phase 5 race harness or root npm command exists yet.
-- General prerelease SemVer ordering is lexical and must be hardened or
-  explicitly rejected before claiming prerelease compatibility.
-- Signed manifest URLs reject credentials and unsafe schemes, but origin/bucket
-  binding still needs an explicit contract and live test.
-- Pre-auth source throttling/WAF enforcement is Phase 6, not a Phase 5
-  checkpoint blocker.
+- The canonical granted inventory read endpoint was optional after the
+  mandatory endpoints; it is implemented and live-validated.
+- Local Supabase uses HTTP by design. The worker, reference client, and signed
+  URL validator permit it only for loopback; hosted URLs remain HTTPS-only.
+- Pre-auth source throttling/WAF rules, broad security headers, dependency and
+  secret scanning, complete cross-feature Playwright, operations readiness,
+  and deployment acceptance are Phase 6 work, not deferred Phase 5 scope.
+- Phase 5 has no open implementation blocker.
 
-## Precisely what remains in Phase 5
-
-1. Multi-session inventory, run-summary, lifecycle/grant/credential, quota, and
-   snapshot-promotion race harness.
-2. Guarded live-local issuance-to-device HTTP/RLS/RPC flow across all six
-   routes, including replay/conflict, unknown printing, revoke, and suspend.
-3. Real local Supabase private Storage upload, signed manifest, download,
-   reference install, and prior-snapshot preservation.
-4. Live OpenAPI/JSON Schema response conformance and non-preview device
-   administration Playwright coverage.
-5. Prerelease SemVer and signed-URL origin/bucket decisions and tests.
-6. One final clean validation/hygiene pass and the prescribed Phase 5 commit.
-
-See `IMPLEMENTATION_PROGRESS.md` and `RESTART_HANDOFF.md`. Do not begin Phase 6
-until this list is complete and Phase 5 is committed with its prescribed final
-subject.
+See `IMPLEMENTATION_PROGRESS.md` and `RESTART_HANDOFF.md` for the Phase 6 resume
+point.

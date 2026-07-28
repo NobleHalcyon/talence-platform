@@ -36,7 +36,7 @@ const VERSION = "mtg-20260727T120000Z-a1b2c3d4-s1";
 
 function authenticatedClient(
   data: unknown,
-  signedUrl = "https://project.supabase.co/storage/v1/object/sign/catalog",
+  signedUrl = `https://project.supabase.co/storage/v1/object/sign/catalog-snapshots/mtg/${VERSION}/catalog.sqlite?token=signed-fixture`,
 ) {
   const rpc = vi.fn().mockResolvedValue({ data, error: null });
   const createSignedUrl = vi.fn().mockResolvedValue({
@@ -96,11 +96,15 @@ function manifestSource(upToDate = false) {
 
 beforeEach(() => {
   mocks.authenticate.mockReset();
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_phase5_test";
   process.env.FEATURE_DEVICE_INVENTORY_WRITES_ENABLED = "true";
   process.env.FEATURE_SNAPSHOT_DOWNLOADS_ENABLED = "true";
 });
 
 afterEach(() => {
+  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+  delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   delete process.env.FEATURE_DEVICE_INVENTORY_WRITES_ENABLED;
   delete process.env.FEATURE_SNAPSHOT_DOWNLOADS_ENABLED;
 });
@@ -184,7 +188,7 @@ describe("device API route handlers", () => {
     };
     expect(body.data.latest.download).toEqual(
       expect.objectContaining({
-        url: "https://project.supabase.co/storage/v1/object/sign/catalog",
+        url: `https://project.supabase.co/storage/v1/object/sign/catalog-snapshots/mtg/${VERSION}/catalog.sqlite?token=signed-fixture`,
       }),
     );
     expect(body.data.latest).not.toHaveProperty("storage_bucket");
@@ -217,7 +221,7 @@ describe("device API route handlers", () => {
     expect(manifest.rpc).not.toHaveBeenCalled();
   });
 
-  it("rejects a malicious signing response and a path not bound to the manifest version", async () => {
+  it("rejects malicious, cross-origin, and path-mismatched signing responses", async () => {
     const malicious = authenticatedClient(manifestSource(), "javascript:alert(1)");
     const request = () =>
       new Request(
@@ -234,6 +238,15 @@ describe("device API route handlers", () => {
     expect(pathResponse.status).toBe(503);
     expect(pathClient.createSignedUrl).not.toHaveBeenCalled();
     expect(malicious.createSignedUrl).toHaveBeenCalled();
+
+    const crossOrigin = authenticatedClient(
+      manifestSource(),
+      `https://attacker.example/storage/v1/object/sign/catalog-snapshots/mtg/${VERSION}/catalog.sqlite?token=stolen`,
+    );
+    const crossOriginResponse = await manifestGet(request());
+    expect(crossOriginResponse.status).toBe(503);
+    expect(JSON.stringify(await crossOriginResponse.json())).not.toContain("attacker.example");
+    expect(crossOrigin.createSignedUrl).toHaveBeenCalled();
   });
 
   it("returns granted inventory with the OpenAPI array envelope and cursor metadata", async () => {

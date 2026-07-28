@@ -498,12 +498,15 @@ components:
           items:
             $ref: '#/components/schemas/InventoryBalance'
         meta:
-          allOf:
-            - $ref: '#/components/schemas/Meta'
-            - type: object
-              properties:
-                next_cursor:
-                  type: [string, 'null']
+          type: object
+          additionalProperties: false
+          required: [request_id, next_cursor]
+          properties:
+            request_id:
+              type: string
+              format: uuid
+            next_cursor:
+              type: [string, 'null']
     RunCounts:
       type: object
       additionalProperties: false

@@ -249,17 +249,69 @@ describe("device API request validation", () => {
     });
   });
 
-  it("accepts HTTPS signed URLs and HTTP only for local development loopback", () => {
+  it("binds signed URLs to the configured Supabase origin, bucket, and object", () => {
+    const productionBinding = {
+      projectUrl: "https://project.supabase.co",
+      bucket: "catalog-snapshots",
+      objectPath: "mtg/version/catalog.sqlite",
+    };
+    const localBinding = {
+      projectUrl: "http://127.0.0.1:54321",
+      bucket: "catalog-snapshots",
+      objectPath: "mtg/version/catalog.sqlite",
+    };
     expect(
-      isSafeSnapshotSignedUrl("https://project.supabase.co/storage/v1/object/sign/x", "production"),
+      isSafeSnapshotSignedUrl(
+        "https://project.supabase.co/storage/v1/object/sign/catalog-snapshots/mtg/version/catalog.sqlite?token=signed",
+        productionBinding,
+        "production",
+      ),
     ).toBe(true);
-    expect(isSafeSnapshotSignedUrl("http://127.0.0.1:54321/storage/v1/object/sign/x", "test")).toBe(
-      true,
-    );
     expect(
-      isSafeSnapshotSignedUrl("http://localhost:54321/storage/v1/object/sign/x", "production"),
+      isSafeSnapshotSignedUrl(
+        "http://127.0.0.1:54321/storage/v1/object/sign/catalog-snapshots/mtg/version/catalog.sqlite?token=signed",
+        localBinding,
+        "test",
+      ),
+    ).toBe(true);
+    expect(
+      isSafeSnapshotSignedUrl(
+        "http://127.0.0.1:54321/storage/v1/object/sign/catalog-snapshots/mtg/version/catalog.sqlite?token=signed",
+        localBinding,
+        "production",
+      ),
     ).toBe(false);
-    expect(isSafeSnapshotSignedUrl("javascript:alert(1)", "test")).toBe(false);
-    expect(isSafeSnapshotSignedUrl("ftp://project.supabase.co/file", "test")).toBe(false);
+    expect(
+      isSafeSnapshotSignedUrl(
+        "https://other.supabase.co/storage/v1/object/sign/catalog-snapshots/mtg/version/catalog.sqlite?token=signed",
+        productionBinding,
+        "test",
+      ),
+    ).toBe(false);
+    expect(
+      isSafeSnapshotSignedUrl(
+        "https://project.supabase.co/storage/v1/object/sign/other-bucket/mtg/version/catalog.sqlite?token=signed",
+        productionBinding,
+        "test",
+      ),
+    ).toBe(false);
+    expect(
+      isSafeSnapshotSignedUrl(
+        "https://project.supabase.co/storage/v1/object/sign/catalog-snapshots/mtg/other/catalog.sqlite?token=signed",
+        productionBinding,
+        "test",
+      ),
+    ).toBe(false);
+    expect(
+      isSafeSnapshotSignedUrl(
+        "https://project.supabase.co/storage/v1/object/sign/catalog-snapshots/mtg/version/catalog.sqlite",
+        productionBinding,
+        "test",
+      ),
+    ).toBe(false);
+    expect(isSafeSnapshotSignedUrl("javascript:alert(1)", productionBinding, "test")).toBe(false);
+    expect(
+      isSafeSnapshotSignedUrl("ftp://project.supabase.co/file", productionBinding, "test"),
+    ).toBe(false);
   });
 });

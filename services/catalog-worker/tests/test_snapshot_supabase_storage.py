@@ -129,3 +129,19 @@ def test_supabase_storage_bounds_verification_download_to_generated_size(
 
     with pytest.raises(SnapshotStorageError, match="exceeds"):
         storage.publish(source, version=VERSION)
+
+
+def test_supabase_storage_allows_only_loopback_http_for_local_integration() -> None:
+    storage = SupabaseSnapshotStorage(
+        "http://127.0.0.1:54321",
+        SECRET_KEY,
+        client=httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(500))),
+    )
+    assert storage.bucket == "catalog-snapshots"
+
+    with pytest.raises(ValueError, match="HTTPS"):
+        SupabaseSnapshotStorage(
+            "http://storage.example.test",
+            SECRET_KEY,
+            client=httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(500))),
+        )
