@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import { getAppContextState } from "@/lib/auth/app-context";
 import { DATABASE_FUNCTIONS, DATABASE_TABLES } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -27,7 +28,10 @@ function adminCatalogHref(status: string, requestId: string): string {
 }
 
 function warnCatalogMutation(code: string, requestId: string): void {
-  console.warn("Talence catalog operation failed", { code, requestId });
+  writeSecurityLog("warn", "catalog.operation.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 async function readyContext() {

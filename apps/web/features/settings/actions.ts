@@ -9,6 +9,7 @@ import { getAppContextState } from "@/lib/auth/app-context";
 import { statusHref } from "@/lib/auth/safe-status";
 import { normalizeDisplayName, normalizeHandle, validateUuid } from "@/lib/auth/validation";
 import { DATABASE_TABLES } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const CURRENCIES = new Set(["EUR", "TIX", "USD"]);
@@ -27,7 +28,10 @@ async function attempt<T>(operation: () => PromiseLike<T>): Promise<AttemptResul
 }
 
 function warnSettingsFailure(code: string, requestId: string): void {
-  console.warn("Talence settings operation failed", { code, requestId });
+  writeSecurityLog("warn", "settings.operation.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 function formString(formData: FormData, name: string): string {

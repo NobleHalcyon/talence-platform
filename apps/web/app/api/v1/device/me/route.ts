@@ -12,6 +12,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request): Promise<Response> {
   return handleDeviceApiRequest(request, async (context) => {
     const authenticated = await authenticateDeviceRequest(request, context.requestId);
+    context.deviceId = authenticated.deviceId;
     requireNoQuery(request);
     const value = await callDeviceRpc(authenticated.client, DATABASE_FUNCTIONS.deviceApiMe, {
       p_device_id: authenticated.deviceId,

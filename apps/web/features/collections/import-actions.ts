@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { getAppContextState } from "@/lib/auth/app-context";
 import { validateUuid } from "@/lib/auth/validation";
 import { DATABASE_FUNCTIONS } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { staticCollectionPreviewEnabled } from "./config";
@@ -96,7 +97,10 @@ function retryState(
 }
 
 function warnImportFailure(code: string, requestId: string): void {
-  console.warn("Talence inventory import failed", { code, requestId });
+  writeSecurityLog("warn", "inventory_import.operation.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 function storageObjectExists(error: unknown): boolean {

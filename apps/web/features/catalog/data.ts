@@ -2,7 +2,9 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
+import { getAppContextState } from "@/lib/auth/app-context";
 import { DATABASE_FUNCTIONS, DATABASE_TABLES } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -43,7 +45,10 @@ function asCatalogRpcClient(client: unknown): CatalogRpcClient {
 }
 
 function warnCatalogFailure(code: string, requestId: string): void {
-  console.warn("Talence catalog read failed", { code, requestId });
+  writeSecurityLog("warn", "catalog.read.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 async function rpcLoad<T>(
@@ -165,6 +170,45 @@ export async function searchCatalog(
     return staticCatalogPreviewEnabled()
       ? { ok: true, data: previewCatalogSearch(query), preview: true }
       : configurationFailure();
+  }
+  const requestId = randomUUID();
+  let workspaceId: string;
+  try {
+    const context = await getAppContextState();
+    if (context.status !== "ready") {
+      return { ok: false, reason: "request_failed", requestId };
+    }
+    workspaceId = context.context.workspace.id;
+  } catch {
+    warnCatalogFailure("quota_context_unavailable", requestId);
+    return { ok: false, reason: "request_failed", requestId };
+  }
+  try {
+    const reservation = await clientState.client.rpc(
+      DATABASE_FUNCTIONS.consumeApplicationFeatureQuota,
+      {
+        p_feature_key: "catalog_search",
+        p_workspace_id: workspaceId,
+        p_units: 24,
+        p_correlation_id: requestId,
+      },
+    );
+    if (reservation.error) {
+      const source =
+        `${reservation.error.code ?? ""} ${reservation.error.message ?? ""}`.toLowerCase();
+      warnCatalogFailure(
+        source.includes("quota_exceeded")
+          ? "catalog_search_rate_limited"
+          : source.includes("feature_disabled")
+            ? "catalog_search_disabled"
+            : "catalog_search_quota_unavailable",
+        requestId,
+      );
+      return { ok: false, reason: "request_failed", requestId };
+    }
+  } catch {
+    warnCatalogFailure("catalog_search_quota_unavailable", requestId);
+    return { ok: false, reason: "request_failed", requestId };
   }
   return searchCatalogWithClient(clientState.client, query);
 }

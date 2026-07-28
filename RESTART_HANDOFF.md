@@ -1,4 +1,4 @@
-# Restart handoff - Phase 5 complete, Phase 6 next
+# Restart handoff - Phase 6 complete
 
 Date: 2026-07-27
 
@@ -6,22 +6,27 @@ Branch: `greenfield/platform-v1`
 
 ## Resume point
 
-Phase 5 is fully implemented and validated. The commit containing this file is
-the prescribed Phase 5 checkpoint:
+The Talence greenfield master implementation is complete through Phase 6. The
+final checkpoint containing this handoff has the prescribed subject:
 
 ```text
-phase 5: device API and robot catalog snapshot
+phase 6: private beta hardening and delivery
 ```
 
-Resolve its SHA with `git log -1 --oneline` after restart. It follows the
-foundation checkpoint:
+Resolve its self-referential SHA after restart:
+
+```powershell
+git log -1 --oneline
+```
+
+It follows:
 
 ```text
-6557191 phase 5 checkpoint: device API and snapshot foundations
+433cbcd phase 5: device API and robot catalog snapshot
 ```
 
-Phase 6 has not started in this checkpoint. No change was pushed, deployed, or
-applied to hosted Supabase, Storage, or Vercel.
+No remote push/merge, hosted migration, production deployment, Auth/Storage
+mutation, real invitation, or live provider call occurred.
 
 ## Read first
 
@@ -30,12 +35,10 @@ applied to hosted Supabase, Storage, or Vercel.
 3. the original Master Greenfield Build Prompt;
 4. `IMPLEMENTATION_PROGRESS.md`;
 5. `IMPLEMENTATION_STATUS.md`;
-6. `docs/dev-logs/phase-5.md`;
-7. the Phase 6 acceptance criteria in the master prompt;
-8. this file and recent git history.
+6. `docs/dev-logs/phase-6.md`;
+7. this file and recent git history.
 
-Preserve the completed Phase 5 database, HTTP, Storage, worker, robot reference
-client, concurrency, and live conformance surfaces.
+Do not regenerate or replace the completed Phase 0-6 implementation.
 
 ## First terminal checks
 
@@ -43,110 +46,122 @@ client, concurrency, and live conformance surfaces.
 Set-Location C:\Users\judge\talence-platform
 git branch --show-current
 git status --short
-git log -5 --oneline
+git log -8 --oneline
 $env:Path = "C:\Users\judge\AppData\Local\Programs\Docker\Docker\resources\bin;C:\Users\judge\AppData\Local\Programs\DockerDesktop\resources\bin;$env:Path"
 docker version
-npx supabase start
+npx supabase status
 ```
 
 Expected branch: `greenfield/platform-v1`.
 
-Expected worktree: clean at `phase 5: device API and robot catalog snapshot`.
-Local Supabase data and private Storage fixtures are disposable.
+Expected repository state after the checkpoint: clean at
+`phase 6: private beta hardening and delivery`. Local Supabase data and private
+Storage fixtures are disposable and ignored.
 
-## Phase 5 closure delivered
+## Phase 6 delivered
 
-- true multi-session inventory, run-summary, lifecycle, credential/grant,
-  quota, and snapshot-promotion concurrency;
-- real private Supabase Storage publication, byte verification, signing,
-  reference installation, anonymous denial, and previous-snapshot retention;
-- complete SemVer prerelease precedence;
-- exact configured Storage origin/bucket/path signed-URL binding;
-- non-preview invitation/Auth/device administration through real RLS/RPCs;
-- all six `/api/v1/device` routes under live OpenAPI/JSON Schema validation;
-- replay/conflict, unknown printing, revoked credential, and suspended device
-  proofs;
-- corrected canonical inventory-page metadata schema and regenerated contracts;
-- clean reset, 754-assertion pgTAP suite, older phase regressions, local
-  integrations, desktop/mobile preview tests, and complete root CI/build.
+- consolidated RLS regression over all 36 exposed tables using two admitted
+  users and two isolated workspaces;
+- atomic application request/work-unit quotas and generic external-service
+  global/user/workspace/device daily reservations;
+- provider-before-call enforcement for managed Auth invitations;
+- platform operations page for application/external/device kill switches,
+  bounded usage, optimistic updates, and sanitized audit events;
+- nonce-based production CSP and the full response security-header baseline;
+- canonical correlation IDs and allowlisted structured request/security logs;
+- source/release/browser bundle secret scans, npm production audit, Python
+  dependency audit, and CI integration;
+- repeatable network-free catalog/Auth/two-workspace private-beta fixture;
+- live browser path through login, catalog, keyboard modal, inventory, real
+  Storage import, deck, device credential/grants, workspace denial, operations,
+  audit, and axe accessibility checks;
+- representative inventory summary performance acceptance;
+- complete environment, WAF/Auth limits, backup/restore, incident, production,
+  and release sign-off documentation.
 
-## Phase 6 work, in master-prompt order
+The generic external model is not invitation-specific: tests add another
+service and exercise its device scope. The release RLS matrix includes direct
+policy/grant checks and bounded RPC denials rather than only checking one table.
 
-1. Complete a cross-feature two-user/two-workspace RLS regression matrix,
-   including anonymous and wrong-workspace denial.
-2. Add real or production-faithful Playwright critical flows:
-   invitation/login fixture path, catalog search, collection add/import
-   preview, deck creation, device credential/grant, and cross-workspace denial.
-3. Add and verify security headers and a CSP compatible with required Scryfall
-   image hosts.
-4. Document and test the Vercel/edge WAF rate-limit/challenge rules; finish
-   hosted Auth rate-limit/CAPTCHA configuration guidance.
-5. Verify application quotas and external-service limits; add operator-facing
-   feature kill switches for risky operations.
-6. Standardize sanitized structured logging and correlation IDs without
-   credentials, signed URLs, bodies, or sensitive provider details.
-7. Add practical dependency and secret scanning to CI.
-8. Finish accessibility, keyboard, focus, and representative search/inventory
-   performance acceptance.
-9. Complete backup/restore, monitoring, incident response, production
-   environment, deployment, and human setup/runbook documentation.
-10. Audit canon/contracts/README and run the final clean private-beta
-    acceptance matrix.
-11. Create the prescribed Phase 6 checkpoint:
+## Known-good validation
 
-```text
-phase 6: private beta hardening and delivery
-```
-
-Do not reduce scope or substitute placeholders. Hosted mutations and production
-deployment still require explicit user authorization.
-
-## Known-good Phase 5 validation commands
+From PowerShell:
 
 ```powershell
 $env:Path = "C:\Users\judge\AppData\Local\Programs\Docker\Docker\resources\bin;C:\Users\judge\AppData\Local\Programs\DockerDesktop\resources\bin;$env:Path"
+npm ci
+.\scripts\setup-python.ps1
+npx playwright install chromium
+npx supabase start
 npx supabase db reset --local --no-seed
 npm run db:lint
-npm run test:supabase
-npm run db:types
 npm run db:types:check
-$env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
-.\.venv\Scripts\python.exe -m pytest services\catalog-worker\tests\test_database_integration.py services\catalog-worker\tests\test_snapshot_database_integration.py -q
+npm run test:supabase
 npm run test:supabase:phase3-integration
 npm run test:supabase:phase4-concurrency
 npm run test:phase5:local
-npm run test:e2e --workspace @talence/web -- devices-preview.spec.ts
+npm run test:supabase:phase6-concurrency
+npm run test:phase6:local
+npm run test:e2e
 npm run ci
 git diff --check
 ```
 
-`npm run test:phase5:local` runs the guarded Phase 5 concurrency harness, real
-private Storage integration, and live non-preview browser/API contract flow in
-the required order. Every integration target is constrained to loopback and
-the standard disposable local database.
+Checkpoint evidence:
+
+- clean reset through Phase 6, zero database lint warnings, no type drift;
+- 31 pgTAP files / 808 assertions;
+- all prior-phase and Phase 6 multi-session/Storage/live regressions;
+- exact 3/8 concurrent quota admission at a limit of 3;
+- unchanged fixture replay with two isolated admitted identities;
+- live Phase 6 browser journey 1/1;
+- web 41 files / 232 tests; contracts/domain/UI/admin 7/2/11/18;
+- Python 83 pass / 3 intentional environment skips plus guarded database and
+  Storage integrations;
+- desktop/mobile preview 19 pass / 3 intentional project skips;
+- production build, dependency/secret/release/bundle/header scans, unit/
+  contract/worker suites, and preview browser coverage.
+
+`npm run test:phase6:local` resets the local database itself before seeding and
+running the browser. Direct `npm run test:e2e:phase6-live` assumes the fixture
+is already present and is not the clean standalone entry point.
 
 ## Important implementation notes
 
-- Docker Desktop is installed per-user. Add the two paths above when a new VS
-  Code terminal does not inherit `docker.exe`.
-- Storage objects can outlive a database reset. Phase 5 publication verifies
-  identical replays and rejects changed bytes at immutable paths.
-- The Phase 3 ledger remains the only inventory authority.
-- Raw device credentials are returned once and never persisted. Only a prefix
-  and server-peppered digest are stored.
-- Manifest URLs must match the configured Supabase origin,
-  `catalog-snapshots` bucket, and exact immutable version path.
-- Local HTTP is accepted only on loopback; hosted service and download URLs
-  require HTTPS.
-- No cloud endpoint starts motion, and no cloud table stores robot execution
-  checkpoints, motor/bin/sensor/camera state, or motion plans.
-- A Next development server can temporarily rewrite `apps/web/next-env.d.ts`
-  to `.next/dev/types/routes.d.ts`; the committed/build state remains
+- Docker Desktop is installed per-user; add the two PATH entries above when a
+  new VS Code terminal cannot find `docker.exe`.
+- All integration scripts verify loopback endpoints and refuse a hosted
+  Supabase target.
+- A Next development server may temporarily rewrite `apps/web/next-env.d.ts`
+  to development route types. The production/build form uses
   `.next/types/routes.d.ts`.
+- Storage objects can survive a database reset. Phase 5 publication treats
+  snapshot paths as immutable and verifies bytes.
+- The Phase 3 ledger remains the only inventory mutation authority.
+- Raw device credentials are returned once and never persisted.
+- Cloud routes never start motion or store robot execution state.
+- Application and external quotas are database-atomic. WAF/IP controls are an
+  additional layer, not a substitute.
+- Audit/log metadata must remain allowlisted. Never add bodies, email
+  addresses, tokens, credentials, digests, signed URLs, or provider payloads.
 
-## Manual setup remains human-controlled
+## Remaining work
 
-The hosted credential pepper, worker database/Storage credentials, private
-bucket, feature-policy values, signed-URL lifetime, first snapshot publication,
-WAF/Auth/CAPTCHA controls, production environment values, and deployment remain
-unset. Do not perform those actions without fresh user authorization.
+There is no remaining locally achievable master-prompt implementation phase.
+Do not invent Phase 7 or broaden into deferred marketplace, billing, store, AI,
+or robot-motion systems.
+
+The next legitimate work unit is human-authorized production setup:
+
+1. complete `docs/operations/private-beta-checklist.md`;
+2. configure the environment matrix, hosted migrations, Auth hook/redirects,
+   SMTP, CAPTCHA, limits, WAF, backups/PITR, Storage protection, and alerts;
+3. rehearse restore and incident procedures;
+4. bootstrap the first admin and review every switch/quota;
+5. manually approve the first live catalog import and snapshot publication;
+6. deploy only with explicit current-session authorization;
+7. execute the human acceptance journey and enable beta access incrementally.
+
+External credentials, hosted dashboards, real provider traffic, and production
+authorization are required for those steps. Repository code intentionally
+cannot complete them alone.

@@ -8,6 +8,7 @@ import { loadCollectionList } from "@/features/collections/data";
 import type { CollectionListPage, CollectionLoadResult } from "@/features/collections/types";
 import { getAppContextState } from "@/lib/auth/app-context";
 import { DATABASE_FUNCTIONS } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { staticDeckPreviewEnabled } from "./config";
@@ -143,7 +144,10 @@ function asRpcClient(value: unknown): DeckRpcClient {
 }
 
 function warnDeckFailure(code: string, requestId: string): void {
-  console.warn("Talence deck read failed", { code, requestId });
+  writeSecurityLog("warn", "deck.read.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 function failureReason(code?: string, message?: string): DeckLoadFailureReason {

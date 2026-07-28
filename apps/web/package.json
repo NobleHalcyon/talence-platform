@@ -16,7 +16,8 @@
     "test": "vitest run --configLoader native --pool=threads --no-file-parallelism",
     "test:watch": "vitest --configLoader native --pool=threads --no-file-parallelism",
     "test:e2e": "playwright test",
-    "test:e2e:phase5-live": "playwright test --config playwright.phase5.config.ts"
+    "test:e2e:phase5-live": "playwright test --config playwright.phase5.config.ts",
+    "test:e2e:phase6-live": "playwright test --config playwright.phase6.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
@@ -29,6 +30,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@apidevtools/swagger-parser": "12.1.0",
     "@playwright/test": "1.62.0",
     "@testing-library/jest-dom": "7.0.0",

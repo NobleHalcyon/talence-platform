@@ -15,6 +15,7 @@ import {
   validateUuid,
 } from "@/lib/auth/validation";
 import { DATABASE_FUNCTIONS, type InvitedUserRecord } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { getApplicationOrigin } from "@/lib/supabase/config";
 import type { Database } from "@/lib/supabase/database.types";
@@ -41,10 +42,10 @@ async function attempt<T>(operation: () => PromiseLike<T>): Promise<AttemptResul
 }
 
 function warnAdminFailure(code: string, requestId: string, invitationId?: string): void {
-  console.warn("Talence invitation administration failed", {
+  writeSecurityLog("warn", "invitation.administration.failed", {
     code,
-    invitationId,
-    requestId,
+    invitation_id: invitationId,
+    request_id: requestId,
   });
 }
 
@@ -198,12 +199,38 @@ async function requirePlatformAdmin(requestId: string) {
 async function sendInvite(
   input: Omit<PrepareInviteInput, "actorUserId">,
   actorUserId: string,
+  workspaceId: string,
   requestId: string,
 ): Promise<never> {
   const trustedClient = adminClient(requestId);
   const origin = getApplicationOrigin();
   if (!trustedClient || !origin) {
     return redirectAdmin("configuration_required", requestId);
+  }
+
+  const quota = await attempt(() =>
+    trustedClient.rpc(DATABASE_FUNCTIONS.consumeExternalServiceQuota, {
+      p_service_key: "managed_auth_invitation",
+      p_units: 1,
+      p_user_id: actorUserId,
+      p_workspace_id: workspaceId,
+      p_correlation_id: requestId,
+    }),
+  );
+  if (!quota.ok || quota.value.error) {
+    const source = quota.ok
+      ? `${quota.value.error?.code ?? ""} ${quota.value.error?.message ?? ""}`.toLowerCase()
+      : "";
+    const code = source.includes("quota_exceeded")
+      ? "invite_rate_limited"
+      : source.includes("service_disabled")
+        ? "invite_disabled"
+        : "invite_quota_unavailable";
+    warnAdminFailure(code, requestId, input.invitationId);
+    return redirectAdmin(
+      code === "invite_rate_limited" || code === "invite_disabled" ? code : "invite_failed",
+      requestId,
+    );
   }
 
   const execution = await attempt(() =>
@@ -227,6 +254,22 @@ async function sendInvite(
   if (!result.ok) {
     warnAdminFailure(result.code, requestId, result.invitationId);
     return redirectAdmin("invite_failed", requestId);
+  }
+
+  const audited = await attempt(() =>
+    trustedClient.rpc(DATABASE_FUNCTIONS.recordServerAuditEvent, {
+      p_actor_user_id: actorUserId,
+      p_event_type: "invitation.issued",
+      p_result_code: "succeeded",
+      p_workspace_id: workspaceId,
+      p_resource_type: "invited_user",
+      p_resource_id: result.invitationId,
+      p_correlation_id: requestId,
+      p_metadata: {},
+    }),
+  );
+  if (!audited.ok || audited.value.error) {
+    warnAdminFailure("invite_audit_failed", requestId, result.invitationId);
   }
 
   revalidatePath(ADMIN_INVITES_PATH);
@@ -257,6 +300,7 @@ export async function issueInviteAction(formData: FormData): Promise<never> {
       note: note.value,
     },
     context.userId,
+    context.workspace.id,
     requestId,
   );
 }
@@ -313,6 +357,7 @@ export async function resendInviteAction(formData: FormData): Promise<never> {
       note: invitation.note,
     },
     context.userId,
+    context.workspace.id,
     requestId,
   );
 }
@@ -380,6 +425,22 @@ export async function revokeInviteAction(formData: FormData): Promise<never> {
       revalidatePath(ADMIN_INVITES_PATH);
       return redirectAdmin("invite_revoked_cleanup_pending", requestId);
     }
+  }
+
+  const audited = await attempt(() =>
+    trustedClient.rpc(DATABASE_FUNCTIONS.recordServerAuditEvent, {
+      p_actor_user_id: context.userId,
+      p_event_type: "invitation.revoked",
+      p_result_code: "succeeded",
+      p_workspace_id: context.workspace.id,
+      p_resource_type: "invited_user",
+      p_resource_id: invitation.id,
+      p_correlation_id: requestId,
+      p_metadata: {},
+    }),
+  );
+  if (!audited.ok || audited.value.error) {
+    warnAdminFailure("invite_revoke_audit_failed", requestId, invitation.id);
   }
 
   revalidatePath(ADMIN_INVITES_PATH);

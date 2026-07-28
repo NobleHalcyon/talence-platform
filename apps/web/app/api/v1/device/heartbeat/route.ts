@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request): Promise<Response> {
   return handleDeviceApiRequest(request, async (context) => {
     const authenticated = await authenticateDeviceRequest(request, context.requestId);
+    context.deviceId = authenticated.deviceId;
     requireNoQuery(request);
     const raw = await readBoundedJsonWithSize(request, getDeviceApiLimits().heartbeatBodyBytes);
     const body = parseHeartbeatRequest(raw.value);

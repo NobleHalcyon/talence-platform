@@ -21,11 +21,15 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run guard:secrets
+      - run: npm run audit:dependencies
       - run: npm run build
         env:
           NEXT_PUBLIC_APP_ORIGIN: https://preview.invalid
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_preview_placeholder
+      - run: npm run guard:browser-bundle
+      - run: npm run guard:security-headers
 
       # Vercel Git integration performs the actual preview deployment. Keeping
       # deployment credentials out of this workflow prevents secret exposure to

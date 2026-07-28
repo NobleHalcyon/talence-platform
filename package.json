@@ -29,9 +29,14 @@
     "test:supabase:phase3-integration": "node supabase/tests/integration/phase3-storage-concurrency.mjs",
     "test:supabase:phase4-concurrency": "node supabase/tests/integration/phase4-deck-concurrency.mjs",
     "test:supabase:phase5-concurrency": "node supabase/tests/integration/phase5-device-concurrency.mjs",
+    "test:supabase:phase6-concurrency": "node supabase/tests/integration/phase6-quota-concurrency.mjs",
     "test:supabase:phase5-storage": "node scripts/run-phase5-storage-integration.mjs",
     "test:e2e:phase5-live": "npm run test:e2e:phase5-live --workspace @talence/web",
+    "test:e2e:phase6-live": "npm run test:e2e:phase6-live --workspace @talence/web",
     "test:phase5:local": "npm run test:supabase:phase5-concurrency && npm run test:supabase:phase5-storage && npm run test:e2e:phase5-live",
+    "seed:private-beta": "node scripts/seed-private-beta-fixture.mjs",
+    "test:seed:repeatability": "node scripts/check-seed-repeatability.mjs",
+    "test:phase6:local": "node scripts/run-phase6-critical-journey.mjs",
     "db:lint": "npx supabase db lint --local --schema public,app_private,app_api --level warning --fail-on warning",
     "db:types": "node scripts/generate-database-types.mjs",
     "db:types:check": "node scripts/generate-database-types.mjs --check",
@@ -47,12 +52,21 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "guard:architecture": "node scripts/check-architecture.mjs",
+    "guard:secrets": "node scripts/check-secrets.mjs",
+    "guard:release": "node scripts/check-release-hygiene.mjs",
+    "guard:browser-bundle": "node scripts/check-browser-bundle-secrets.mjs",
+    "guard:security-headers": "node scripts/check-production-security-headers.mjs",
+    "audit:dependencies": "npm audit --omit=dev --audit-level=high",
+    "audit:python": "node scripts/python.mjs -m pip_audit --local --skip-editable",
     "canon:validate": "node scripts/check-canonical-manifest.mjs",
-    "ci": "npm run canon:validate && npm run guard:architecture && npm run format:check && npm run lint && npm run typecheck && npm run test:unit && npm run test:contracts && npm run lint:python && npm run format:python && npm run typecheck:python && npm run test:python && npm run build"
+    "ci": "npm run canon:validate && npm run guard:architecture && npm run guard:secrets && npm run guard:release && npm run audit:dependencies && npm run format:check && npm run lint && npm run typecheck && npm run test:unit && npm run test:contracts && npm run lint:python && npm run format:python && npm run typecheck:python && npm run test:python && npm run audit:python && npm run build && npm run guard:browser-bundle && npm run guard:security-headers"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.8",
-    "pg": "8.22.0"
+    "next": "16.2.12",
+    "pg": "8.22.0",
+    "postcss": "8.5.23",
+    "sharp": "0.35.3"
   },
   "devDependencies": {
     "@types/node": "24.13.3",
@@ -61,5 +75,12 @@
     "supabase": "2.109.1",
     "tsx": "4.23.1",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "next": {
+      ".": "$next",
+      "postcss": "$postcss",
+      "sharp": "$sharp"
+    }
   }
 }

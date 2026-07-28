@@ -18,6 +18,7 @@ export async function GET(
 ): Promise<Response> {
   return handleDeviceApiRequest(request, async (context) => {
     const authenticated = await authenticateDeviceRequest(request, context.requestId);
+    context.deviceId = authenticated.deviceId;
     const { collectionId: rawCollectionId } = await route.params;
     const collectionId = requireUuid(rawCollectionId, "collection_id");
     const url = new URL(request.url);

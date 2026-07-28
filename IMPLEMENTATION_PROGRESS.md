@@ -6,178 +6,183 @@ Branch: `greenfield/platform-v1`
 
 ## Checkpoint position
 
-Phases 0 through 4 are complete at:
+The greenfield master build is complete through Phase 6. Checkpoints:
 
 ```text
+211e438 phase 0: greenfield platform scaffold
+56cece3 phase 1: invite-only identity and workspace foundation
+2cc652c phase 2: canonical catalog pricing and browse
+d819a17 phase 3: auditable collection inventory
 905deaf phase 4: collection-aware deck builder
-```
-
-The initial Phase 5 foundation is committed at:
-
-```text
 6557191 phase 5 checkpoint: device API and snapshot foundations
+433cbcd phase 5: device API and robot catalog snapshot
+phase 6: private beta hardening and delivery
 ```
 
-Phase 5 is now fully implemented and validated. The commit containing this
-document must use the prescribed subject:
+The Phase 6 SHA is intentionally not embedded in the commit that defines it.
+Resolve it with `git log -1 --oneline` after the checkpoint. Nothing was pushed,
+deployed, or applied to hosted Supabase/Auth/Storage or Vercel.
 
-```text
-phase 5: device API and robot catalog snapshot
-```
+## Completed phases
 
-Resolve its SHA with `git log -1 --oneline` after the checkpoint is created.
-Phase 6 has not yet started. Nothing was pushed, deployed, or applied to a
-hosted Supabase, Storage, or Vercel project.
+### Phase 0 - greenfield foundation
 
-## Phase 5 completed
+- Established the locked npm-workspace, Next.js/React/TypeScript, CSS Modules,
+  Supabase, Python 3.13, Vercel, test, and CI structure.
+- Checked in canonical docs/contracts and guards against architecture drift,
+  public registration, Tailwind, and historical application imports.
+- Added Windows-friendly setup and clean database smoke automation.
 
-### Database, authorization, and concurrency
+### Phase 1 - invitation, identity, and workspaces
 
-- Added workspace-scoped devices, private digest-only credentials, explicit
-  collection grants, immutable sync batches and run summaries, catalog
-  snapshots, idempotency records, feature policies, and quota windows.
-- Added bounded owner/admin device administration and service-only device API
-  functions with default-deny RLS and least-privilege execution grants.
-- Routed device inventory writes through the Phase 3 immutable ledger with
-  device-wide idempotency, replay, conflict detection, and catalog identity
-  checks.
-- Added deterministic snapshot publication with exact active-generation
-  validation, create/replay conflict safety, stale publisher rejection, and
-  current/previous snapshot retention.
-- Implemented full SemVer precedence for snapshot minimum-client matching:
-  release versus prerelease, numeric identifiers, numeric versus non-numeric
-  identifiers, build metadata, invalid leading zeroes, and unbounded numeric
-  identifiers.
-- Added a loopback-only multi-session harness covering:
-  - identical and conflicting inventory keys;
-  - run-summary idempotency and external-run identity;
-  - in-flight suspension, credential revocation, and grant revocation;
-  - concurrent quota first use and exhaustion;
-  - concurrent snapshot create/replay, stale promotion, and prior pointer
-    retention.
+- Added invite-gated Before User Created admission, idempotent profile/personal
+  workspace/default collection provisioning, recovery/login/logout/settings,
+  and trusted admin scripts.
+- Enforced default-deny workspace RLS, active membership/role rules, and final
+  owner protection.
+- Kept human identity entirely in managed Supabase Auth; there is no public
+  registration route or application-owned password/session system.
 
-### Web administration and stable machine API
+### Phase 2 - canonical catalog and pricing
 
-- Implemented responsive non-preview and preview device list/detail,
-  registration, one-time credential acknowledgement, rotation/revocation,
-  lifecycle, and explicit collection-grant controls.
-- Implemented all six canonical `/api/v1/device` routes:
-  - `GET /api/v1/device/me`;
-  - `POST /api/v1/device/heartbeat`;
-  - `GET /api/v1/device/catalog/manifest`;
-  - `GET /api/v1/device/collections/[collectionId]/inventory`;
-  - `POST /api/v1/device/collections/[collectionId]/inventory-batches`;
-  - `POST /api/v1/device/runs`.
-- Kept raw device secrets one-time only. The database receives only a bounded
-  non-secret prefix and a server-peppered HMAC-SHA-256 digest.
-- Added strict Bearer parsing, constant-time verification, bounded JSON/query
-  parsing, idempotency-key requirements, canonical envelopes, correlation IDs,
-  safe error details, quotas, feature switches, and prohibited robot-state
-  rejection.
-- Bound accepted manifest URLs to the exact configured Supabase origin,
-  `catalog-snapshots` bucket, immutable object path, and signed token. Hosted
-  URLs require HTTPS; local loopback development may use HTTP.
-- Corrected the canonical OpenAPI `InventoryPageResponse.meta` schema so the
-  required `request_id` and `next_cursor` coexist under a sealed object, then
-  regenerated contract types and updated the canonical manifest.
+- Added normalized global catalog, provider identities, faces/legalities,
+  current finish-specific price observations, active import promotion, and
+  bounded browse/detail/admin RPCs.
+- Added the offline-testable Scryfall worker with download/redirect/size/hash/
+  retry guards, deterministic fixture import, and failure-safe promotion.
+- Added indexed search and representative 50,000-printing performance proof.
+  Missing prices remain missing and every present price carries source and
+  freshness.
 
-### Snapshot worker, private Storage, and robot reference client
+### Phase 3 - auditable inventory
 
-- Added repeatable-read extraction under the shared catalog-promotion lock and
-  deterministic populated SQLite generation in primary-key order.
-- Added canonical metadata/counts, exact decimal prices, FTS, foreign-key and
-  integrity checks, byte-size limits, and SHA-256 verification.
-- Kept rebuilds byte-identical by deriving generated/ingested timestamps from
-  provider observation rather than mutable worker clocks.
-- Added immutable local-file and real Supabase private Storage adapters.
-  Upload and verification complete before database publication.
-- Added a reference installer with bounded retry, manifest/client/schema
-  compatibility, checksum, size, SQLite integrity, cloud printing identity,
-  and current/previous installation checks.
-- Permitted HTTP only for loopback Storage/reference-client integration;
-  non-local download and project URLs remain HTTPS-only.
-- Added a guarded real-local Storage test covering two snapshot publications,
-  create-only replay, changed-byte rejection, signed downloads, reference
-  installation, sampled cloud printing parity, anonymous denial, and previous
-  snapshot preservation.
+- Added workspace collections, exact balances, immutable transactions/lines,
+  idempotent mutations, transfers, reversals, history, valuation, analytics,
+  private CSV import, retention, and safe export.
+- Removed ordinary direct balance/history writes; every quantity mutation
+  crosses a locked PostgreSQL transaction function.
+- Added real local Storage and multi-session concurrency coverage.
 
-### Live composition and contract conformance
+### Phase 4 - collection-aware decks
 
-- Added a dedicated non-preview Playwright configuration that discovers and
-  refuses anything except disposable local Supabase endpoints.
-- The live flow:
-  - creates an Auth user only after inserting a valid invitation;
-  - signs in through the real login UI and uses actual Auth cookies;
-  - finalizes the admitted profile/workspace through RLS/RPC;
-  - registers the device through the browser and captures the credential once;
-  - saves all three explicit collection grants;
-  - calls all six HTTP routes against real Auth/Postgres/RLS/RPC/Storage;
-  - validates requests with the canonical JSON Schemas and every live response
-    with the dereferenced OpenAPI 3.1 schema;
-  - downloads and hashes the signed private SQLite artifact;
-  - proves inventory and run replay/conflict behavior plus actionable unknown
-    printing diagnostics;
-  - revokes the first credential and suspends a rotated credential, proving
-    both fail closed with canonical 401 responses.
+- Added formats/versions, workspace decks, entries, selected collection
+  sources, immutable revisions, validation evidence, ownership/value, history,
+  export, archive/restore, and responsive editing.
+- Added optimistic concurrency, cross-workspace source denial, revision-bound
+  validation, and price/ownership behavior that never treats missing as zero.
 
-## Final Phase 5 validation evidence
+### Phase 5 - device API and robot snapshot
 
-- Blank `npx supabase db reset --local --no-seed`: pass through all Phase 5
-  migrations.
-- `npm run db:lint`: zero warnings.
-- `npm run test:supabase`: 28 files and 754 assertions pass.
-- `npm run db:types` and `npm run db:types:check`: pass with no drift.
-- Guarded worker/PostgreSQL integration: 2/2 pass.
-- Phase 3 Storage/inventory concurrency regression: pass.
-- Phase 4 deck concurrency regression: pass.
-- Phase 5 device/snapshot concurrency: pass.
-- Real private Storage publication/reference install: 1/1 pass.
-- Real non-preview Auth/admin/all-route contract flow: 1/1 pass.
-- Device preview Playwright: 4/4 across desktop and mobile Chromium.
-- Canonical manifest, copied contracts, OpenAPI, JSON Schemas, generated
-  contract types, and SQLite schema validation: pass.
-- Root `npm run ci`: pass, including:
-  - web Vitest: 38 files / 223 tests;
-  - contracts: 7 tests;
-  - domain: 2 tests;
-  - UI: 11 tests;
-  - trusted administration: 18 tests;
-  - Python: 83 passed / 3 environment-gated skips;
-  - Ruff, strict mypy, formatting, lint, typecheck, architecture guard, and
-    production Next.js build.
-- `git diff --check`: pass.
+- Added digest-only scoped/revocable device credentials, explicit collection
+  grants, lifecycle administration, feature policies/quotas, idempotent
+  inventory batches and run summaries, and six stable `/api/v1/device` routes.
+- Added deterministic SQLite catalog snapshots, private immutable Storage
+  publication, active/previous manifests, full SemVer compatibility, and the
+  separate robot reference installer.
+- Proved live Auth/RLS/RPC/HTTP/OpenAPI/JSON Schema/Storage composition and
+  concurrent lifecycle, quota, idempotency, and promotion invariants.
+- Kept robot motion and execution checkpoints entirely outside cloud state.
 
-## Phase 6 is next
+### Phase 6 - private-beta hardening and delivery
 
-No Phase 6 implementation is included in the Phase 5 checkpoint. The next work
-unit must complete the master-prompt Phase 6 acceptance criteria:
+- Added a consolidated two-user/two-workspace release RLS matrix covering all
+  exposed tables, direct grants, and bounded cross-feature RPCs.
+- Added private application request/work-unit windows and a generic atomic
+  external-service UTC-day quota model over global/user/workspace/device
+  scopes. Managed Auth invitation reserves before provider work.
+- Added platform-admin operations controls for application, external, and
+  device switches, daily usage, optimistic updates, and sanitized audit events.
+- Added UUID request correlation and allowlisted structured security/request
+  logging across browser and device boundaries.
+- Added nonce-based production CSP, Scryfall/Supabase/Turnstile compatibility,
+  HSTS, Permissions/Referrer/Frame/Content-Type headers, and a built-server
+  header smoke test.
+- Added source/release/browser-bundle secret scanning, production npm audit,
+  Python dependency audit, repository hygiene guards, and CI coverage.
+- Added a repeatable network-free catalog/two-workspace/Auth fixture.
+- Added a live browser critical journey across login, catalog, modal keyboard
+  focus, inventory, real Storage import preview/commit, deck creation, device
+  credential/grants, cross-workspace denial, operations toggle/audit, and axe
+  serious/critical checks.
+- Added representative 10,000-row inventory-summary performance acceptance.
+- Added the final environment, WAF/Auth/rate-limit, backup/restore, incident,
+  production setup, and private-beta sign-off runbooks.
 
-- full two-user/two-workspace RLS regression;
-- critical-flow browser coverage across Auth, catalog, collection/import,
-  decks, and devices;
-- CSP/security headers, edge/WAF documentation, Auth/CAPTCHA production
-  controls, application quotas, and kill switches;
-- sanitized structured logging and correlation IDs;
-- dependency and secret scanning in CI;
-- accessibility, keyboard, focus, and representative performance acceptance;
-- backup/restore, monitoring, incident, deployment, environment, and operator
-  documentation;
-- final canonical/contract consistency, clean-reset, seed, CI, security, and
-  repository-hygiene audit.
+## Phase 6 database surface
 
-## Manual production setup still required
+Migration:
 
-- Configure hosted credential pepper and server-only worker database/Storage
-  credentials.
-- Apply reviewed migrations and the private `catalog-snapshots` bucket to
-  hosted development before production.
-- Choose production feature-policy limits and signed-URL lifetime.
-- Run the first operator-reviewed catalog import, snapshot publication, and
-  device fixture.
-- Complete the earlier Auth/SMTP/CAPTCHA/bootstrap setup and all Phase 6
-  private-beta readiness controls.
-- Do not push, deploy, mutate hosted state, or publish the first snapshot
-  without fresh explicit authorization.
+- `20260727060000_phase_6_operational_controls.sql`.
 
-See `IMPLEMENTATION_STATUS.md`, `RESTART_HANDOFF.md`, and
-`docs/dev-logs/phase-5.md` for the detailed record.
+New exposed RLS table:
+
+- `public.audit_events`, selectable only by admitted platform administrators.
+
+New private tables:
+
+- `application_feature_policies`;
+- `application_usage_windows`;
+- `external_service_policies`;
+- `external_service_usage_daily`.
+
+New bounded functions:
+
+- `consume_application_feature_quota`;
+- `consume_external_service_quota`;
+- `record_server_audit_event`;
+- `admin_operational_controls`;
+- `admin_application_feature_policy_update`;
+- `admin_external_service_policy_update`;
+- `admin_operational_control_toggle`.
+
+Ordinary direct writes are revoked. Private quota/policy tables are not exposed.
+Audit metadata is bounded and rejects secret-bearing key names.
+
+## Validation evidence
+
+The completed Phase 6 checkpoint has green evidence for:
+
+- empty local database migration through all 26 ordered migrations;
+- database lint with zero warnings and generated database types with no drift;
+- pgTAP: 31 files / 808 assertions;
+- Phase 3 inventory/Storage, Phase 4 deck, Phase 5 device/snapshot, and Phase 6
+  quota multi-session regressions;
+- real private snapshot Storage publication/reference installation;
+- live Phase 5 Auth/device/all-route OpenAPI and JSON Schema composition;
+- repeatable Phase 6 seed and live full critical journey;
+- desktop/mobile preview browser coverage;
+- canonical manifest, architecture, source-secret, release-hygiene,
+  production-dependency, browser-bundle-secret, and production-header guards;
+- formatting, lint, strict TypeScript, worker Ruff/mypy/pytest/pip-audit,
+  unit/contract suites, and production Next.js build;
+- web Vitest 41 files / 232 tests; contracts/domain/UI/admin 7/2/11/18;
+- Python 83 pass / 3 intentional environment skips plus all guarded
+  PostgreSQL/Storage integrations;
+- desktop/mobile preview browser 19 pass / 3 intentional project skips;
+- `git diff --check`.
+
+Exact command output and test counts are recorded in
+`docs/dev-logs/phase-6.md` and `IMPLEMENTATION_STATUS.md`.
+
+## Achievable work remaining
+
+No locally achievable master-prompt implementation or Phase 6 acceptance item
+is incomplete.
+
+## Manual production setup remaining
+
+Only credentialed/human operations remain:
+
+- approve and apply hosted migrations;
+- enter Vercel/server/worker secrets and environment values;
+- configure Supabase redirects, Before User Created hook, SMTP, CAPTCHA, Auth
+  limits, backups/PITR, alerts, and private Storage protection;
+- configure Vercel DNS/TLS, WAF/rate/challenge rules, spend alerts, and
+  authorized deployment;
+- complete a restore rehearsal and fill operator/incident contacts;
+- bootstrap the first platform admin and review quota/feature values;
+- perform the first approved live catalog import/snapshot publication;
+- enable production surfaces incrementally and invite beta users.
+
+Follow `docs/operations/private-beta-checklist.md`. The repository intentionally
+does not perform those actions.

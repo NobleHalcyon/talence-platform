@@ -23,6 +23,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request): Promise<Response> {
   return handleDeviceApiRequest(request, async (context) => {
     const authenticated = await authenticateDeviceRequest(request, context.requestId);
+    context.deviceId = authenticated.deviceId;
     if (!snapshotDownloadsEnabled()) {
       throw new DeviceApiError(
         503,

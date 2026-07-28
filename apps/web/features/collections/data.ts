@@ -6,6 +6,7 @@ import type { CollectionView } from "./types";
 
 import { getAppContextState } from "@/lib/auth/app-context";
 import { DATABASE_FUNCTIONS, DATABASE_TABLES } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { staticCollectionPreviewEnabled } from "./config";
@@ -60,7 +61,10 @@ function asRpcClient(value: unknown): CollectionRpcClient {
 }
 
 function warnCollectionFailure(code: string, requestId: string): void {
-  console.warn("Talence collection read failed", { code, requestId });
+  writeSecurityLog("warn", "collection.read.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 function errorReason(
@@ -381,6 +385,31 @@ export async function loadCollectionAnalytics(
   const client = await userClient();
   if (!client) {
     return { ok: false, reason: "configuration_required", requestId: randomUUID() };
+  }
+  const requestId = randomUUID();
+  try {
+    const reservation = await client.rpc(DATABASE_FUNCTIONS.consumeApplicationFeatureQuota, {
+      p_feature_key: "collection_analytics",
+      p_workspace_id: scoped.scope.workspaceId,
+      p_units: 5_000,
+      p_correlation_id: requestId,
+    });
+    if (reservation.error) {
+      const source =
+        `${reservation.error.code ?? ""} ${reservation.error.message ?? ""}`.toLowerCase();
+      warnCollectionFailure(
+        source.includes("quota_exceeded")
+          ? "collection_analytics_rate_limited"
+          : source.includes("feature_disabled")
+            ? "collection_analytics_disabled"
+            : "collection_analytics_quota_unavailable",
+        requestId,
+      );
+      return { ok: false, reason: "request_failed", requestId };
+    }
+  } catch {
+    warnCollectionFailure("collection_analytics_quota_unavailable", requestId);
+    return { ok: false, reason: "request_failed", requestId };
   }
   return loadCollectionAnalyticsWithClient(client, collectionId, scoped.scope.currency, query);
 }

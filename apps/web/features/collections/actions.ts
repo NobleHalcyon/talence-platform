@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { getAppContextState } from "@/lib/auth/app-context";
 import { validateUuid } from "@/lib/auth/validation";
 import { DATABASE_FUNCTIONS, DATABASE_TABLES } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { staticCollectionPreviewEnabled } from "./config";
@@ -103,7 +104,10 @@ function collectionPath(collectionId: string): string {
 }
 
 function warnCollectionMutation(code: string, requestId: string): void {
-  console.warn("Talence collection mutation failed", { code, requestId });
+  writeSecurityLog("warn", "collection.mutation.failed", {
+    code,
+    request_id: requestId,
+  });
 }
 
 function rpcFailure(error: { code?: string; message?: string } | null): RpcMutationResult<never> {

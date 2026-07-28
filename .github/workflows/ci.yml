@@ -23,12 +23,21 @@ jobs:
       - run: npm ci
       - run: npm run canon:validate
       - run: npm run guard:architecture
+      - run: npm run guard:secrets
+      - run: npm run guard:release
+      - run: npm run audit:dependencies
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit
       - run: npm run test:contracts
       - run: npm run build
+        env:
+          NEXT_PUBLIC_APP_ORIGIN: https://preview.invalid
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+      - run: npm run guard:browser-bundle
+      - run: npm run guard:security-headers
 
   catalog-worker:
     runs-on: ubuntu-latest
@@ -46,6 +55,7 @@ jobs:
       - run: python -m ruff format --check services/catalog-worker
       - run: python -m mypy services/catalog-worker/src
       - run: python -m pytest services/catalog-worker/tests
+      - run: python -m pip_audit --local --skip-editable
 
   database:
     runs-on: ubuntu-latest
@@ -58,10 +68,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx supabase start
-      - run: npx supabase db reset
+      - run: npx supabase db reset --local --no-seed
       - run: npm run db:lint
       - run: npm run db:types:check
       - run: npx supabase test db
+      - run: npm run test:supabase:phase3-integration
+      - run: npm run test:supabase:phase4-concurrency
+      - run: npm run test:supabase:phase5-concurrency
+      - run: npm run test:supabase:phase6-concurrency
 
   browser:
     runs-on: ubuntu-latest
@@ -75,3 +89,27 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
+  live-private-beta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: services/catalog-worker/pyproject.toml
+      - run: npm ci
+      - run: bash scripts/setup-python.sh
+      - run: npx playwright install --with-deps chromium
+      - run: npx supabase start
+      - run: npx supabase db reset --local --no-seed
+      - run: npm run seed:private-beta
+      - run: npm run test:supabase:phase5-storage
+      - run: npm run test:e2e:phase5-live
+      - run: npm run test:phase6:local

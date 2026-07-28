@@ -80,44 +80,57 @@ npm run dev
 
 ## Verification
 
-JavaScript and TypeScript:
+Install the exact lockfile, Python development environment, and Chromium from
+a fresh PowerShell:
 
 ```powershell
-npm run guard:architecture
-npm run format:check
-npm run lint
-npm run typecheck
-npm run test:unit
-npm run test:contracts
-npm run build
+npm ci
+.\scripts\setup-python.ps1
+npx playwright install chromium
 ```
 
-Python, using the local virtual environment on Windows:
+Run the complete non-Docker CI chain:
 
 ```powershell
-.\.venv\Scripts\python.exe -m ruff check services\catalog-worker
-.\.venv\Scripts\python.exe -m ruff format --check services\catalog-worker
-.\.venv\Scripts\python.exe -m mypy services\catalog-worker\src
-.\.venv\Scripts\python.exe -m pytest services\catalog-worker\tests
+npm run ci
 ```
 
-The equivalent Bash commands replace `.\.venv\Scripts\python.exe` with
-`.venv/bin/python`.
+That command validates the canonical manifest and architecture, scans source
+and release contents, audits production npm and installed Python dependencies,
+checks formatting/lint/types, runs all unit/contract/worker tests, builds the
+production application, scans browser assets for server secrets, and starts
+the built server to verify production security headers.
 
-Database and browser:
+Run the clean local Supabase and browser acceptance matrix:
 
 ```powershell
-npx supabase db reset
+$env:Path = "C:\Users\judge\AppData\Local\Programs\Docker\Docker\resources\bin;C:\Users\judge\AppData\Local\Programs\DockerDesktop\resources\bin;$env:Path"
+npx supabase start
+npx supabase db reset --local --no-seed
 npm run db:lint
 npm run db:types:check
 npm run test:supabase
-npx playwright install chromium
+npm run test:supabase:phase3-integration
+npm run test:supabase:phase4-concurrency
+npm run test:phase5:local
+npm run test:supabase:phase6-concurrency
+npm run test:phase6:local
 npm run test:e2e
+git diff --check
+git status --short
 ```
 
-`npm run ci` runs the local checks that do not require Docker or a browser
-download. GitHub Actions starts a clean local Supabase stack, checks generated
-database types, lints all committed schemas, and runs pgTAP.
+`npm run test:phase5:local` covers multi-session device/snapshot concurrency,
+real private Storage publication/reference installation, and live Auth/device
+API contract composition. `npm run test:phase6:local` owns a clean reset,
+repeatable two-workspace fixture, and the full private-beta browser journey.
+Both commands refuse non-loopback Supabase endpoints.
+
+The GitHub Actions `CI` workflow runs five isolated jobs for web/contracts,
+Python, database/Storage, preview browser coverage, and live private-beta
+composition. `Preview readiness` performs the production build and security
+scans without receiving deployment credentials; Vercel Git integration remains
+responsible for any authorized preview deployment.
 
 ## Environment contract
 
@@ -135,6 +148,9 @@ The Supabase secret key, direct worker database URL, device credential pepper,
 and catalog-worker configuration are server/worker-only. They must never use a
 `NEXT_PUBLIC_` prefix. The Turnstile secret is configured in Supabase Auth, not
 in the web application; only its site key is browser-visible.
+
+The complete production placement table is
+[`docs/operations/environment-matrix.md`](docs/operations/environment-matrix.md).
 
 All incident-sensitive features default off when configuration is absent:
 invitations, catalog sync, device inventory writes, and snapshot downloads.
@@ -226,6 +242,24 @@ currency, observation/ingestion times, and stale state. Missing observations
 remain explicitly unpriced. See the
 [`Phase 3 dev log`](docs/dev-logs/phase-3.md).
 
+## Collection-aware decks
+
+Phase 4 adds workspace-scoped deck formats, current immutable format versions,
+decks, entries, selected collection sources, revisions, and validation runs.
+All edits use optimistic revision checks and atomically write an immutable
+revision. Cross-workspace collection sources are rejected.
+
+Authenticated routes include:
+
+- `/app/decks` for create, browse, archive, and restore;
+- `/app/decks/[deckId]` for revision-aware editing, grouped entries,
+  collection ownership, value, validation, history, and text export.
+
+Deck value and ownership stay finish-specific, use only selected collections,
+and keep missing prices explicitly unpriced. Validation evidence records the
+exact format version, deck revision, and source collections. See the
+[`Phase 4 dev log`](docs/dev-logs/phase-4.md).
+
 ## Catalog worker safety and local commands
 
 Tests use committed fixtures and do not call Scryfall. Live catalog work runs
@@ -267,6 +301,42 @@ in flight fails the run and preserves the active catalog. See
 Devices use independent high-entropy credentials through `/api/v1/device`.
 Credentials are scoped, revocable, and stored only as digests. No cloud route
 starts physical motion or stores robot execution checkpoints.
+
+Human routes `/app/devices` and `/app/devices/[deviceId]` issue a raw
+credential once, manage lifecycle and rotation, and assign explicit
+per-collection read/write/run-summary grants. Six versioned machine routes
+provide identity, heartbeat, immutable catalog manifest, bounded inventory
+read, idempotent inventory batches, and idempotent run summaries.
+
+The Python worker builds byte-deterministic SQLite catalog snapshots, verifies
+them before private Storage publication, and retains the current and previous
+manifests. The separate robot reference client verifies API/client/schema
+compatibility, SHA-256, size, SQLite integrity, and cloud printing identity
+before installation. See the
+[`Phase 5 dev log`](docs/dev-logs/phase-5.md).
+
+## Private-beta operations
+
+Phase 6 adds atomic application and generic external-service quotas, existing
+device-policy consolidation, feature kill switches, safe audit events,
+structured correlation IDs, production CSP/security headers, release scanners,
+repeatable fixtures, and the full live private-beta browser journey.
+
+Platform administrators use `/app/admin/operations` to inspect bounded usage,
+toggle application/external/device controls with optimistic concurrency, and
+review sanitized audit events. Ordinary workspace owners cannot read this
+surface or its audit table.
+
+Production setup remains human-controlled. Start with:
+
+- [`private-beta-checklist.md`](docs/operations/private-beta-checklist.md);
+- [`production-setup.md`](docs/operations/production-setup.md);
+- [`waf-and-rate-limits.md`](docs/operations/waf-and-rate-limits.md);
+- [`backup-and-restore.md`](docs/operations/backup-and-restore.md);
+- [`incident-response.md`](docs/operations/incident-response.md).
+
+No script in this repository deploys production or mutates hosted
+configuration without an explicit operator action.
 
 ## Canon and behavior changes
 

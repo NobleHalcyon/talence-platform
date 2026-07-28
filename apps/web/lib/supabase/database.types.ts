@@ -3,6 +3,53 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          actor_user_id: string | null;
+          correlation_id: string;
+          event_type: string;
+          id: string;
+          metadata: Json;
+          occurred_at: string;
+          resource_id: string | null;
+          resource_type: string | null;
+          result_code: string;
+          workspace_id: string | null;
+        };
+        Insert: {
+          actor_user_id?: string | null;
+          correlation_id: string;
+          event_type: string;
+          id?: string;
+          metadata?: Json;
+          occurred_at?: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_code: string;
+          workspace_id?: string | null;
+        };
+        Update: {
+          actor_user_id?: string | null;
+          correlation_id?: string;
+          event_type?: string;
+          id?: string;
+          metadata?: Json;
+          occurred_at?: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_code?: string;
+          workspace_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       catalog_cards: {
         Row: {
           active: boolean;
@@ -2303,6 +2350,19 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_application_feature_policy_update: {
+        Args: {
+          p_correlation_id: string;
+          p_enabled: boolean;
+          p_expected_updated_at: string;
+          p_feature_key: string;
+          p_max_units_per_request: number;
+          p_per_day_requests: number;
+          p_per_day_units: number;
+          p_per_minute_requests: number;
+        };
+        Returns: Json;
+      };
       admin_bootstrap_platform_admin: {
         Args: { p_user_id: string };
         Returns: Json;
@@ -2319,6 +2379,19 @@ export type Database = {
           p_per_day_requests: number;
           p_per_day_units: number;
           p_per_minute_requests: number;
+        };
+        Returns: Json;
+      };
+      admin_external_service_policy_update: {
+        Args: {
+          p_correlation_id: string;
+          p_enabled: boolean;
+          p_expected_updated_at: string;
+          p_global_daily_units: number;
+          p_per_device_daily_units: number;
+          p_per_user_daily_units: number;
+          p_per_workspace_daily_units: number;
+          p_service_key: string;
         };
         Returns: Json;
       };
@@ -2355,6 +2428,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      admin_operational_control_toggle: {
+        Args: {
+          p_control_key: string;
+          p_control_kind: string;
+          p_correlation_id: string;
+          p_enabled: boolean;
+          p_expected_updated_at: string;
+        };
+        Returns: Json;
+      };
+      admin_operational_controls: { Args: never; Returns: Json };
       admin_prepare_invited_user: {
         Args: {
           p_actor_user_id: string;
@@ -2535,6 +2619,26 @@ export type Database = {
           p_description: string;
           p_expected_updated_at: string;
           p_name: string;
+        };
+        Returns: Json;
+      };
+      consume_application_feature_quota: {
+        Args: {
+          p_correlation_id: string;
+          p_feature_key: string;
+          p_units: number;
+          p_workspace_id: string;
+        };
+        Returns: Json;
+      };
+      consume_external_service_quota: {
+        Args: {
+          p_correlation_id?: string;
+          p_device_id?: string;
+          p_service_key: string;
+          p_units: number;
+          p_user_id: string;
+          p_workspace_id: string;
         };
         Returns: Json;
       };
@@ -2887,6 +2991,19 @@ export type Database = {
       inventory_import_stage_rows: {
         Args: { p_complete?: boolean; p_import_job_id: string; p_rows: Json };
         Returns: Json;
+      };
+      record_server_audit_event: {
+        Args: {
+          p_actor_user_id: string;
+          p_correlation_id: string;
+          p_event_type: string;
+          p_metadata?: Json;
+          p_resource_id: string;
+          p_resource_type: string;
+          p_result_code: string;
+          p_workspace_id: string;
+        };
+        Returns: string;
       };
       reverse_inventory_transaction: {
         Args: {

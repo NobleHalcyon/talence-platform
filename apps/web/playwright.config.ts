@@ -10,6 +10,7 @@ const channelOverride = browserChannel ? { channel: browserChannel } : {};
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: ["phase5-live-device.spec.ts", "phase6-private-beta.spec.ts"],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

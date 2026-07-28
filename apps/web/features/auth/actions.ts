@@ -15,6 +15,7 @@ import {
   validatePassword,
 } from "@/lib/auth/validation";
 import { DATABASE_FUNCTIONS, DATABASE_TABLES } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import {
   getApplicationOrigin,
   getCaptchaSiteKey,
@@ -29,7 +30,11 @@ function redirectWithStatus(pathname: string, status: string, requestId?: string
 }
 
 function safeFailure(action: string, requestId: string, code: string): void {
-  console.warn("Talence managed-auth action failed", { action, code, requestId });
+  writeSecurityLog("warn", "auth.action.failed", {
+    action,
+    code,
+    request_id: requestId,
+  });
 }
 
 function captchaFailure(

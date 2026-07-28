@@ -54,6 +54,18 @@ const STATUS_MESSAGES: Readonly<Record<string, SafeStatus>> = {
       "No account access was granted. Retry or inspect the admission ledger before continuing.",
     tone: "danger",
   },
+  invite_disabled: {
+    title: "Invitations are paused",
+    message:
+      "No account access was granted. The external invitation control is closed for incident response.",
+    tone: "warning",
+  },
+  invite_rate_limited: {
+    title: "Invitation limit reached",
+    message:
+      "No account access was granted. Retry after the configured external-service quota window.",
+    tone: "warning",
+  },
   invite_input_invalid: {
     title: "Invitation needs attention",
     message: "Enter a valid email, an expiration within thirty-one days, and a shorter note.",

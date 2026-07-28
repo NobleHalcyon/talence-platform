@@ -440,14 +440,91 @@ policy is adopted. Monitor expired, failed, cancelled, committed, and purged
 counts plus retained bytes. Rehearse interruption between object deletion and
 the idempotent database mark so the next run recovers safely.
 
-## Later-phase production work
+## Phase 4 deck checklist
 
-The following remain intentionally pending until their implementation phases:
+Phase 4 requires no additional external provider. After applying its migrations:
 
-1. Create the immutable catalog-artifact/snapshot Storage bucket with MIME,
-   size, retention, and signed-URL policies.
-2. Configure device API quotas, credential pepper, and snapshot controls.
-3. Enable Vercel Spend Management and Supabase cost controls.
-4. Complete backup/restore and incident-response rehearsals.
-5. Perform the Phase 6 security, accessibility, performance, and deployment
-   acceptance review.
+1. Confirm deck tables expose only the reviewed authenticated RLS policies and
+   ordinary sessions cannot write revisions directly.
+2. Create, edit, validate, export, archive, and restore one deck through the
+   application.
+3. Select one or more same-workspace collection sources and prove that a
+   cross-workspace collection cannot be attached.
+4. Race two edits from the same revision and verify one succeeds while the
+   stale editor receives a conflict.
+5. Preserve immutable revisions/validation evidence and never infer missing
+   prices as zero.
+
+## Phase 5 device and snapshot checklist
+
+### 1. Configure trusted runtime values
+
+Set in Vercel Production:
+
+- a new independent `DEVICE_CREDENTIAL_PEPPER`;
+- `TALENCE_CATALOG_SNAPSHOT_BUCKET=catalog-snapshots`;
+- reviewed request-body and signed-URL limits;
+- `FEATURE_DEVICE_INVENTORY_WRITES_ENABLED=false`;
+- `FEATURE_SNAPSHOT_DOWNLOADS_ENABLED=false`.
+
+Set the worker’s protected Supabase URL/secret, direct database URL, snapshot
+limits, client/API versions, and `TALENCE_SNAPSHOT_STORAGE_BACKEND=supabase`.
+Follow `environment-matrix.md`; never place these values in browser variables.
+
+### 2. Verify private Storage and credentials
+
+The ordered migration creates the private `catalog-snapshots` bucket. Confirm:
+
+- anonymous public object access is denied;
+- only exact immutable version paths are published;
+- uploaded bytes are re-downloaded and checked before database publication;
+- generated signed URLs use the exact project origin, bucket, object path, and
+  a short expiry;
+- changed bytes cannot replace an existing snapshot version.
+
+Register a disposable device, acknowledge its 256-bit credential once, and
+verify only the prefix plus peppered digest remain. Exercise explicit
+collection grants, credential rotation/revocation, suspension, and terminal
+revocation.
+
+### 3. Publish the first snapshot
+
+Run the fixture and guarded local integrations first. For the live operation:
+
+1. manually approve and complete the first Scryfall catalog import;
+2. build the deterministic SQLite snapshot under the shared promotion lock;
+3. verify schema, foreign keys, FTS, counts, byte size, and SHA-256;
+4. upload privately, verify stored bytes, and publish the database manifest;
+5. install through the robot reference client and retain the previous verified
+   local generation;
+6. enable snapshot downloads only after the reference installation succeeds.
+
+No cloud route starts physical motion or stores robot execution state.
+
+## Phase 6 release readiness
+
+Complete the following runbooks before the first invitation:
+
+- `environment-matrix.md` for Vercel, Supabase, worker, and preview placement;
+- `waf-and-rate-limits.md` for Vercel Firewall, Supabase Auth/CAPTCHA, database
+  quotas, and kill switches;
+- `backup-and-restore.md` for database plus private Storage recovery;
+- `incident-response.md` for containment, correlation, credential, isolation,
+  and recovery procedures;
+- `private-beta-checklist.md` for the final automated and hosted sign-off.
+
+The operator must additionally:
+
+1. run the exact clean validation matrix in the private-beta checklist;
+2. configure custom SMTP, CAPTCHA, Auth rate limits, WAF rules, backups/PITR,
+   Storage protection, alerts, and incident contacts;
+3. confirm the production CSP/security headers and browser-bundle secret scan;
+4. approve application, external-service, and device quota values;
+5. verify `/app/admin/operations` can disable/re-enable each policy and records
+   a sanitized correlated audit event;
+6. enable the minimum read paths first, then one mutable/provider surface at a
+   time.
+
+Repository automation does not deploy Vercel, apply hosted migrations, enter
+secrets, or enable production switches. Those actions require explicit human
+authorization.

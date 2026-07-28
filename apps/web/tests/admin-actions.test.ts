@@ -43,6 +43,7 @@ vi.mock("@/features/admin/config", () => ({
 const ADMIN_USER_ID = "11111111-1111-4111-8111-111111111111";
 const INVITATION_ID = "22222222-2222-4222-8222-222222222222";
 const AUTH_USER_ID = "33333333-3333-4333-8333-333333333333";
+const WORKSPACE_ID = "44444444-4444-4444-8444-444444444444";
 
 function redirectError(href: string): Error {
   return new Error(`NEXT_REDIRECT:${href}`);
@@ -104,7 +105,7 @@ describe("admin invitation server-action failure boundaries", () => {
         isPlatformAdmin: true,
         profile: {},
         userId: ADMIN_USER_ID,
-        workspace: {},
+        workspace: { id: WORKSPACE_ID },
         workspaces: [],
       },
       status: "ready",
@@ -218,6 +219,41 @@ describe("admin invitation server-action failure boundaries", () => {
       redirectTo: "https://talence.example/auth/callback?type=invite&next=/invite/complete",
     });
     expectRedirect("invite_failed");
+  });
+
+  it("reserves generic external-service quota before contacting managed Auth", async () => {
+    const rpc = vi.fn((functionName: string) => {
+      if (functionName === "admin_prepare_invited_user") {
+        return Promise.resolve({
+          data: { email: "invitee@example.test", id: INVITATION_ID },
+          error: null,
+        });
+      }
+      if (functionName === "consume_external_service_quota") {
+        return Promise.resolve({
+          data: null,
+          error: { code: "P0001", message: "talence_external_service_quota_exceeded" },
+        });
+      }
+      return Promise.resolve({ data: invitedUser(), error: null });
+    });
+    const inviteUserByEmail = vi.fn();
+    mocks.createAdminSupabaseClient.mockReturnValue({
+      auth: { admin: { inviteUserByEmail } },
+      rpc,
+    });
+
+    await expect(issueInviteAction(issueForm())).rejects.toThrow("NEXT_REDIRECT:");
+
+    expect(rpc).toHaveBeenCalledWith("consume_external_service_quota", {
+      p_correlation_id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      p_service_key: "managed_auth_invitation",
+      p_units: 1,
+      p_user_id: ADMIN_USER_ID,
+      p_workspace_id: WORKSPACE_ID,
+    });
+    expect(inviteUserByEmail).not.toHaveBeenCalled();
+    expectRedirect("invite_rate_limited");
   });
 
   it("normalizes an exception while constructing the trusted client", async () => {

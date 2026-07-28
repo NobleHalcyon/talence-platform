@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { getAppContextState } from "@/lib/auth/app-context";
 import { validateUuid } from "@/lib/auth/validation";
 import { DATABASE_FUNCTIONS } from "@/lib/database/contracts";
+import { writeSecurityLog } from "@/lib/observability/security-log";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { staticDeckPreviewEnabled } from "./config";
@@ -226,7 +227,9 @@ async function authorizedMutation(requestId: string): Promise<AuthorizedMutation
       client,
     };
   } catch {
-    console.warn("Talence deck mutation authorization failed", { requestId });
+    writeSecurityLog("warn", "deck.mutation.authorization_failed", {
+      request_id: requestId,
+    });
     return null;
   }
 }

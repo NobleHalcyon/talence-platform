@@ -4,13 +4,16 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getPublicSupabaseConfig } from "./config";
 import type { Database } from "./database.types";
 
-export async function refreshSupabaseSession(request: NextRequest): Promise<NextResponse> {
+export async function refreshSupabaseSession(
+  request: NextRequest,
+  requestHeaders = new Headers(request.headers),
+): Promise<NextResponse> {
   const config = getPublicSupabaseConfig();
   if (!config) {
-    return NextResponse.next({ request });
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  let response = NextResponse.next({ request });
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
   const supabase = createServerClient<Database>(config.url, config.publishableKey, {
     cookies: {
       getAll() {
@@ -21,7 +24,7 @@ export async function refreshSupabaseSession(request: NextRequest): Promise<Next
           request.cookies.set(name, value);
         }
 
-        response = NextResponse.next({ request });
+        response = NextResponse.next({ request: { headers: requestHeaders } });
 
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
