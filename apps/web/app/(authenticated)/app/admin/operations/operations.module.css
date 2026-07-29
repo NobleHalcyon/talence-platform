@@ -1,0 +1,68 @@
+.groups {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.control {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.control header {
+  align-items: start;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.control h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.limits {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.limits div {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.limits dt {
+  color: var(--color-text-muted);
+}
+
+.limits dd {
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.usageGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.usageGrid strong,
+.usageGrid span {
+  display: block;
+}
+
+.usageGrid span {
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.auditTable code {
+  font-size: var(--font-size-xs);
+}

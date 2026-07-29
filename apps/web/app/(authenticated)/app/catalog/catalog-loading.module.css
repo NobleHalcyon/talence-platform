@@ -1,0 +1,17 @@
+.loading,
+.grid {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.search {
+  min-height: 5rem;
+}
+
+.grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.card {
+  min-height: 20rem;
+}

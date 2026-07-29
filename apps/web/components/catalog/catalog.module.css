@@ -1,0 +1,459 @@
+.controls,
+.results,
+.detailStack {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.searchForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--tl-space-3);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  padding: var(--tl-space-3);
+}
+
+.desktopFilters {
+  display: none;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  padding: var(--tl-space-4);
+}
+
+.filterGrid {
+  display: grid;
+  gap: var(--tl-space-3);
+}
+
+.checks {
+  display: grid;
+  gap: var(--tl-space-1);
+  margin-block-start: var(--tl-space-3);
+}
+
+.filterFormActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--tl-space-2);
+  margin-block-start: var(--tl-space-4);
+}
+
+.mobileFilterTrigger {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawerFilterForm {
+  min-width: 0;
+}
+
+.resultHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--tl-space-3);
+}
+
+.resultHeader h2 {
+  margin: 0 0 var(--tl-space-1);
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+}
+
+.freshness {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tl-space-1) var(--tl-space-3);
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.viewToggle {
+  display: flex;
+  gap: var(--tl-space-1);
+}
+
+.viewToggle form {
+  margin: 0;
+}
+
+.defaultPredicate {
+  margin: 0;
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+}
+
+.filterChips,
+.legalityGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filterChips a {
+  display: inline-flex;
+  min-height: var(--tl-control-height);
+  align-items: center;
+  gap: var(--tl-space-2);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-color-surface);
+  color: var(--tl-color-action);
+  padding-inline: var(--tl-space-3);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+  text-decoration: none;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  gap: var(--tl-space-4);
+}
+
+.catalogCard {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+}
+
+.gridImage {
+  width: 100%;
+}
+
+.catalogCardBody {
+  display: grid;
+  gap: var(--tl-space-3);
+  padding: var(--tl-space-3);
+}
+
+.catalogCardTitle {
+  margin: 0;
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-16);
+  line-height: var(--tl-line-height-tight);
+}
+
+.catalogCardTitle a,
+.primaryLink {
+  color: var(--tl-color-action);
+  font-weight: var(--tl-font-weight-semibold);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.printedName,
+.printingMeta,
+.secondaryText,
+.compactCopy,
+.unavailablePrice p {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+}
+
+.printedName,
+.printingMeta,
+.compactCopy,
+.unavailablePrice p {
+  margin: var(--tl-space-1) 0 0;
+}
+
+.printingMeta a {
+  color: var(--tl-color-action);
+}
+
+.finishList,
+.detailBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tl-space-1);
+}
+
+.tableIdentity {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(12rem, 1fr);
+  align-items: center;
+  gap: var(--tl-space-3);
+  white-space: normal;
+}
+
+.tableIdentity > span,
+.primaryLink,
+.secondaryText {
+  min-width: 0;
+}
+
+.secondaryText {
+  display: block;
+  margin-block-start: var(--tl-space-1);
+  white-space: normal;
+}
+
+.tableImage {
+  width: 3.25rem;
+}
+
+.catalogTable td {
+  max-width: 24rem;
+}
+
+.detailHero {
+  display: grid;
+  gap: var(--tl-space-4);
+  align-items: start;
+}
+
+.detailImageColumn {
+  width: min(100%, 21rem);
+  margin-inline: auto;
+}
+
+.oraclePanel {
+  display: grid;
+  min-width: 0;
+  gap: var(--tl-space-6);
+}
+
+.definitionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--tl-space-4);
+  margin: 0;
+}
+
+.definitionGrid div {
+  min-width: 0;
+  border-block-start: 1px solid var(--tl-color-border);
+  padding-block-start: var(--tl-space-2);
+}
+
+.definitionGrid dt {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.definitionGrid dd {
+  overflow-wrap: anywhere;
+  margin: var(--tl-space-1) 0 0;
+  font-size: var(--tl-font-size-14);
+}
+
+.definitionGrid a {
+  color: var(--tl-color-action);
+}
+
+.subheading {
+  margin: 0;
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-16);
+}
+
+.oracleText {
+  margin: var(--tl-space-1) 0 0;
+  white-space: pre-line;
+}
+
+.legalityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.legalityGrid li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tl-space-3);
+  border-block-end: 1px solid var(--tl-color-border);
+  padding-block: var(--tl-space-2);
+  font-size: var(--tl-font-size-14);
+}
+
+.priceGrid,
+.faceRulesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--tl-space-3);
+}
+
+.pricePanel,
+.faceRules {
+  display: grid;
+  gap: var(--tl-space-3);
+}
+
+.faceRules {
+  min-width: 0;
+  border-block-start: 1px solid var(--tl-color-border);
+  padding-block-start: var(--tl-space-3);
+}
+
+.faceRules h3,
+.faceRules p {
+  margin: 0;
+}
+
+.faceRules h3 {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-16);
+}
+
+.faceRules p {
+  overflow-wrap: anywhere;
+  font-size: var(--tl-font-size-14);
+}
+
+.unavailablePrice {
+  display: grid;
+  gap: var(--tl-space-1);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 40rem) {
+  .desktopFilters {
+    display: block;
+  }
+
+  .mobileFilterTrigger {
+    display: none;
+  }
+
+  .filterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detailHero {
+    grid-template-columns: minmax(15rem, 21rem) minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 64rem) {
+  .filterGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 39.999rem) {
+  .searchForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filterChips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-block-end: var(--tl-space-1);
+  }
+
+  .filterChips a {
+    min-height: var(--tl-touch-target);
+    white-space: nowrap;
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tl-space-3);
+  }
+
+  .catalogCardBody {
+    padding: var(--tl-space-2);
+  }
+
+  .catalogTable.catalogTable,
+  .detailTable.detailTable {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .catalogTable.catalogTable table,
+  .catalogTable.catalogTable tbody,
+  .detailTable.detailTable table,
+  .detailTable.detailTable tbody {
+    display: block;
+    min-width: 0;
+  }
+
+  .catalogTable.catalogTable thead,
+  .detailTable.detailTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .catalogTable.catalogTable tr,
+  .detailTable.detailTable tr {
+    display: grid;
+    gap: var(--tl-space-2);
+    margin-block-end: var(--tl-space-3);
+    border: 1px solid var(--tl-color-border);
+    border-radius: var(--tl-radius);
+    background: var(--tl-color-surface);
+    padding: var(--tl-space-3);
+  }
+
+  .catalogTable.catalogTable td,
+  .detailTable.detailTable td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 0.4fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--tl-space-2);
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    border: 0;
+    padding: 0;
+    white-space: normal;
+  }
+
+  .catalogTable.catalogTable td::before,
+  .detailTable.detailTable td::before {
+    content: attr(data-label);
+    color: var(--tl-color-text-muted);
+    font-size: var(--tl-font-size-12);
+    font-weight: var(--tl-font-weight-semibold);
+  }
+
+  .tableIdentity {
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+  }
+
+  .tableImage {
+    width: 2.75rem;
+  }
+
+  .definitionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 27rem) {
+  .cardGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

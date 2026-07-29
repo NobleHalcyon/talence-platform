@@ -1,0 +1,42 @@
+{
+  "name": "@talence/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Canonical Talence device, inventory, run-summary, and catalog snapshot contracts.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./generated": {
+      "types": "./dist/generated/index.d.ts",
+      "default": "./dist/generated/index.js"
+    }
+  },
+  "files": [
+    "canonical",
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run generate:check && tsc -p tsconfig.build.json",
+    "check:drift": "node scripts/check-canonical-drift.mjs",
+    "generate": "node scripts/generate-types.mjs",
+    "generate:check": "node scripts/generate-types.mjs --check",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --pool=threads --no-file-parallelism",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate": "npm run check:drift && node scripts/validate-contracts.mjs && npm run generate:check && npm run test"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "12.1.0",
+    "json-schema-to-typescript": "15.0.4",
+    "openapi-typescript": "7.13.0",
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
+  }
+}

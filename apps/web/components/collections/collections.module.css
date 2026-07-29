@@ -1,0 +1,533 @@
+.sectionStack,
+.controlStack,
+.inventoryBrowser,
+.historyList,
+.importPreview {
+  display: grid;
+  min-width: 0;
+  gap: var(--tl-space-4);
+}
+
+.sectionStack > *,
+.controlStack > *,
+.inventoryBrowser > *,
+.historyList > *,
+.importPreview > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.collectionGrid {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.collectionCard {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.collectionCardHeader,
+.transactionHeader,
+.importPreviewHeader,
+.selectionControls,
+.viewControls,
+.statusFilters,
+.lifecycleActions,
+.badgeRow,
+.importCommit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tl-space-2);
+}
+
+.collectionCardHeader,
+.transactionHeader,
+.importPreviewHeader,
+.selectionControls {
+  justify-content: space-between;
+}
+
+.collectionCard h2,
+.transactionHeader h2,
+.inventoryCard h2,
+.importPreviewHeader h2 {
+  margin: var(--tl-space-2) 0 0;
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+}
+
+.collectionCard p,
+.transactionHeader p,
+.inventoryCard p,
+.importPreviewHeader p,
+.resultContext,
+.mutedCopy {
+  margin: var(--tl-space-1) 0 0;
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-14);
+}
+
+.collectionStats,
+.transactionMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--tl-space-3);
+  margin: 0;
+}
+
+.collectionStats div,
+.transactionMeta div {
+  min-width: 0;
+}
+
+.collectionStats dt,
+.transactionMeta dt,
+.metricLabel {
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+  text-transform: uppercase;
+}
+
+.collectionStats dd,
+.transactionMeta dd {
+  overflow-wrap: anywhere;
+  margin: var(--tl-space-1) 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.actionDisclosure {
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+}
+
+.actionDisclosure > summary {
+  min-height: var(--tl-touch-target);
+  padding: var(--tl-space-3) var(--tl-space-4);
+  color: var(--tl-color-action);
+  cursor: pointer;
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.formStack,
+.importForm,
+.commitForm,
+.reversalForm {
+  display: grid;
+  gap: var(--tl-space-3);
+}
+
+.formStack {
+  border-block-start: 1px solid var(--tl-color-border);
+  padding: var(--tl-space-4);
+}
+
+.textarea,
+.fileInput {
+  width: 100%;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  color: var(--tl-color-text);
+  padding: var(--tl-space-3);
+  font: inherit;
+}
+
+.fileInput {
+  min-height: var(--tl-touch-target);
+}
+
+.summaryGrid,
+.analyticsHeadline,
+.importCounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--tl-space-3);
+}
+
+.summaryGrid > div,
+.analyticsHeadline > div,
+.importCounts > div {
+  display: grid;
+  align-content: start;
+  gap: var(--tl-space-1);
+}
+
+.metricValue {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+  font-variant-numeric: tabular-nums;
+}
+
+.freshnessMetric {
+  grid-column: 1 / -1;
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+}
+
+.analyticsTableRegion {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+}
+
+.analyticsTableRegion table {
+  width: 100%;
+  min-width: 46rem;
+  border-collapse: collapse;
+  font-size: var(--tl-font-size-14);
+}
+
+.analyticsTableRegion th,
+.analyticsTableRegion td {
+  border-block-end: 1px solid var(--tl-color-border);
+  padding: var(--tl-space-3);
+  text-align: start;
+}
+
+.analyticsTableRegion thead th {
+  background: var(--tl-color-gray-50);
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+}
+
+.previewBadge {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--tl-color-information);
+  border-radius: var(--tl-radius-round);
+  color: var(--tl-color-information);
+  padding: var(--tl-space-1) var(--tl-space-2);
+  font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.clearLink,
+.inlineLink,
+.downloadLink,
+.primaryLink {
+  color: var(--tl-color-action);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.clearLink,
+.downloadLink {
+  display: inline-flex;
+  min-height: var(--tl-control-height);
+  align-items: center;
+}
+
+.resultContext code {
+  overflow-wrap: anywhere;
+}
+
+.selectionControls {
+  min-height: var(--tl-touch-target);
+}
+
+.inventoryIdentity {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(8rem, 1fr);
+  align-items: center;
+  gap: var(--tl-space-3);
+}
+
+.inventoryIdentity > div {
+  min-width: 0;
+}
+
+.tableCardImage {
+  width: 3.25rem;
+}
+
+.secondaryText,
+.totalEstimate {
+  display: block;
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-12);
+}
+
+.quantityEditor,
+.bulkForm,
+.rowResolution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tl-space-2);
+}
+
+.priceCell {
+  display: grid;
+  gap: var(--tl-space-1);
+  min-width: 11rem;
+}
+
+.inventoryGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: var(--tl-space-4);
+}
+
+.inventoryCard {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+}
+
+.inventoryCardSelect {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  padding-inline: var(--tl-space-2);
+  inset-block-start: var(--tl-space-2);
+  inset-inline-start: var(--tl-space-2);
+}
+
+.inventoryCardSelect label span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.galleryCardImage {
+  border-block-end: 1px solid var(--tl-color-border);
+}
+
+.inventoryCardBody {
+  display: grid;
+  gap: var(--tl-space-3);
+  padding: var(--tl-space-4);
+}
+
+.bulkBar {
+  position: sticky;
+  z-index: 2;
+  display: grid;
+  gap: var(--tl-space-3);
+  border: 1px solid var(--tl-color-navy);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  padding: var(--tl-space-3);
+  box-shadow: var(--tl-shadow-overlay);
+  inset-block-end: calc(var(--tl-space-4) + var(--tl-touch-target));
+}
+
+.bulkBar > div {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2);
+}
+
+.bulkError,
+.negative {
+  color: var(--tl-color-danger);
+}
+
+.positive {
+  color: var(--tl-color-success);
+}
+
+.transactionCard {
+  display: grid;
+  gap: var(--tl-space-4);
+}
+
+.transactionHeader {
+  align-items: flex-start;
+}
+
+.transactionNote {
+  margin: 0;
+  border-inline-start: 3px solid var(--tl-color-gold);
+  padding-inline-start: var(--tl-space-3);
+}
+
+.historyTable td:first-child {
+  min-width: 14rem;
+}
+
+.importCounts {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.importCounts strong {
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-20);
+  font-variant-numeric: tabular-nums;
+}
+
+.importTable td {
+  max-width: 22rem;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.importTable code {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: var(--tl-font-size-12);
+}
+
+.importCommit {
+  align-items: flex-end;
+  justify-content: space-between;
+  border-block-start: 1px solid var(--tl-color-border);
+  padding-block-start: var(--tl-space-4);
+}
+
+.commitForm {
+  width: min(100%, 34rem);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 40rem) {
+  .summaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .collectionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .summaryGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .freshnessMetric {
+    grid-column: span 3;
+  }
+
+  .bulkBar {
+    inset-block-end: var(--tl-space-4);
+  }
+}
+
+@media (max-width: 39.999rem) {
+  .summaryGrid,
+  .analyticsHeadline,
+  .importCounts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .importCounts > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .inventoryTableRegion {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .inventoryTableRegion .inventoryTable,
+  .inventoryTableRegion .inventoryTable tbody,
+  .inventoryTableRegion .inventoryTable tr,
+  .inventoryTableRegion .inventoryTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .inventoryTableRegion .inventoryTable {
+    min-width: 0;
+  }
+
+  .inventoryTableRegion .inventoryTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .inventoryTableRegion .inventoryTable tr {
+    margin-block-end: var(--tl-space-3);
+    border: 1px solid var(--tl-color-border);
+    border-radius: var(--tl-radius);
+    background: var(--tl-color-surface);
+    padding: var(--tl-space-3);
+  }
+
+  .inventoryTableRegion .inventoryTable td {
+    height: auto;
+    min-height: var(--tl-touch-target);
+    border: 0;
+    padding: var(--tl-space-2) 0;
+    white-space: normal;
+  }
+
+  .inventoryTableRegion .inventoryTable td::before {
+    display: block;
+    margin-block-end: var(--tl-space-1);
+    color: var(--tl-color-text-muted);
+    content: attr(data-label);
+    font-size: var(--tl-font-size-12);
+    font-weight: var(--tl-font-weight-semibold);
+    text-transform: uppercase;
+  }
+
+  .inventoryIdentity {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+
+  .tableCardImage {
+    width: 4.5rem;
+  }
+
+  .quantityEditor,
+  .quantityEditor > div,
+  .bulkForm,
+  .bulkForm > *,
+  .rowResolution,
+  .rowResolution > *,
+  .reversalForm > * {
+    width: 100%;
+  }
+
+  .statusFilters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .transactionHeader,
+  .importPreviewHeader,
+  .importCommit {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .historyTable,
+  .importTable {
+    min-width: 46rem;
+  }
+}
+.pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-3);
+  justify-content: space-between;
+}

@@ -117,9 +117,9 @@
       "sha256": "2cec92bf612d170ce9e4c6be180fdbe4b4f4a909de421ee42a05d25f71b8d209"
     },
     {
-      "bytes": 16614,
+      "bytes": 16695,
       "path": "contracts/device-api.openapi.yaml",
-      "sha256": "463d2e6484647dd79a8d08aded4e0729c8dc1e298dfe1b2fe9f1f02e0b9081da"
+      "sha256": "308562bb377122f1d711c377f34b80a0e26c8077cab2376a088aba2af60a8117"
     },
     {
       "bytes": 1991,

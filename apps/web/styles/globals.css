@@ -1,0 +1,21 @@
+body {
+  background: var(--tl-color-canvas);
+}
+
+.tl-skip-link {
+  position: fixed;
+  z-index: 1000;
+  inset-block-start: var(--tl-space-2);
+  inset-inline-start: var(--tl-space-2);
+  translate: 0 -200%;
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-navy);
+  color: var(--tl-color-white);
+  padding: var(--tl-space-2) var(--tl-space-3);
+  font-weight: var(--tl-font-weight-semibold);
+  text-decoration: none;
+}
+
+.tl-skip-link:focus {
+  translate: 0;
+}

@@ -1,0 +1,78 @@
+:root {
+  color-scheme: light;
+
+  --tl-color-navy: #1f2f5a;
+  --tl-color-gold: #c29a3a;
+  --tl-color-gray-50: #f4f6fa;
+  --tl-color-gray-100: #e9edf5;
+  --tl-color-gray-200: #d7ddea;
+  --tl-color-gray-600: #5e6a85;
+  --tl-color-gray-800: #2c3448;
+  --tl-color-white: #ffffff;
+  --tl-color-success: #2f6b4f;
+  --tl-color-warning: #8a641d;
+  --tl-color-danger: #943f46;
+  --tl-color-information: #356a8a;
+
+  --tl-color-canvas: var(--tl-color-gray-50);
+  --tl-color-surface: var(--tl-color-white);
+  --tl-color-surface-subtle: var(--tl-color-gray-100);
+  --tl-color-border: var(--tl-color-gray-200);
+  --tl-color-text: var(--tl-color-gray-800);
+  --tl-color-text-muted: var(--tl-color-gray-600);
+  --tl-color-action: var(--tl-color-navy);
+  --tl-color-identity: var(--tl-color-gold);
+  --tl-color-focus: var(--tl-color-information);
+  --tl-color-scrim: rgb(31 47 90 / 52%);
+
+  --tl-font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tl-font-size-12: 0.75rem;
+  --tl-font-size-14: 0.875rem;
+  --tl-font-size-16: 1rem;
+  --tl-font-size-20: 1.25rem;
+  --tl-font-size-24: 1.5rem;
+  --tl-font-size-32: 2rem;
+  --tl-font-weight-regular: 400;
+  --tl-font-weight-medium: 500;
+  --tl-font-weight-semibold: 600;
+  --tl-font-weight-bold: 700;
+  --tl-line-height-tight: 1.2;
+  --tl-line-height-body: 1.5;
+
+  --tl-space-1: 0.25rem;
+  --tl-space-2: 0.5rem;
+  --tl-space-3: 0.75rem;
+  --tl-space-4: 1rem;
+  --tl-space-6: 1.5rem;
+  --tl-space-8: 2rem;
+  --tl-space-12: 3rem;
+  --tl-space-16: 4rem;
+
+  --tl-radius: 0.375rem;
+  --tl-radius-round: 999px;
+  --tl-control-height: 2.5rem;
+  --tl-touch-target: 2.75rem;
+  --tl-row-height: 2.5rem;
+  --tl-row-height-dense: 2rem;
+  --tl-shell-top-height: 3.5rem;
+  --tl-shell-rail-width: 15rem;
+  --tl-content-constrained: 60rem;
+  --tl-content-wide: 75rem;
+  --tl-overlay-dialog-width: 36rem;
+  --tl-overlay-drawer-width: 28rem;
+  --tl-z-overlay: 100;
+  --tl-z-popover: 110;
+
+  /*
+   * CSS custom properties cannot be used in media-query conditions.
+   * Component styles repeat the canonical 40rem and 64rem boundaries.
+   */
+  --tl-breakpoint-medium: 40rem;
+  --tl-breakpoint-wide: 64rem;
+
+  --tl-duration-fast: 140ms;
+  --tl-duration-standard: 180ms;
+  --tl-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --tl-shadow-overlay: 0 12px 32px rgb(31 47 90 / 14%);
+}
