@@ -14,7 +14,11 @@ describe("sanitized structured logging", () => {
         request_id: "60000000-0000-4000-8000-000000000001",
         duration_ms: 42,
         replayed: false,
+        email: "private@example.test",
+        provider_payload: '{"token":"must-never-appear"}',
+        session: "managed-session-secret",
         token: "must-never-appear",
+        token_hash: "must-never-appear",
         route: "/api/v1/device/me\nforged",
       }),
     ).toEqual({
@@ -47,6 +51,7 @@ describe("sanitized structured logging", () => {
       status: 429,
     });
     expect(serialized).not.toContain("raw-device-secret");
+    expect(serialized).not.toContain("private@example.test");
     expect(serialized).not.toContain("signed");
     expect(serialized).not.toContain("token");
   });

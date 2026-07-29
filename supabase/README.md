@@ -39,8 +39,11 @@ may not inherit the Docker CLI directory. If `supabase test db` reports that it
 cannot run Docker, prepend the local install for that PowerShell process:
 
 ```powershell
-$talenceDockerBin = Join-Path $env:LOCALAPPDATA "Programs\Docker\Docker\resources\bin"
-$env:PATH = "$talenceDockerBin;$env:PATH"
+$talenceDockerBins = @(
+  (Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"),
+  (Join-Path $env:LOCALAPPDATA "Programs\Docker\Docker\resources\bin")
+) | Where-Object { Test-Path -LiteralPath $_ }
+$env:PATH = "$($talenceDockerBins -join ';');$env:PATH"
 npm run test:supabase
 ```
 
@@ -71,6 +74,13 @@ recovery. Global public signup, anonymous sign-in, manual identity linking, and
 SMS signup are disabled. The local SMTP viewer receives email without production
 credentials.
 
+`config.toml` loads `templates/invite.html` and `templates/recovery.html`.
+Both templates link directly to the Talence server callback with the
+provider-supported `TokenHash`, a fixed action type, and an encoded fixed
+destination. They intentionally do not use the default `ConfirmationURL`,
+which verifies at `/auth/v1/verify` and returns a browser fragment that a
+Next.js server route cannot read.
+
 The database-backed invitation ledger, Before User Created hook, admission
 finalizer, and RLS policies are active locally. `config.toml` points the local
 Auth service to:
@@ -94,6 +104,19 @@ npm run db:types:check
 
 Commit the generated file whenever a migration changes the exposed schema or
 RPC signatures.
+
+Run the destructive local email acceptance harness only against disposable
+state:
+
+```powershell
+npm run test:auth-email:local
+```
+
+It refuses hosted endpoints, resets the local database without seed data,
+restarts Auth so template/configuration changes take effect, invokes the real
+trusted invitation CLI, reads the resulting Mailpit messages, and completes
+invite plus recovery through Chromium. Messages captured before a template
+change retain their old links; never reuse them as acceptance evidence.
 
 For a hosted project, apply migrations first and then activate the **Before User
 Created** hook in Supabase Auth using the same Postgres function URI. Confirm

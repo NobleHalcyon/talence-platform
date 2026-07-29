@@ -110,6 +110,7 @@ npx supabase db reset --local --no-seed
 npm run db:lint
 npm run db:types:check
 npm run test:supabase
+npm run test:auth-email:local
 npm run test:supabase:phase3-integration
 npm run test:supabase:phase4-concurrency
 npm run test:phase5:local
@@ -124,7 +125,10 @@ git status --short
 real private Storage publication/reference installation, and live Auth/device
 API contract composition. `npm run test:phase6:local` owns a clean reset,
 repeatable two-workspace fixture, and the full private-beta browser journey.
-Both commands refuse non-loopback Supabase endpoints.
+`npm run test:auth-email:local` owns a no-seed reset and Auth-container restart,
+then issues disposable invitations through the trusted CLI and clicks the real
+invite/recovery HTML captured by Mailpit. These commands refuse non-loopback
+Supabase endpoints.
 
 The GitHub Actions `CI` workflow runs five isolated jobs for web/contracts,
 Python, database/Storage, preview browser coverage, and live private-beta
@@ -175,6 +179,13 @@ Phase 1 includes:
 - login, logout, recovery, invitation completion, settings, workspace context,
   and platform-admin invitation management;
 - trusted bootstrap, invite, revoke, and status commands under `scripts/admin`.
+
+Local Supabase loads the committed Invite user and Reset password templates
+from `supabase/templates/`. They send `TokenHash` directly to the server
+callback; developers never edit a Mailpit URL or rely on a browser-only session
+fragment. Restart the local stack after template/configuration changes. Emails
+already captured before a template change do not update, so issue a fresh
+disposable invitation.
 
 For local trusted CLI usage and the first-admin sequence, see
 [`scripts/admin/README.md`](scripts/admin/README.md). Hosted hook activation,

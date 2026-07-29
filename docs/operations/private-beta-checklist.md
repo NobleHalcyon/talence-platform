@@ -62,6 +62,10 @@ Confirm:
 - [ ] Before User Created hook targets `app_private.before_user_created`;
 - [ ] public registration is disabled and only invited-user creation succeeds;
 - [ ] exact Site URL and redirect allowlist are configured;
+- [ ] hosted Invite user and Reset password templates use the reviewed direct
+      `SiteURL` + `TokenHash` callbacks with fixed encoded destinations;
+- [ ] newly delivered invite/recovery messages contain no `/auth/v1/verify`
+      URL or session fragment and complete through the server callback;
 - [ ] custom SMTP sender/domain and delivery monitoring are configured;
 - [ ] Turnstile CAPTCHA is enabled for sign-in/recovery and tested;
 - [ ] Auth rate limits are approved and a throttled probe was observed;

@@ -59,15 +59,18 @@ and recommends exact production
 
 ### 3. Configure server-readable email links
 
-In Authentication > Email Templates, retain the surrounding branded HTML but
-make the primary link target use the following exact values. HTML attributes
-must use `&amp;`.
+The default Supabase `ConfirmationURL` first visits `/auth/v1/verify` and then
+returns the established session in a browser URL fragment. A Next.js Route
+Handler cannot read that fragment. In **Authentication > Email Templates**,
+replace the full **Invite user** and **Reset password** templates with reviewed
+branded HTML whose primary links use the following exact values. HTML
+attributes must use `&amp;`.
 
 Invite user:
 
 ```html
 <a
-  href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=invite&amp;next=/invite/complete"
+  href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=invite&amp;next=%2Finvite%2Fcomplete"
 >
   Accept invitation
 </a>
@@ -77,15 +80,30 @@ Reset password:
 
 ```html
 <a
-  href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=recovery&amp;next=/reset-password"
+  href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=recovery&amp;next=%2Freset-password"
 >
   Reset password
 </a>
 ```
 
-These links let the server callback verify the token and set the SSR session
-before rendering the next page. Disable provider-side click tracking that
-rewrites authentication links. Review Supabase's
+`SiteURL` and `TokenHash` are supported Supabase template variables. Keep
+`SiteURL` fixed to the exact configured production origin; do not substitute
+the caller-controlled `RedirectTo` into either link. The application still
+sends and allowlists typed `redirectTo` values as defense in depth, but the
+template owns the actual email destination.
+
+Save both templates, send a new disposable invite and recovery message, and
+inspect their actual delivered HTML. A passing message starts at the production
+origin, targets `/auth/callback`, contains only `token_hash`, the fixed `type`,
+and the fixed encoded `next`, has no fragment, and does not contain
+`/auth/v1/verify`. Previously issued messages do not change when a template is
+saved; never use one for this probe.
+
+These links let the server callback verify the one-time token and set only the
+HTTP-only SSR session cookies before rendering the next page. Disable
+provider-side click tracking that rewrites authentication links. Also disable
+or account for link-prefetch/security scanners that consume single-use links
+before the user clicks them. Review Supabase's
 [email-template guidance](https://supabase.com/docs/guides/auth/auth-email-templates),
 including link-prefetch behavior, before choosing a production mail provider.
 
@@ -178,12 +196,16 @@ the secret key alone is not the application authorization decision.
 Before admitting real users, verify:
 
 - an email absent from `app_private.invited_users` is rejected by Auth;
+- actual delivered invite and recovery messages use the direct Talence
+  `TokenHash` callbacks and never the default `/auth/v1/verify` link;
 - expired, revoked, failed, and metadata-mismatched invitations are rejected;
 - a valid invite completes once and replay does not duplicate resources;
 - a suspended profile cannot enter the application;
 - one user cannot read another workspace;
 - revoke removes a pending Auth identity or reports cleanup reconciliation;
 - recovery remains generic for malformed, unknown, and provider-rejected email;
+- expired, malformed, missing, and reused callback tokens render only bounded
+  safe statuses with no token or provider detail;
 - browser bundles contain no secret key or direct database URL.
 
 ## Phase 2 catalog and pricing checklist

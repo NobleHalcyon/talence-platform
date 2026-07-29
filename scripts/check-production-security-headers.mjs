@@ -2,14 +2,20 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
 
+import nextEnvironment from "@next/env";
+
 import { repositoryRoot } from "./lib/local-supabase.mjs";
 
 const port = 3117;
 const origin = `http://127.0.0.1:${port}`;
+const webRoot = path.join(repositoryRoot, "apps", "web");
+// Match `next build` environment-file resolution so a developer's ignored
+// `.env.local` cannot make the smoke test expect a different public origin
+// from the one compiled into the production Proxy.
+nextEnvironment.loadEnvConfig(webRoot, false);
 const configuredSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example.supabase.co";
 const supabaseOrigin = new URL(configuredSupabaseUrl).origin;
 const nextCli = path.join(repositoryRoot, "node_modules", "next", "dist", "bin", "next");
-const webRoot = path.join(repositoryRoot, "apps", "web");
 const child = spawn(
   process.execPath,
   [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(port)],
