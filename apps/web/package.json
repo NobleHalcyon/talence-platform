@@ -16,6 +16,7 @@
     "test": "vitest run --configLoader native --pool=threads --no-file-parallelism",
     "test:watch": "vitest --configLoader native --pool=threads --no-file-parallelism",
     "test:e2e": "playwright test",
+    "test:e2e:auth-email-live": "playwright test --config playwright.auth-email.config.ts",
     "test:e2e:phase5-live": "playwright test --config playwright.phase5.config.ts",
     "test:e2e:phase6-live": "playwright test --config playwright.phase6.config.ts"
   },

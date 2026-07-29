@@ -22,6 +22,15 @@ The CLI does not load a local `.env` file. Set trusted values in the process
 environment or an approved secret-injection tool. Never put a database URL or
 secret key in a `NEXT_PUBLIC_*` variable.
 
+Supabase controls the message body independently of `redirectTo`. Before
+issuing invitations, configure both the local or hosted **Invite user** email
+template and its fixed `TokenHash` callback as documented in
+`docs/operations/production-setup.md`. The default provider
+`/auth/v1/verify` link redirects session credentials in a browser fragment and
+is incompatible with the Talence server callback. Never edit a captured
+Mailpit link by hand; restart local Auth after template changes and issue a
+fresh invitation.
+
 ## First administrator
 
 There is intentionally no pre-existing platform administrator. The database
@@ -60,6 +69,54 @@ npm run admin:bootstrap -- --user-id <accepted-auth-user-uuid>
 Use `--help` on any command for all accepted options. Commands emit structured
 JSON and never print raw provider/database errors, credentials, or connection
 strings.
+
+## Disposable local first-owner flow
+
+This reset destroys only the loopback local database. Do not add `--linked`.
+The stop/start after the reset both reloads the committed templates and gives
+local Auth a fresh connection to the recreated database.
+
+```powershell
+npx supabase db reset --local --no-seed
+npx supabase stop
+npx supabase start
+
+$localSupabase = npx supabase status -o json | ConvertFrom-Json
+$env:SUPABASE_URL = $localSupabase.API_URL
+$env:NEXT_PUBLIC_SUPABASE_URL = $localSupabase.API_URL
+$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = if ($localSupabase.PUBLISHABLE_KEY) {
+  $localSupabase.PUBLISHABLE_KEY
+} else {
+  $localSupabase.ANON_KEY
+}
+$env:SUPABASE_SECRET_KEY = if ($localSupabase.SECRET_KEY) {
+  $localSupabase.SECRET_KEY
+} else {
+  $localSupabase.SERVICE_ROLE_KEY
+}
+$env:TALENCE_DATABASE_URL = $localSupabase.DB_URL
+$env:NEXT_PUBLIC_APP_ORIGIN = "http://localhost:3000"
+$env:TALENCE_AUTH_INVITE_REDIRECT_URL = "http://localhost:3000/auth/callback?type=invite&next=/invite/complete"
+$env:FEATURE_INVITATIONS_ENABLED = "true"
+$ownerEmail = Read-Host "Disposable local owner email"
+
+npm run admin:invite -- --email $ownerEmail
+```
+
+Run `npm run dev`, open Mailpit at `http://127.0.0.1:54324`, open the newest
+message for that address, and click **Accept invitation** without changing its
+URL. Complete the profile/password form, verify `/app`, then bootstrap that
+accepted identity with:
+
+```powershell
+npm run admin:bootstrap -- --email $ownerEmail
+```
+
+For automated coverage of the same provider-compatible email path:
+
+```powershell
+npm run test:auth-email:local
+```
 
 ## Ordering and recovery
 

@@ -23,6 +23,7 @@
     "test": "npm run test:unit && npm run test:contracts && npm run test:python",
     "test:unit": "npm run test --workspaces --if-present && npm run test:admin",
     "test:e2e": "npm run test:e2e --workspace @talence/web",
+    "test:auth-email:local": "node scripts/run-auth-email-flow.mjs",
     "test:contracts": "npm run validate --workspace @talence/contracts",
     "test:python": "node scripts/python.mjs -m pytest services/catalog-worker/tests",
     "test:supabase": "npx supabase test db",
