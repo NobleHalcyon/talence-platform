@@ -71,6 +71,25 @@ def test_fixture_import_requires_database_without_dry_run(
     assert payload["promoted"] is False
 
 
+def test_live_import_requires_an_explicit_operator_user_agent(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("TALENCE_CATALOG_USER_AGENT", raising=False)
+    monkeypatch.setenv(
+        "TALENCE_DATABASE_URL",
+        "postgresql://worker:secret@hosted.example/database",
+    )
+
+    assert entrypoint(["live-import"]) == 2
+
+    payload = json.loads(capsys.readouterr().err)
+    assert payload["status"] == "failed"
+    assert payload["error_code"] == "configuration_invalid"
+    assert "TALENCE_CATALOG_USER_AGENT is required" in payload["message"]
+    assert "secret" not in payload["message"]
+
+
 def test_snapshot_publish_requires_database_and_storage_configuration_before_io(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,

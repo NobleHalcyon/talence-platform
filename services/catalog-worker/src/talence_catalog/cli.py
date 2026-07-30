@@ -171,6 +171,7 @@ def entrypoint(argv: Sequence[str] | None = None) -> int:
             _print_json(outcome.as_dict())
             return 0
         if arguments.command == "live-import":
+            _require_live_user_agent(config)
             database_url = _required_database_url(config)
             with (
                 PostgresCatalogStore.connect(database_url) as store,
@@ -335,6 +336,14 @@ def _required_database_url(config: WorkerConfig) -> str:
             "use fixture-import --dry-run for an offline validation."
         )
     return config.database_url
+
+
+def _require_live_user_agent(config: WorkerConfig) -> None:
+    if not config.user_agent_explicitly_configured:
+        raise ConfigurationError(
+            "TALENCE_CATALOG_USER_AGENT is required for live-import and must "
+            "identify Talence with an operator-controlled https:// or mailto: contact."
+        )
 
 
 def _cli_error_code(error: Exception) -> str:

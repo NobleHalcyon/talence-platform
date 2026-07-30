@@ -1,0 +1,11 @@
+{
+  "object": "bulk_data",
+  "id": "00000000-0000-4000-8000-000000000001",
+  "type": "all_cards",
+  "updated_at": "2026-07-29T21:27:56.280+00:00",
+  "uri": "https://api.scryfall.com/bulk-data/00000000-0000-4000-8000-000000000001",
+  "name": "All Cards",
+  "description": "Sanitized fixture preserving the live descriptor field shape.",
+  "jsonl_download_uri": "https://data.scryfall.io/all-cards/all-cards-20260729212756.jsonl.gz",
+  "compressed_size": 389772467
+}

@@ -8,7 +8,8 @@ artifact, and atomically publish its manifest.
 
 ## Safety properties
 
-- Live mode selects exactly Scryfall `all_cards` and separately reads
+- Live mode discovers exactly Scryfall `all_cards` through
+  `GET https://api.scryfall.com/bulk-data/all-cards` and separately reads
   authoritative set metadata.
 - Fixture mode opens only the supplied local files; it cannot instantiate the
   Scryfall client or make a network request.
@@ -17,11 +18,13 @@ artifact, and atomically publish its manifest.
   `Accept: application/json;q=0.9,*/*;q=0.8`.
 - Metadata requests are paced below 10 requests/second. Transient retries use
   bounded exponential backoff; permanent HTTP failures are not retried.
-- Bulk bytes stream through a size-bounded atomic temporary file while
-  calculating the literal `all_cards` SHA-256.
+- The current descriptor must expose a positive `compressed_size` and an
+  HTTPS `jsonl_download_uri`. Gzipped JSONL bytes stream through a size-bounded
+  atomic temporary file while calculating the literal `all_cards` SHA-256.
 - Bulk downloads are restricted to the official `data.scryfall.io` host.
   Redirect targets are validated before they are requested.
-- `ijson` parses cards incrementally and PostgreSQL writes are bounded by
+- Gzip decompression and JSONL parsing are incremental; the legacy fixture JSON
+  array remains incremental through `ijson`. PostgreSQL writes are bounded by
   `TALENCE_CATALOG_BATCH_SIZE`.
 - Normalization and database validation are fail-fast. One rejected source
   record fails the whole candidate import; there is no rejection-tolerance
@@ -63,6 +66,10 @@ artifact, and atomically publish its manifest.
   bulk card file is downloaded. A queue item marked `requested_force` continues
   through the full download and import path.
 - Missing provider prices create no row and are never converted to zero.
+- A provider price whose implied finish is unavailable on that printing also
+  creates no row. Reused third-party IDs that resolve to multiple entities are
+  omitted rather than assigned arbitrarily; their omission count is returned
+  in validation and promotion results.
 
 The catalog input identity covers both sources without losing their
 provenance:
@@ -123,10 +130,14 @@ The fixture command defaults to `fixtures\scryfall\all_cards.json` and
 Live mode is an explicit operator action:
 
 ```powershell
-$env:TALENCE_CATALOG_USER_AGENT = "Talence-Catalog-Worker/0.2 (+https://your-domain.example/contact)"
 $env:TALENCE_DATABASE_URL = "<direct PostgreSQL worker URL>"
-talence-catalog live-import
+$env:TALENCE_CATALOG_USER_AGENT = "Talence-Catalog-Worker/0.2 (+https://your-domain.example/contact)"
+.\.venv\Scripts\python.exe -m talence_catalog live-import --trigger-type manual
 ```
+
+Run that block from the repository root. The live command refuses to start
+unless the operator explicitly supplies the contact-bearing user agent; the
+checked-in example is a placeholder, not a production identity.
 
 Use `--force` only for a deliberate replay. A queued admin request can be
 claimed with `--queued-import-id <uuid>`. Do not put the database URL on the

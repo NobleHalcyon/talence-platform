@@ -28,10 +28,14 @@ class NormalizationError(ValueError):
 
 
 def normalize_search_name(value: str) -> str:
+    stripped = value.strip().lower()
+    if not stripped:
+        return ""
     punctuation_insensitive = "".join(
         character if character.isalnum() else " " for character in value.lower()
     )
-    return " ".join(punctuation_insensitive.split())
+    normalized = " ".join(punctuation_insensitive.split())
+    return normalized or f"symbol{stripped.encode('utf-8').hex()}"
 
 
 def normalize_card(
@@ -137,6 +141,7 @@ def normalize_card(
         prices=_normalize_prices(
             raw,
             printing_id,
+            finishes,
             observed_at,
             ingested_at,
             stale_after,
@@ -301,6 +306,7 @@ def _normalize_external_ids(
 def _normalize_prices(
     raw: Mapping[str, Any],
     printing_id: str,
+    available_finishes: tuple[CardFinish, ...],
     observed_at: str,
     ingested_at: str,
     stale_after: str | None,
@@ -320,7 +326,7 @@ def _normalize_prices(
     observations = []
     for source_key, currency, finish in mappings:
         raw_amount = raw_prices.get(source_key)
-        if raw_amount is None:
+        if raw_amount is None or finish not in available_finishes:
             continue
         amount = _optional_decimal(raw_amount, f"card.prices.{source_key}")
         if amount is None or amount < 0:

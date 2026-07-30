@@ -324,13 +324,19 @@ Do not enable the web queue or GitHub live job for the first provider import.
 Choose a monitored maintenance window, open the database gate, and run:
 
 ```powershell
-talence-catalog live-import --trigger-type manual
-talence-catalog status
+$env:TALENCE_DATABASE_URL = "<direct PostgreSQL worker URL>"
+$env:TALENCE_CATALOG_USER_AGENT = "Talence-Catalog-Worker/0.2 (+https://your-domain.example/contact)"
+.\.venv\Scripts\python.exe -m talence_catalog live-import --trigger-type manual
+.\.venv\Scripts\python.exe -m talence_catalog status
 ```
 
-The worker must select exactly Scryfall `all_cards`, accept bulk bytes only from
-the official download host, and stop rather than promote when its size,
-normalization, relational validation, or live-count floors fail.
+Run the commands from the repository root and replace the user-agent placeholder
+with an operator-controlled, monitored contact URL. The live command refuses
+to use the checked-in default. The worker must request the supported
+`/bulk-data/all-cards` endpoint, require its `jsonl_download_uri` and positive
+`compressed_size`, accept gzipped JSONL bytes only from the official download
+host, and stop rather than promote when its size, normalization, relational
+validation, or live-count floors fail.
 
 After success, verify:
 

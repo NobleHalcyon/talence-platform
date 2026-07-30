@@ -39,6 +39,11 @@ def normalize_sets(raw_sets: Iterable[Mapping[str, Any]]) -> tuple[CatalogSet, .
             isinstance(card_count, bool) or not isinstance(card_count, int) or card_count < 0
         ):
             raise NormalizationError("set.card_count must be a nonnegative integer or null.")
+        foil_only = _boolean(raw_set, "foil_only", default=False)
+        nonfoil_only = _boolean(raw_set, "nonfoil_only", default=False)
+        if foil_only and nonfoil_only:
+            foil_only = False
+            nonfoil_only = False
 
         candidate = CatalogSet(
             set_id=set_id,
@@ -49,8 +54,8 @@ def normalize_sets(raw_sets: Iterable[Mapping[str, Any]]) -> tuple[CatalogSet, .
             parent_set_id=parent_set_id,
             card_count=card_count,
             digital=_boolean(raw_set, "digital", default=False),
-            foil_only=_boolean(raw_set, "foil_only", default=False),
-            nonfoil_only=_boolean(raw_set, "nonfoil_only", default=False),
+            foil_only=foil_only,
+            nonfoil_only=nonfoil_only,
             icon_svg_uri=_optional_text(raw_set.get("icon_svg_uri")),
         )
         existing_set = sets.get(set_id)

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import gzip
+import json
 from collections.abc import Iterator, Mapping, Sequence
+from decimal import Decimal
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import ijson  # type: ignore[import-untyped]
 
@@ -21,14 +24,45 @@ from talence_catalog.models import (
 from talence_catalog.normalize.card import NormalizationError, normalize_card
 from talence_catalog.normalize.sets import normalize_sets
 
+CardSourceFormat = Literal["json_array", "jsonl_gzip"]
+LEGALITY_PRECEDENCE = {
+    "not_legal": 0,
+    "legal": 1,
+    "restricted": 2,
+    "banned": 3,
+}
 
-def iter_card_objects(source_path: Path) -> Iterator[dict[str, Any]]:
-    """Iterate a top-level Scryfall card array without materializing the file."""
 
-    with source_path.open("rb") as source:
-        for item in ijson.items(source, "item"):
+def iter_card_objects(
+    source_path: Path,
+    *,
+    source_format: CardSourceFormat = "json_array",
+) -> Iterator[dict[str, Any]]:
+    """Iterate a Scryfall card source without materializing the file."""
+
+    if source_format == "json_array":
+        with source_path.open("rb") as source:
+            for item in ijson.items(source, "item"):
+                if not isinstance(item, dict):
+                    raise NormalizationError("Every bulk catalog item must be an object.")
+                yield cast(dict[str, Any], item)
+        return
+
+    if source_format != "jsonl_gzip":
+        raise ValueError(f"Unsupported card source format: {source_format}.")
+
+    with gzip.open(source_path, "rb") as source:
+        for line_number, line in enumerate(source, start=1):
+            if not line.strip():
+                raise NormalizationError(f"Bulk JSONL line {line_number} must contain an object.")
+            try:
+                item = json.loads(line, parse_float=Decimal)
+            except (json.JSONDecodeError, UnicodeDecodeError) as error:
+                raise NormalizationError(
+                    f"Bulk JSONL line {line_number} is not valid UTF-8 JSON."
+                ) from error
             if not isinstance(item, dict):
-                raise NormalizationError("Every bulk catalog item must be an object.")
+                raise NormalizationError(f"Bulk JSONL line {line_number} must contain an object.")
             yield cast(dict[str, Any], item)
 
 
@@ -60,6 +94,7 @@ def iter_set_batches(
 def iter_normalized_card_batches(
     source_path: Path,
     *,
+    source_format: CardSourceFormat = "json_array",
     catalog_sets: Mapping[str, CatalogSet],
     observed_at: str,
     ingested_at: str,
@@ -72,7 +107,7 @@ def iter_normalized_card_batches(
         raise ValueError("batch_size must be greater than zero.")
 
     pending: list[NormalizedCard] = []
-    for raw_card in iter_card_objects(source_path):
+    for raw_card in iter_card_objects(source_path, source_format=source_format):
         raw_set_id = raw_card.get("set_id")
         authoritative_set = catalog_sets.get(raw_set_id) if isinstance(raw_set_id, str) else None
         if authoritative_set is None:
@@ -103,6 +138,7 @@ def normalize_catalog_file(
     ingested_at: str,
     sets_path: Path | None = None,
     stale_after: str | None = None,
+    source_format: CardSourceFormat = "json_array",
 ) -> NormalizedCatalog:
     authoritative_sets = (
         {catalog_set.set_id: catalog_set for catalog_set in normalize_set_file(sets_path)}
@@ -115,10 +151,11 @@ def normalize_catalog_file(
     faces: dict[tuple[str, int], Face] = {}
     legalities: dict[tuple[str, str], Legality] = {}
     external_ids: dict[tuple[str, str, str], ExternalIdentifier] = {}
+    ambiguous_external_ids: set[tuple[str, str, str]] = set()
     prices: dict[tuple[str, str, str, str], PriceObservation] = {}
     cards_seen = 0
 
-    for raw_card in iter_card_objects(source_path):
+    for raw_card in iter_card_objects(source_path, source_format=source_format):
         raw_set_id = raw_card.get("set_id")
         catalog_set = (
             authoritative_sets.get(raw_set_id)
@@ -164,14 +201,13 @@ def normalize_catalog_file(
                 "face",
             )
         for legality in normalized.legalities:
-            _store_consistent(
+            _store_card_legality(
                 legalities,
                 (legality.oracle_card_id, legality.format_code),
                 legality,
-                "legality",
             )
         for identifier in normalized.external_ids:
-            _store_consistent(
+            _store_unambiguous_external_identifier(
                 external_ids,
                 (
                     identifier.provider,
@@ -179,7 +215,7 @@ def normalize_catalog_file(
                     identifier.identifier_value,
                 ),
                 identifier,
-                "external identifier",
+                ambiguous_external_ids,
             )
         for price in normalized.prices:
             _store_consistent(
@@ -214,7 +250,10 @@ def _build_batch(cards: Sequence[NormalizedCard]) -> NormalizedBatch:
     printings: dict[str, Printing] = {}
     faces: dict[tuple[str, int], Face] = {}
     legalities: dict[tuple[str, str], Legality] = {}
-    external_ids: dict[tuple[str, str, str], ExternalIdentifier] = {}
+    external_ids: dict[
+        tuple[str, str, str, str, str],
+        ExternalIdentifier,
+    ] = {}
     prices: dict[tuple[str, str, str, str], PriceObservation] = {}
 
     for normalized in cards:
@@ -234,11 +273,10 @@ def _build_batch(cards: Sequence[NormalizedCard]) -> NormalizedBatch:
         for face in normalized.faces:
             _store_consistent(faces, (face.printing_id, face.face_index), face, "face")
         for legality in normalized.legalities:
-            _store_consistent(
+            _store_card_legality(
                 legalities,
                 (legality.oracle_card_id, legality.format_code),
                 legality,
-                "legality",
             )
         for identifier in normalized.external_ids:
             _store_consistent(
@@ -247,6 +285,8 @@ def _build_batch(cards: Sequence[NormalizedCard]) -> NormalizedBatch:
                     identifier.provider,
                     identifier.identifier_type,
                     identifier.identifier_value,
+                    identifier.entity_type,
+                    identifier.entity_id,
                 ),
                 identifier,
                 "external identifier",
@@ -279,4 +319,37 @@ def _store_consistent[Key, Record](
     existing = destination.get(key)
     if existing is not None and existing != value:
         raise NormalizationError(f"Conflicting normalized {label} identity: {key}.")
+    destination[key] = value
+
+
+def _store_card_legality(
+    destination: dict[tuple[str, str], Legality],
+    key: tuple[str, str],
+    value: Legality,
+) -> None:
+    """Collapse printing-specific legality into deterministic oracle-card legality."""
+
+    existing = destination.get(key)
+    if (
+        existing is None
+        or LEGALITY_PRECEDENCE[value.legality] > LEGALITY_PRECEDENCE[existing.legality]
+    ):
+        destination[key] = value
+
+
+def _store_unambiguous_external_identifier(
+    destination: dict[tuple[str, str, str], ExternalIdentifier],
+    key: tuple[str, str, str],
+    value: ExternalIdentifier,
+    ambiguous: set[tuple[str, str, str]],
+) -> None:
+    """Keep only provider identifiers that resolve to exactly one entity."""
+
+    if key in ambiguous:
+        return
+    existing = destination.get(key)
+    if existing is not None and existing != value:
+        destination.pop(key)
+        ambiguous.add(key)
+        return
     destination[key] = value

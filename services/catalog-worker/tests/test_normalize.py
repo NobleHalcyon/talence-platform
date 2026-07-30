@@ -1,10 +1,16 @@
+import gzip
 import json
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
-from talence_catalog.normalize import NormalizationError, normalize_catalog_file
+from talence_catalog.normalize import (
+    NormalizationError,
+    iter_card_objects,
+    normalize_catalog_file,
+    normalize_sets,
+)
 from talence_catalog.normalize.card import normalize_search_name
 
 OBSERVED_AT = "2026-07-26T12:00:00Z"
@@ -69,8 +75,58 @@ def test_representative_fixture_normalizes_without_network(
     assert foil_bolt.stale_after == "2026-07-28T00:00:00Z"
 
 
+def test_current_gzipped_jsonl_shape_normalizes_incrementally_without_network(
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    tmp_path: Path,
+) -> None:
+    cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
+    jsonl_path = tmp_path / "all_cards.jsonl.gz"
+    with gzip.open(jsonl_path, "wt", encoding="utf-8", newline="\n") as destination:
+        for card in cards:
+            destination.write(json.dumps(card, ensure_ascii=False, separators=(",", ":")))
+            destination.write("\n")
+
+    catalog = normalize_catalog_file(
+        jsonl_path,
+        source_format="jsonl_gzip",
+        observed_at=OBSERVED_AT,
+        ingested_at=INGESTED_AT,
+        sets_path=sets_fixture_path,
+        stale_after="2026-07-28T00:00:00Z",
+    )
+
+    assert catalog.record_counts() == {
+        "cards_seen": 4,
+        "sets": 3,
+        "oracle_cards": 2,
+        "printings": 4,
+        "faces": 5,
+        "legalities": 6,
+        "external_ids": 14,
+        "prices": 7,
+    }
+
+
+def test_malformed_gzipped_jsonl_fails_fast_without_echoing_payload(
+    tmp_path: Path,
+) -> None:
+    jsonl_path = tmp_path / "malformed.jsonl.gz"
+    with gzip.open(jsonl_path, "wb") as destination:
+        destination.write(b'{"object":"card"}\n')
+        destination.write(b'{"secret":"must-not-appear"\n')
+
+    with pytest.raises(NormalizationError, match="line 2 is not valid UTF-8 JSON") as caught:
+        list(iter_card_objects(jsonl_path, source_format="jsonl_gzip"))
+
+    assert "must-not-appear" not in str(caught.value)
+
+
 def test_search_normalization_matches_database_unicode_and_punctuation_rules() -> None:
+    assert normalize_search_name("   ") == ""
     assert normalize_search_name("Æther_Gust — Test!") == "æther gust test"
+    assert normalize_search_name("_____") == "symbol5f5f5f5f5f"
+    assert normalize_search_name("%") == "symbol25"
 
 
 def test_conflicting_oracle_identity_is_rejected(
@@ -90,6 +146,121 @@ def test_conflicting_oracle_identity_is_rejected(
             ingested_at=INGESTED_AT,
             sets_path=sets_fixture_path,
         )
+
+
+def test_printing_specific_legalities_collapse_to_card_level_precedence(
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    tmp_path: Path,
+) -> None:
+    cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
+    lightning_bolts = [
+        card for card in cards if card.get("oracle_id") == "4457d7c0-f97e-4cac-93f6-0447f3a0b1f9"
+    ]
+    assert len(lightning_bolts) == 2
+    lightning_bolts[0]["legalities"].update(
+        {
+            "oldschool": "legal",
+            "pauper": "restricted",
+            "vintage": "banned",
+        }
+    )
+    lightning_bolts[1]["legalities"].update(
+        {
+            "oldschool": "not_legal",
+            "pauper": "not_legal",
+            "vintage": "not_legal",
+        }
+    )
+    cards_path = tmp_path / "printing-specific-legalities.json"
+    cards_path.write_text(json.dumps(cards), encoding="utf-8")
+
+    catalog = normalize_catalog_file(
+        cards_path,
+        observed_at=OBSERVED_AT,
+        ingested_at=INGESTED_AT,
+        sets_path=sets_fixture_path,
+    )
+    legalities = {
+        legality.format_code: legality.legality
+        for legality in catalog.legalities
+        if legality.oracle_card_id == "4457d7c0-f97e-4cac-93f6-0447f3a0b1f9"
+    }
+
+    assert legalities["oldschool"] == "legal"
+    assert legalities["pauper"] == "restricted"
+    assert legalities["vintage"] == "banned"
+
+
+def test_external_identifier_mapped_to_multiple_printings_is_omitted(
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    tmp_path: Path,
+) -> None:
+    cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
+    lightning_bolts = [
+        card for card in cards if card.get("oracle_id") == "4457d7c0-f97e-4cac-93f6-0447f3a0b1f9"
+    ]
+    assert len(lightning_bolts) == 2
+    for card in lightning_bolts:
+        card["tcgplayer_id"] = 999_999
+    cards_path = tmp_path / "ambiguous-external-id.json"
+    cards_path.write_text(json.dumps(cards), encoding="utf-8")
+
+    catalog = normalize_catalog_file(
+        cards_path,
+        observed_at=OBSERVED_AT,
+        ingested_at=INGESTED_AT,
+        sets_path=sets_fixture_path,
+    )
+
+    assert not any(
+        identifier.provider == "tcgplayer"
+        and identifier.identifier_type == "product_id"
+        and identifier.identifier_value == "999999"
+        for identifier in catalog.external_ids
+    )
+    assert any(identifier.provider == "scryfall" for identifier in catalog.external_ids)
+
+
+def test_price_without_a_matching_printing_finish_remains_absent(
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    tmp_path: Path,
+) -> None:
+    cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
+    target = cards[0]
+    target["finishes"] = ["foil"]
+    target["prices"]["tix"] = "0.42"
+    cards_path = tmp_path / "foil-only-with-tix.json"
+    cards_path.write_text(json.dumps(cards), encoding="utf-8")
+
+    catalog = normalize_catalog_file(
+        cards_path,
+        observed_at=OBSERVED_AT,
+        ingested_at=INGESTED_AT,
+        sets_path=sets_fixture_path,
+    )
+    target_prices = [price for price in catalog.prices if price.printing_id == target["id"]]
+
+    assert target_prices
+    assert all(price.finish == "foil" for price in target_prices)
+    assert not any(price.currency == "TIX" for price in target_prices)
+
+
+def test_contradictory_set_finish_exclusivity_normalizes_to_unspecified(
+    sets_fixture_path: Path,
+) -> None:
+    raw_sets = json.loads(sets_fixture_path.read_text(encoding="utf-8"))
+    raw_sets[0]["foil_only"] = True
+    raw_sets[0]["nonfoil_only"] = True
+
+    catalog_set = next(
+        item for item in normalize_sets(raw_sets) if item.set_id == raw_sets[0]["id"]
+    )
+
+    assert catalog_set.foil_only is False
+    assert catalog_set.nonfoil_only is False
 
 
 def test_empty_bulk_source_is_rejected(tmp_path: Path) -> None:

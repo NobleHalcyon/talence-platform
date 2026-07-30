@@ -153,7 +153,7 @@ test("real private-beta critical journey remains secure, accessible, and workspa
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/app$/);
 
-  await page.goto("/app/catalog?q=Lightning%20Bolt&view=table");
+  await page.goto("/app/catalog?q=Lightning%20Bolt&set=m10&view=table");
   await expect(page.getByRole("heading", { name: "Browse exact printings" })).toBeVisible();
   const resultRow = page
     .getByRole("row")

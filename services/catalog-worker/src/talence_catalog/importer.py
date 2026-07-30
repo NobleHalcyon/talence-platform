@@ -172,7 +172,10 @@ def run_live_import(
             prefix="talence-catalog-",
             dir=config.temporary_directory,
         ) as temporary_directory:
-            destination = Path(temporary_directory) / "all_cards.json"
+            destination_name = (
+                "all_cards.jsonl.gz" if descriptor.file_format == "jsonl_gzip" else "all_cards.json"
+            )
+            destination = Path(temporary_directory) / destination_name
             download = provider.download_bulk(descriptor, destination)
             return import_downloaded_catalog(
                 descriptor=descriptor,
@@ -280,6 +283,7 @@ def import_downloaded_catalog(
         )
         for batch in iter_normalized_card_batches(
             download.path,
+            source_format=descriptor.file_format,
             catalog_sets=sets_by_id,
             observed_at=descriptor.updated_at,
             ingested_at=downloaded_at,
@@ -537,6 +541,7 @@ def status_payload(store: CatalogStore | None) -> dict[str, Any]:
             "fixture_network_access": False,
             "live_provider_import": True,
             "streaming_json": True,
+            "streaming_jsonl_gzip": True,
             "bounded_batch_staging": True,
             "postgres_staging": True,
             "catalog_promotion": True,

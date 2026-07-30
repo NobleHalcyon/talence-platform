@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -14,6 +15,7 @@ from talence_catalog.importer import (
     CatalogImportError,
     ImportOutcome,
     catalog_sets_sha256,
+    digest_local_file,
     run_fixture_import,
     run_live_import,
     unchanged_outcome,
@@ -126,7 +128,7 @@ class MemoryCatalogStore:
         queued_import_id: str | None,
     ) -> ImportRegistration:
         assert source_file_id.startswith("source-")
-        assert trigger_type == "fixture"
+        assert trigger_type in {"fixture", "live", "manual", "scheduled"}
         assert worker_version == "0.2.0"
         self.begin_calls += 1
         return ImportRegistration(
@@ -287,6 +289,38 @@ class UnchangedLiveProvider:
         raise AssertionError("An unchanged queued import must not download bulk data.")
 
 
+@dataclass
+class JsonlLiveProvider:
+    raw_sets: tuple[dict[str, object], ...]
+    cards_path: Path
+    destination_names: list[str] = field(default_factory=list)
+
+    def discover_all_cards(self) -> BulkDataDescriptor:
+        return BulkDataDescriptor(
+            provider_object_id="bulk-jsonl-object",
+            source_type="all_cards",
+            updated_at=OBSERVED_AT,
+            download_uri="https://data.scryfall.io/all-cards.jsonl.gz",
+            content_type="application/gzip",
+            content_encoding="gzip",
+            compressed_size=self.cards_path.stat().st_size,
+            file_format="jsonl_gzip",
+        )
+
+    def fetch_sets(self) -> tuple[dict[str, object], ...]:
+        return self.raw_sets
+
+    def download_bulk(
+        self,
+        descriptor: BulkDataDescriptor,
+        destination: Path,
+    ) -> DownloadResult:
+        assert descriptor.file_format == "jsonl_gzip"
+        self.destination_names.append(destination.name)
+        destination.write_bytes(self.cards_path.read_bytes())
+        return digest_local_file(destination)
+
+
 def fixture_config() -> WorkerConfig:
     return WorkerConfig.from_environment(
         {
@@ -352,6 +386,44 @@ def test_fixture_import_stages_bounded_complete_batches_without_network(
     assert non_oracle.color_identity == ("B", "R")
     assert len(store.heartbeats) == len(store.batches) + 2
     assert set(store.heartbeats) == {"run-1"}
+
+
+def test_live_import_wires_gzipped_jsonl_through_staging_and_promotion(
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    tmp_path: Path,
+) -> None:
+    cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
+    jsonl_path = tmp_path / "provider-source.jsonl.gz"
+    with gzip.open(jsonl_path, "wt", encoding="utf-8", newline="\n") as destination:
+        for card in cards:
+            destination.write(json.dumps(card, ensure_ascii=False, separators=(",", ":")))
+            destination.write("\n")
+    raw_sets = cast(
+        list[dict[str, object]],
+        json.loads(sets_fixture_path.read_text(encoding="utf-8")),
+    )
+    provider = JsonlLiveProvider(raw_sets=tuple(raw_sets), cards_path=jsonl_path)
+    store = MemoryCatalogStore()
+
+    outcome = run_live_import(
+        provider=cast(ScryfallProvider, provider),
+        store=store,
+        config=fixture_config(),
+        trigger_type="manual",
+        now=lambda: INGESTED_AT,
+    )
+
+    assert outcome.status == "succeeded"
+    assert outcome.promoted is True
+    assert outcome.record_counts == {
+        "sets": 3,
+        "cards": 2,
+        "printings": 4,
+        "faces": 5,
+        "prices": 7,
+    }
+    assert provider.destination_names == ["all_cards.jsonl.gz"]
 
 
 def test_identical_fixture_replay_is_an_unchanged_noop(

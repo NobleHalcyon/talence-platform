@@ -4,7 +4,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urljoin, urlsplit
 
 import httpx
@@ -17,8 +17,11 @@ from talence_catalog.download import (
 )
 
 SCRYFALL_API_BASE_URL = "https://api.scryfall.com"
+SCRYFALL_ALL_CARDS_ROUTE = "/bulk-data/all-cards"
 SCRYFALL_ACCEPT_HEADER = "application/json;q=0.9,*/*;q=0.8"
 SCRYFALL_BULK_HOSTS = frozenset({"data.scryfall.io"})
+SCRYFALL_JSONL_CONTENT_TYPE = "application/gzip"
+SCRYFALL_JSONL_CONTENT_ENCODING = "gzip"
 TRANSIENT_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 MAXIMUM_BULK_REDIRECTS = 5
 
@@ -40,6 +43,7 @@ class BulkDataDescriptor:
     content_type: str
     content_encoding: str | None
     compressed_size: int | None
+    file_format: Literal["json_array", "jsonl_gzip"] = "json_array"
     dependency_sha256: str | None = None
 
 
@@ -78,19 +82,8 @@ class ScryfallProvider:
         self.close()
 
     def discover_all_cards(self) -> BulkDataDescriptor:
-        payload = self._request_json("/bulk-data")
-        data = payload.get("data")
-        if not isinstance(data, list):
-            raise ProviderResponseError("Scryfall bulk metadata is missing a data array.")
-
-        matches = [
-            item for item in data if isinstance(item, dict) and item.get("type") == "all_cards"
-        ]
-        if len(matches) != 1:
-            raise ProviderResponseError(
-                "Scryfall must return exactly one all_cards bulk descriptor."
-            )
-        return self._parse_bulk_descriptor(matches[0])
+        payload = self._request_json(SCRYFALL_ALL_CARDS_ROUTE)
+        return self._parse_bulk_descriptor(payload)
 
     def fetch_sets(self) -> tuple[dict[str, Any], ...]:
         payload = self._request_json("/sets")
@@ -151,9 +144,9 @@ class ScryfallProvider:
                             break
 
                         self._raise_for_permanent_status(response)
-                        self._validate_download_headers(response)
+                        self._validate_download_headers(response, descriptor)
                         return stream_to_file(
-                            response.iter_bytes(),
+                            response.iter_raw(),
                             destination,
                             maximum_bytes=self._config.maximum_download_bytes,
                         )
@@ -228,7 +221,11 @@ class ScryfallProvider:
                 now += remaining
         self._last_metadata_request_at = now
 
-    def _validate_download_headers(self, response: httpx.Response) -> None:
+    def _validate_download_headers(
+        self,
+        response: httpx.Response,
+        descriptor: BulkDataDescriptor,
+    ) -> None:
         content_length = response.headers.get("Content-Length")
         if content_length is not None:
             try:
@@ -243,38 +240,44 @@ class ScryfallProvider:
                 )
 
         content_type = response.headers.get("Content-Type")
-        if content_type is not None and "json" not in content_type.casefold():
+        if content_type is not None and (
+            content_type.partition(";")[0].strip().casefold() != descriptor.content_type.casefold()
+        ):
             raise ProviderResponseError(
                 f"Scryfall bulk response has unexpected Content-Type: {content_type}."
             )
 
     @staticmethod
     def _parse_bulk_descriptor(item: dict[str, Any]) -> BulkDataDescriptor:
+        if item.get("object") != "bulk_data":
+            raise ProviderResponseError("Scryfall all_cards metadata is not a bulk_data object.")
         provider_object_id = _required_provider_text(item, "id")
         source_type = _required_provider_text(item, "type")
+        if source_type != "all_cards":
+            raise ProviderResponseError(
+                "Scryfall all_cards endpoint returned an unexpected bulk type."
+            )
         updated_at = _required_provider_text(item, "updated_at")
-        download_uri = _required_provider_text(item, "download_uri")
-        content_type = _required_provider_text(item, "content_type")
+        download_uri = _required_provider_text(item, "jsonl_download_uri")
         _validate_scryfall_bulk_uri(download_uri)
 
-        compressed_size = item.get("size", item.get("compressed_size"))
-        if compressed_size is not None and (
-            not isinstance(compressed_size, int) or compressed_size < 0
+        compressed_size = item.get("compressed_size")
+        if (
+            isinstance(compressed_size, bool)
+            or not isinstance(compressed_size, int)
+            or compressed_size <= 0
         ):
-            raise ProviderResponseError("Bulk compressed_size must be nonnegative.")
-
-        content_encoding = item.get("content_encoding")
-        if content_encoding is not None and not isinstance(content_encoding, str):
-            raise ProviderResponseError("Bulk content_encoding must be text or null.")
+            raise ProviderResponseError("Bulk compressed_size must be a positive integer.")
 
         return BulkDataDescriptor(
             provider_object_id=provider_object_id,
             source_type=source_type,
             updated_at=updated_at,
             download_uri=download_uri,
-            content_type=content_type,
-            content_encoding=content_encoding,
+            content_type=SCRYFALL_JSONL_CONTENT_TYPE,
+            content_encoding=SCRYFALL_JSONL_CONTENT_ENCODING,
             compressed_size=compressed_size,
+            file_format="jsonl_gzip",
         )
 
 

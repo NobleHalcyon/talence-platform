@@ -76,6 +76,7 @@ class WorkerConfig:
     """Non-secret catalog worker configuration plus an optional private DB URL."""
 
     user_agent: str
+    user_agent_explicitly_configured: bool = False
     maximum_download_bytes: int = 2_000_000_000
     request_timeout_seconds: float = 30.0
     maximum_attempts: int = 4
@@ -159,6 +160,9 @@ class WorkerConfig:
 
         return cls(
             user_agent=user_agent,
+            user_agent_explicitly_configured=bool(
+                values.get("TALENCE_CATALOG_USER_AGENT", "").strip()
+            ),
             maximum_download_bytes=_positive_int(
                 values,
                 "TALENCE_CATALOG_MAX_DOWNLOAD_BYTES",

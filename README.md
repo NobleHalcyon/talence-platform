@@ -287,12 +287,14 @@ $env:TALENCE_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/post
 .\.venv\Scripts\python.exe -m talence_catalog status
 ```
 
-Live mode additionally requires a real contact-bearing
-`TALENCE_CATALOG_USER_AGENT`. It selects exactly Scryfall `all_cards`, restricts
-bulk bytes to the official download host, streams through SHA/size guards,
-normalizes in bounded batches, and promotes only after database validation.
-Unchanged active sources are no-ops and failure preserves the previous active
-catalog.
+Live mode refuses to start unless the operator explicitly supplies a real
+contact-bearing `TALENCE_CATALOG_USER_AGENT`. It discovers exactly Scryfall
+`all_cards` from the supported `/bulk-data/all-cards` endpoint, accepts the
+current `jsonl_download_uri` descriptor, restricts gzipped JSONL bytes to the
+official download host, and streams decompression and parsing through SHA/size
+guards and bounded database batches. Promotion occurs only after database
+validation. Unchanged active sources are pre-download no-ops and failure
+preserves the previous active catalog.
 
 An unforced queued run may complete without downloading bulk bytes only after
 the database confirms its discovered provider/set identity still matches the

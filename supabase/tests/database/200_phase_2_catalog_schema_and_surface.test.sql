@@ -1,6 +1,24 @@
 begin;
 
-select plan(40);
+select plan(43);
+
+select is(
+  app_private.normalize_catalog_search_text('   '),
+  '',
+  'empty browse input retains the empty-query contract'
+);
+
+select is(
+  app_private.normalize_catalog_search_text('_____'),
+  'symbol5f5f5f5f5f',
+  'punctuation-only catalog names retain a non-empty normalized search value'
+);
+
+select is(
+  app_private.normalize_catalog_search_text('%'),
+  'symbol25',
+  'punctuation-only search normalization cannot retain SQL wildcard syntax'
+);
 
 select has_table('public', 'catalog_sets', 'catalog sets exist');
 select has_table('public', 'catalog_cards', 'oracle cards exist');

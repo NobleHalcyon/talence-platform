@@ -40,9 +40,12 @@ from talence_catalog.store import (
 )
 
 MAX_DATABASE_ERROR_SUMMARY_LENGTH = 500
+AMBIGUOUS_EXTERNAL_ID_ENTITY_TYPE = "ambiguous"
+AMBIGUOUS_EXTERNAL_ID_UUID = "00000000-0000-0000-0000-000000000000"
 type StageRecord = (
     CatalogSet | OracleCard | Printing | Face | Legality | ExternalIdentifier | PriceObservation
 )
+type ExternalIdentifierKey = tuple[str, str, str]
 
 
 @dataclass(frozen=True, slots=True)
@@ -470,20 +473,32 @@ class PostgresCatalogStore:
         _required_text(payload, "heartbeat_at")
 
     def validate_import(self, import_run_id: str) -> ImportValidation:
-        payload = self._call_json(
-            """
-            SELECT app_private.catalog_validate_import(
-              p_import_run_id => %(import_run_id)s::uuid,
-              p_max_rejections => 0
-            )
-            """,
-            {"import_run_id": import_run_id},
-            operation="validate staged catalog import",
-        )
+        try:
+            with self._connection.transaction():
+                ambiguous_ids = self._detach_ambiguous_external_ids(import_run_id)
+                payload = self._call_json(
+                    """
+                    SELECT app_private.catalog_validate_import(
+                      p_import_run_id => %(import_run_id)s::uuid,
+                      p_max_rejections => 0
+                    )
+                    """,
+                    {"import_run_id": import_run_id},
+                    operation="validate staged catalog import",
+                )
+                self._restore_ambiguous_external_ids(import_run_id, ambiguous_ids)
+        except CatalogStoreError:
+            raise
+        except psycopg.Error as error:
+            raise CatalogStoreError(
+                "Unable to reconcile ambiguous staged external identifiers."
+            ) from error
         raw_counts = payload.get("counts")
         if not isinstance(raw_counts, Mapping):
             raise CatalogStoreError("Catalog validation returned invalid counts.")
         counts = _integer_mapping(raw_counts)
+        if ambiguous_ids:
+            counts["ambiguous_external_ids_omitted"] = len(ambiguous_ids)
         records_rejected = counts.get(
             "records_rejected",
             counts.get("rejected", 0),
@@ -507,29 +522,146 @@ class PostgresCatalogStore:
         *,
         catalog_version: str,
     ) -> PromotionResult:
-        payload = self._call_json(
-            """
-            SELECT app_private.catalog_promote_import(
-              p_import_run_id => %(import_run_id)s::uuid,
-              p_catalog_version => %(catalog_version)s
-            )
-            """,
-            {
-                "import_run_id": import_run_id,
-                "catalog_version": catalog_version,
-            },
-            operation="promote staged catalog import",
-        )
-        raw_counts = payload.get("counts")
-        if not isinstance(raw_counts, Mapping):
-            raise CatalogStoreError("Catalog promotion returned invalid counts.")
-        status = _required_text(payload, "status")
-        if status != "succeeded":
-            raise CatalogStoreError("Catalog promotion did not succeed.")
+        try:
+            with self._connection.transaction():
+                ambiguous_ids = self._detach_ambiguous_external_ids(import_run_id)
+                self._delete_current_ambiguous_external_ids(ambiguous_ids)
+                payload = self._call_json(
+                    """
+                    SELECT app_private.catalog_promote_import(
+                      p_import_run_id => %(import_run_id)s::uuid,
+                      p_catalog_version => %(catalog_version)s
+                    )
+                    """,
+                    {
+                        "import_run_id": import_run_id,
+                        "catalog_version": catalog_version,
+                    },
+                    operation="promote staged catalog import",
+                )
+                raw_counts = payload.get("counts")
+                if not isinstance(raw_counts, Mapping):
+                    raise CatalogStoreError("Catalog promotion returned invalid counts.")
+                status = _required_text(payload, "status")
+                if status != "succeeded":
+                    raise CatalogStoreError("Catalog promotion did not succeed.")
+                counts = _integer_mapping(raw_counts)
+                if ambiguous_ids:
+                    counts["ambiguous_external_ids_omitted"] = len(ambiguous_ids)
+        except CatalogStoreError:
+            raise
+        except psycopg.Error as error:
+            raise CatalogStoreError(
+                "Unable to reconcile ambiguous external identifiers during promotion."
+            ) from error
         return PromotionResult(
             active_import_id=_required_text(payload, "import_run_id"),
             catalog_version=_required_text(payload, "catalog_version"),
-            counts=_integer_mapping(raw_counts),
+            counts=counts,
+        )
+
+    def _detach_ambiguous_external_ids(
+        self,
+        import_run_id: str,
+    ) -> tuple[ExternalIdentifierKey, ...]:
+        rows = self._connection.execute(
+            """
+            DELETE FROM app_private.catalog_stage_external_ids
+            WHERE import_run_id = %(import_run_id)s::uuid
+              AND entity_type = %(ambiguous_entity_type)s
+              AND entity_id = %(ambiguous_entity_id)s::uuid
+            RETURNING provider, identifier_type, identifier_value
+            """,
+            {
+                "import_run_id": import_run_id,
+                "ambiguous_entity_type": AMBIGUOUS_EXTERNAL_ID_ENTITY_TYPE,
+                "ambiguous_entity_id": AMBIGUOUS_EXTERNAL_ID_UUID,
+            },
+        ).fetchall()
+        keys: list[ExternalIdentifierKey] = []
+        for row in rows:
+            if (
+                len(row) != 3
+                or not isinstance(row[0], str)
+                or not isinstance(row[1], str)
+                or not isinstance(row[2], str)
+            ):
+                raise CatalogStoreError(
+                    "Database returned an invalid ambiguous external identifier."
+                )
+            keys.append((row[0], row[1], row[2]))
+        return tuple(keys)
+
+    def _restore_ambiguous_external_ids(
+        self,
+        import_run_id: str,
+        identifiers: tuple[ExternalIdentifierKey, ...],
+    ) -> None:
+        if not identifiers:
+            return
+        with self._connection.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO app_private.catalog_stage_external_ids (
+                  import_run_id,
+                  entity_type,
+                  entity_id,
+                  provider,
+                  identifier_type,
+                  identifier_value
+                )
+                VALUES (
+                  %(import_run_id)s::uuid,
+                  %(entity_type)s,
+                  %(entity_id)s::uuid,
+                  %(provider)s,
+                  %(identifier_type)s,
+                  %(identifier_value)s
+                )
+                """,
+                [
+                    {
+                        "import_run_id": import_run_id,
+                        "entity_type": AMBIGUOUS_EXTERNAL_ID_ENTITY_TYPE,
+                        "entity_id": AMBIGUOUS_EXTERNAL_ID_UUID,
+                        "provider": provider,
+                        "identifier_type": identifier_type,
+                        "identifier_value": identifier_value,
+                    }
+                    for provider, identifier_type, identifier_value in identifiers
+                ],
+            )
+
+    def _delete_current_ambiguous_external_ids(
+        self,
+        identifiers: tuple[ExternalIdentifierKey, ...],
+    ) -> None:
+        if not identifiers:
+            return
+        self._connection.execute(
+            """
+            DELETE FROM public.catalog_external_ids AS current_id
+            USING jsonb_to_recordset(%(identifiers)s::jsonb) AS ambiguous_id (
+              provider text,
+              identifier_type text,
+              identifier_value text
+            )
+            WHERE current_id.provider = ambiguous_id.provider
+              AND current_id.identifier_type = ambiguous_id.identifier_type
+              AND current_id.identifier_value = ambiguous_id.identifier_value
+            """,
+            {
+                "identifiers": Jsonb(
+                    [
+                        {
+                            "provider": provider,
+                            "identifier_type": identifier_type,
+                            "identifier_value": identifier_value,
+                        }
+                        for provider, identifier_type, identifier_value in identifiers
+                    ]
+                )
+            },
         )
 
     def mark_import_failed(
@@ -735,6 +867,38 @@ def _consistent_upsert_sql(spec: StageSpec) -> str:
     assignments = ", ".join(f"{column} = EXCLUDED.{column}" for column in value_columns)
     existing_row = ", ".join(f"staged.{column}" for column in value_columns)
     excluded_row = ", ".join(f"EXCLUDED.{column}" for column in value_columns)
+    if spec.attribute == "legalities":
+        return (
+            f"INSERT INTO app_private.{spec.table} AS staged ({insert_columns}) "
+            f"VALUES ({placeholders}) "
+            f"ON CONFLICT ({conflict_columns}) DO UPDATE SET legality = CASE "
+            "WHEN staged.legality = 'banned' OR EXCLUDED.legality = 'banned' "
+            "THEN 'banned' "
+            "WHEN staged.legality = 'restricted' OR EXCLUDED.legality = 'restricted' "
+            "THEN 'restricted' "
+            "WHEN staged.legality = 'legal' OR EXCLUDED.legality = 'legal' "
+            "THEN 'legal' "
+            "ELSE 'not_legal' END"
+        )
+    if spec.attribute == "external_ids":
+        target_differs = (
+            "staged.entity_type = 'ambiguous' OR "
+            "ROW(staged.entity_type, staged.entity_id) IS DISTINCT FROM "
+            "ROW(EXCLUDED.entity_type, EXCLUDED.entity_id)"
+        )
+        return (
+            f"INSERT INTO app_private.{spec.table} AS staged ({insert_columns}) "
+            f"VALUES ({placeholders}) "
+            "ON CONFLICT ("
+            "import_run_id, provider, identifier_type, identifier_value"
+            ") DO UPDATE SET "
+            f"entity_type = CASE WHEN {target_differs} "
+            f"THEN '{AMBIGUOUS_EXTERNAL_ID_ENTITY_TYPE}' "
+            "ELSE staged.entity_type END, "
+            f"entity_id = CASE WHEN {target_differs} "
+            f"THEN '{AMBIGUOUS_EXTERNAL_ID_UUID}'::uuid "
+            "ELSE staged.entity_id END"
+        )
     return (
         f"INSERT INTO app_private.{spec.table} AS staged ({insert_columns}) "
         f"VALUES ({placeholders}) "

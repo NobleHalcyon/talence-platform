@@ -37,6 +37,16 @@ def sets_fixture_path() -> Path:
 
 
 @pytest.fixture
+def bulk_descriptor_fixture_path() -> Path:
+    return (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "scryfall"
+        / "all_cards_bulk_descriptor_jsonl.json"
+    )
+
+
+@pytest.fixture
 def canonical_snapshot_schema_path() -> Path:
     return (
         Path(__file__).resolve().parents[3]

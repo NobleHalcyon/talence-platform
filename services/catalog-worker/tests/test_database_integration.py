@@ -112,21 +112,15 @@ def test_real_fixture_promotion_replay_and_failure_preservation(
         )
         active_before_failure = store.status()["active_catalog_version"]
 
-        invalid_cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
-        invalid_cards[0]["finishes"] = ["nonfoil"]
-        invalid_path = tmp_path / "all_cards-invalid-finish-price.json"
-        invalid_path.write_text(
-            json.dumps(invalid_cards, ensure_ascii=False),
-            encoding="utf-8",
-        )
         with pytest.raises(CatalogImportError, match="price_invalid"):
             run_fixture_import(
-                cards_path=invalid_path,
+                cards_path=cards_fixture_path,
                 sets_path=sets_fixture_path,
                 provider_observed_at="2026-07-26T12:01:00Z",
                 store=store,
                 config=config,
                 force=True,
+                now=lambda: "2026-07-25T12:00:00Z",
             )
         active_after_failure = store.status()["active_catalog_version"]
 
@@ -337,3 +331,92 @@ def test_real_fixture_promotion_replay_and_failure_preservation(
     assert failed_run == ("validation_failed",)
     assert queued_row == ("succeeded", None, "true", "0.2.0")
     assert sync_failed_run == ("sync_disabled",)
+
+
+@pytest.mark.integration
+def test_cross_batch_legality_and_external_id_reconciliation(
+    cards_fixture_path: Path,
+    sets_fixture_path: Path,
+    tmp_path: Path,
+) -> None:
+    database_url = os.environ.get("TALENCE_DATABASE_URL")
+    if database_url is None:
+        pytest.skip("TALENCE_DATABASE_URL is not configured for local integration.")
+    require_disposable_local_supabase_database(database_url)
+    cards = json.loads(cards_fixture_path.read_text(encoding="utf-8"))
+    lightning_bolts = [
+        card for card in cards if card.get("oracle_id") == "4457d7c0-f97e-4cac-93f6-0447f3a0b1f9"
+    ]
+    assert len(lightning_bolts) == 2
+    lightning_bolts[0]["legalities"]["oldschool"] = "legal"
+    lightning_bolts[1]["legalities"]["oldschool"] = "not_legal"
+    lightning_bolts[0]["tcgplayer_id"] = 999_999
+    lightning_bolts[1].pop("tcgplayer_id", None)
+    unique_path = tmp_path / "unique-external-id.json"
+    unique_path.write_text(json.dumps(cards), encoding="utf-8")
+    config = WorkerConfig.from_environment(
+        {
+            "TALENCE_DATABASE_URL": database_url,
+            "TALENCE_CATALOG_BATCH_SIZE": "1",
+        }
+    )
+
+    with PostgresCatalogStore.connect(database_url) as store:
+        unique_outcome = run_fixture_import(
+            cards_path=unique_path,
+            sets_path=sets_fixture_path,
+            provider_observed_at="2026-07-26T12:03:00Z",
+            store=store,
+            config=config,
+            force=True,
+        )
+
+    with psycopg.connect(database_url) as connection:
+        unique_mapping = connection.execute(
+            """
+            SELECT entity_id::text
+            FROM public.catalog_external_ids
+            WHERE provider = 'tcgplayer'
+              AND identifier_type = 'product_id'
+              AND identifier_value = '999999'
+            """
+        ).fetchone()
+
+    lightning_bolts[1]["tcgplayer_id"] = 999_999
+    ambiguous_path = tmp_path / "ambiguous-external-id.json"
+    ambiguous_path.write_text(json.dumps(cards), encoding="utf-8")
+    with PostgresCatalogStore.connect(database_url) as store:
+        ambiguous_outcome = run_fixture_import(
+            cards_path=ambiguous_path,
+            sets_path=sets_fixture_path,
+            provider_observed_at="2026-07-26T12:04:00Z",
+            store=store,
+            config=config,
+            force=True,
+        )
+
+    with psycopg.connect(database_url) as connection:
+        oldschool = connection.execute(
+            """
+            SELECT legality
+            FROM public.catalog_legalities
+            WHERE card_id = '4457d7c0-f97e-4cac-93f6-0447f3a0b1f9'::uuid
+              AND format_code = 'oldschool'
+            """
+        ).fetchone()
+        ambiguous_mapping = connection.execute(
+            """
+            SELECT entity_id
+            FROM public.catalog_external_ids
+            WHERE provider = 'tcgplayer'
+              AND identifier_type = 'product_id'
+              AND identifier_value = '999999'
+            """
+        ).fetchone()
+
+    assert unique_outcome.promoted is True
+    assert unique_mapping == ("e6a1f7d6-5f5b-4f1e-8cc3-8bf2962a8ac7",)
+    assert ambiguous_outcome.promoted is True
+    assert ambiguous_outcome.record_counts["ambiguous_external_ids_omitted"] == 1
+    assert ambiguous_mapping is None
+    assert oldschool == ("legal",)

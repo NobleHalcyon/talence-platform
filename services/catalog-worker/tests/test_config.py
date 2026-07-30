@@ -7,6 +7,7 @@ def test_configuration_uses_safe_non_secret_defaults() -> None:
     config = WorkerConfig.from_environment({})
 
     assert "Talence" in config.user_agent
+    assert config.user_agent_explicitly_configured is False
     assert config.maximum_download_bytes > 0
     assert config.metadata_minimum_interval_seconds >= 0.1
     assert config.price_stale_after_hours == 36
@@ -24,6 +25,18 @@ def test_configuration_rejects_unidentified_user_agent() -> None:
 def test_configuration_requires_user_agent_contact_context() -> None:
     with pytest.raises(ConfigurationError, match="contact/reference"):
         WorkerConfig.from_environment({"TALENCE_CATALOG_USER_AGENT": "Talence-Catalog-Worker/0.2"})
+
+
+def test_configuration_records_an_explicit_operator_user_agent() -> None:
+    config = WorkerConfig.from_environment(
+        {
+            "TALENCE_CATALOG_USER_AGENT": (
+                "Talence-Catalog-Worker/0.2 (+https://operator.example/contact)"
+            )
+        }
+    )
+
+    assert config.user_agent_explicitly_configured is True
 
 
 def test_configuration_cannot_exceed_scryfall_metadata_rate_guidance() -> None:
