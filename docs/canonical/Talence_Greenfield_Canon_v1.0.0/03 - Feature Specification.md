@@ -157,23 +157,13 @@ No browser request may query Scryfall directly for ordinary search.
 
 ### 5.3 Filters — P0
 
-At minimum:
+Catalog and collection browsing share one validated filter-tree contract. Search is followed by compact quick filters for color identity, card type, set, rarity, and mana value; every active rule appears as an individually removable chip. Advanced filters open in a wide desktop panel or full-screen mobile sheet, with collapsible card, printing, and collection sections, a sticky apply footer, and Sort remaining in the results toolbar.
 
-- set;
-- color identity;
-- color;
-- type line;
-- rarity;
-- mana value range;
-- language;
-- finish availability;
-- price availability;
-- physical/digital;
-- release date range.
+Categorical controls are searchable multi-selectors with explicit include/exclude and any/all/exact states where meaningful. Set options display symbol, full name, and code; language options display human-readable names; card color and color identity use accessible mana symbols. Type line is normalized into separate supertype, card-type, and subtype filters. Numeric controls cover mana value, power, toughness, and loyalty; nonnumeric P/T/L values are included only by an explicit option. Legality, artist, keyword, rules-text, rarity, finish, release date, digital/default-object scope, and supported ownership fields are available. Price-availability, currency, price-range, flavor-text, and raw query-language controls are not browse filters.
 
-Filters are URL-addressable so a result can be refreshed or shared among admitted users.
-All browse filters live in a drawer opened from the search control group at every viewport width.
-The drawer includes an unchecked **Return all variants** checkbox with the tooltip: "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card."
+Normal mode compiles separate fields into an AND group. Logic mode supports AND/OR groups plus NOT on rules or groups, with at most two nested group levels. The server validates the same typed model and compiles it without interpolating values into raw SQL. The serialized tree is URL-addressable so refresh, sharing, and browser navigation preserve state. Quick and advanced controls edit the same state.
+
+The advanced panel includes an unchecked **Return all variants** checkbox with the tooltip: "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card."
 
 Grid presentation is image-first. The browse surface omits import/freshness metadata and the explanatory Oracle-mode sentence. Hover and keyboard focus reveal the Oracle name above the image, compact nonfoil/foil prices below it, and folder-plus/list-plus actions for collection and deck entry. The image area links to card detail. Touch layouts keep the same information and actions available without hover.
 

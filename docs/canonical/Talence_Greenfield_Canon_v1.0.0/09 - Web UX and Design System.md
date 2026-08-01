@@ -254,9 +254,13 @@ Feature code composes these primitives instead of recreating controls.
 ### Browse
 
 - the page opens directly on a populated result set without a redundant catalog introduction;
-- search remains visible and shares one control group with Search and Filter actions;
-- active filters are visible as removable chips/summary;
-- all filters live in a drawer at every viewport width;
+- search remains visible above a compact, horizontally scrollable quick-filter row;
+- color identity, card type, set, rarity, and mana value open compact quick-filter popovers without opening the advanced panel;
+- active filters are visible as individually removable chips, with a global Clear all action;
+- advanced filters use a 520-600 px desktop side panel and a full-screen mobile sheet with collapsible sections and a sticky footer;
+- normal mode combines fields with AND; Logic mode exposes AND/OR groups and explicit NOT states up to two nested group levels;
+- searchable multi-selectors stay open for repeated selection, display selected-value pills, and provide keyboard navigation and visible focus/selected states;
+- Sort remains in the results toolbar beside Grid/Table controls rather than inside filtering;
 - the filter drawer exposes an unchecked **Return all variants** checkbox; its tooltip reads "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card.";
 - unchecked Oracle mode shows one representative per card, while checking it shows individual printings; a set filter constrains the Oracle representative to that set;
 - the grid-first table/grid toggle always defaults a bare catalog route to grid; table remains an explicit URL-addressable view and does not become the later default;

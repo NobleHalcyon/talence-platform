@@ -107,7 +107,7 @@ describe("catalog UI states", () => {
     expect(screen.getByRole("status", { name: "Loading catalog results" })).toBeVisible();
   });
 
-  it("opens a compact filter drawer with labeled controls", () => {
+  it("opens the progressive advanced panel with human-readable selectors", () => {
     render(
       <CatalogPageState
         parsed={parsed()}
@@ -119,19 +119,13 @@ describe("catalog UI states", () => {
       />,
     );
 
-    const filterTrigger = screen.getByRole("button", { name: "Filter" });
+    const filterTrigger = screen.getByRole("button", { name: "Advanced filters" });
     expect(filterTrigger).toBeEnabled();
-    expect(filterTrigger.parentElement).toBe(
-      screen.getByRole("button", { name: "Search" }).parentElement,
-    );
     fireEvent.click(filterTrigger);
-    const drawer = screen.getByRole("dialog", { name: "Filters" });
+    const drawer = screen.getByRole("dialog", { name: "Advanced filters" });
     expect(drawer).toBeVisible();
-    expect(screen.getAllByLabelText("Language code")).toHaveLength(1);
-    expect(
-      screen.getAllByText('English is the default. Enter "all" to include every language.'),
-    ).toHaveLength(1);
-    expect(drawer.querySelector('[name="lang"]')).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Language" })).toBeEnabled();
+    expect(drawer.querySelector('[name="lang"]')).not.toBeInTheDocument();
     const variants = screen.getByRole("checkbox", { name: "Return all variants" });
     expect(variants).not.toBeChecked();
     expect(variants).toHaveAccessibleDescription(
@@ -139,16 +133,15 @@ describe("catalog UI states", () => {
     );
   });
 
-  it("renders one server-side Filter trigger beside Search", () => {
+  it("renders one advanced trigger in the quick-filter row", () => {
     const container = document.createElement("div");
     container.innerHTML = renderToString(<CatalogControls query={defaultCatalogQuery("grid")} />);
 
     const buttons = Array.from(container.querySelectorAll("button"));
-    const searchTrigger = buttons.find((button) => button.textContent === "Search");
-    const filterTrigger = buttons.find((button) => button.textContent === "Filter");
+    const filterTrigger = buttons.find((button) => button.textContent === "Advanced filters");
 
     expect(filterTrigger).toBeEnabled();
-    expect(filterTrigger?.parentElement).toBe(searchTrigger?.parentElement);
+    expect(filterTrigger?.parentElement?.getAttribute("aria-label")).toBe("Quick filters");
     expect(container.querySelectorAll('[name="lang"]')).toHaveLength(0);
   });
 
@@ -177,8 +170,22 @@ describe("catalog UI states", () => {
     });
   });
 
-  it("broadens preview results only through the explicit all-language sentinel", () => {
-    const query = { ...defaultCatalogQuery("grid"), language: "all" };
+  it("broadens preview results through an explicit shared language rule", () => {
+    const query = {
+      ...defaultCatalogQuery("grid"),
+      filters: {
+        id: "root",
+        operator: "and" as const,
+        children: [
+          {
+            id: "language",
+            field: "language" as const,
+            comparator: "is" as const,
+            value: ["en", "ja"],
+          },
+        ],
+      },
+    };
     const data = previewCatalogSearch(query);
 
     expect(data.items.map((item) => item.language)).toContain("en");
@@ -199,7 +206,11 @@ describe("catalog UI states", () => {
     const alphaSet = previewCatalogSearch({
       ...defaultCatalogQuery("grid"),
       query: "Black Lotus",
-      setCode: "LEA",
+      filters: {
+        id: "root",
+        operator: "and",
+        children: [{ id: "set-lea", field: "set", comparator: "is", value: ["LEA"] }],
+      },
     });
 
     expect(oracle.totalCount).toBe(1);

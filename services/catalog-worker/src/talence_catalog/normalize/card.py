@@ -21,6 +21,7 @@ FACE_NAMESPACE = UUID("2599fbc9-38df-4e34-a463-b50c40c5ec07")
 ALLOWED_FINISHES = frozenset({"nonfoil", "foil", "etched"})
 ALLOWED_LEGALITIES = frozenset({"legal", "not_legal", "restricted", "banned"})
 DEFAULT_BROWSE_EXCLUDED_LAYOUTS = frozenset({"art_series", "emblem", "token"})
+SUPERTYPES = frozenset({"Basic", "Legendary", "Ongoing", "Snow", "World", "Elite", "Host"})
 
 
 class NormalizationError(ValueError):
@@ -32,6 +33,38 @@ def normalize_search_name(value: str) -> str:
         character if character.isalnum() else " " for character in value.lower()
     )
     return " ".join(punctuation_insensitive.split())
+
+
+def normalize_type_parts(
+    type_line: str | None,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """Split Scryfall's canonical type line once during ingestion.
+
+    Multi-face root type lines are unioned across their ``//`` sections. Face rows
+    are normalized independently, so query semantics can match either aggregate
+    Oracle identity or one eligible face without parsing in React.
+    """
+    supertypes: set[str] = set()
+    card_types: set[str] = set()
+    subtypes: set[str] = set()
+    for face_type in (type_line or "").split("//"):
+        left, separator, right = face_type.strip().partition(" — ")
+        for word in left.split():
+            (supertypes if word in SUPERTYPES else card_types).add(word)
+        if separator:
+            subtypes.update(right.split())
+    return tuple(sorted(supertypes)), tuple(sorted(card_types)), tuple(sorted(subtypes))
+
+
+def normalize_numeric_stat(value: object) -> Decimal | None:
+    """Project only genuinely numeric P/T/L values; *, X, and expressions stay null."""
+    text = _optional_text(value)
+    if text is None:
+        return None
+    try:
+        return Decimal(text)
+    except InvalidOperation:
+        return None
 
 
 def normalize_card(
@@ -74,6 +107,8 @@ def normalize_card(
             "Card set identity does not match authoritative Scryfall set metadata."
         )
 
+    card_type_line = _optional_text(raw.get("type_line"))
+    card_supertypes, card_types, card_subtypes = normalize_type_parts(card_type_line)
     oracle_card = (
         OracleCard(
             oracle_card_id=oracle_id,
@@ -81,7 +116,7 @@ def normalize_card(
             normalized_name=normalize_search_name(name),
             mana_cost=_optional_text(raw.get("mana_cost")),
             mana_value=_optional_decimal(raw.get("cmc"), "card.cmc"),
-            type_line=_optional_text(raw.get("type_line")),
+            type_line=card_type_line,
             oracle_text=_optional_text(raw.get("oracle_text")),
             colors=_string_tuple(raw.get("colors"), "card.colors"),
             color_identity=_string_tuple(
@@ -90,6 +125,9 @@ def normalize_card(
             ),
             keywords=_string_tuple(raw.get("keywords"), "card.keywords"),
             reserved=_boolean(raw, "reserved", default=False),
+            supertypes=card_supertypes,
+            card_types=card_types,
+            subtypes=card_subtypes,
         )
         if oracle_id is not None
         else None
@@ -125,6 +163,7 @@ def normalize_card(
             and not oversized
             and (layout is None or layout not in DEFAULT_BROWSE_EXCLUDED_LAYOUTS)
         ),
+        artists=_artist_names(raw),
     )
 
     return NormalizedCard(
@@ -172,6 +211,8 @@ def _normalize_faces(
                 f"scryfall:{printing_id}:face:{face_index}",
             )
         )
+        type_line = _optional_text(source.get("type_line"))
+        supertypes, card_types, subtypes = normalize_type_parts(type_line)
         faces.append(
             Face(
                 face_id=face_id,
@@ -179,7 +220,7 @@ def _normalize_faces(
                 face_index=face_index,
                 name=_required_text(source, "name"),
                 mana_cost=_optional_text(source.get("mana_cost")),
-                type_line=_optional_text(source.get("type_line")),
+                type_line=type_line,
                 oracle_text=_optional_text(source.get("oracle_text")),
                 colors=_string_tuple(source.get("colors"), "face.colors"),
                 power=_optional_text(source.get("power")),
@@ -193,12 +234,33 @@ def _normalize_faces(
                 image_png_uri=_optional_text(image_map.get("png")),
                 art_crop_uri=_optional_text(image_map.get("art_crop")),
                 border_crop_uri=_optional_text(image_map.get("border_crop")),
+                supertypes=supertypes,
+                card_types=card_types,
+                subtypes=subtypes,
+                power_numeric=normalize_numeric_stat(source.get("power")),
+                toughness_numeric=normalize_numeric_stat(source.get("toughness")),
+                loyalty_numeric=normalize_numeric_stat(source.get("loyalty")),
             )
         )
 
     if not faces:
         raise NormalizationError("A printing must normalize to at least one face.")
     return tuple(faces)
+
+
+def _artist_names(raw: Mapping[str, Any]) -> tuple[str, ...]:
+    names: set[str] = set()
+    root_artist = _optional_text(raw.get("artist"))
+    if root_artist:
+        names.add(root_artist)
+    raw_faces = raw.get("card_faces")
+    if isinstance(raw_faces, list):
+        for face in raw_faces:
+            if isinstance(face, Mapping):
+                artist = _optional_text(face.get("artist"))
+                if artist:
+                    names.add(artist)
+    return tuple(sorted(names))
 
 
 def _normalize_legalities(

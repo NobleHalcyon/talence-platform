@@ -10,10 +10,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cli = path.join(root, "node_modules", "supabase", "dist", "supabase.js");
 const outputPath = path.join(root, "apps", "web", "lib", "supabase", "database.types.ts");
 const checkOnly = process.argv.includes("--check");
+const databaseUrl = process.env.TALENCE_DATABASE_URL?.trim();
+const sourceArguments = databaseUrl ? ["--db-url", databaseUrl] : ["--local"];
 
 const result = spawnSync(
   process.execPath,
-  [cli, "gen", "types", "typescript", "--local", "--schema", "public"],
+  [cli, "gen", "types", "typescript", ...sourceArguments, "--schema", "public"],
   {
     cwd: root,
     encoding: "utf8",

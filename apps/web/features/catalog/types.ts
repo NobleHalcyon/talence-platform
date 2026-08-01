@@ -1,5 +1,7 @@
 import type { PriceObservation } from "@talence/domain";
 
+import type { FilterGroup } from "@/features/filters/model";
+
 export const CATALOG_VIEWS = ["table", "grid"] as const;
 export type CatalogView = (typeof CATALOG_VIEWS)[number];
 
@@ -9,26 +11,12 @@ export type CatalogPageSize = (typeof CATALOG_PAGE_SIZES)[number];
 export const CATALOG_SORTS = ["name", "newest", "price_asc", "price_desc"] as const;
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
-export type CatalogPriceAvailability = "any" | "available" | "unavailable";
-
 export interface CatalogSearchQuery {
   query: string;
-  setCode: string;
-  language: string;
-  rarity: string;
-  finish: string;
-  colors: string[];
-  colorIdentity: string[];
-  typeLine: string;
-  manaValueMin: number | null;
-  manaValueMax: number | null;
-  priceAvailability: CatalogPriceAvailability;
-  currency: string;
+  filters: FilterGroup;
   includeDigital: boolean;
   includeNondefault: boolean;
   returnAllVariants: boolean;
-  releasedFrom: string;
-  releasedTo: string;
   sort: CatalogSort;
   cursor: string | null;
   view: CatalogView;

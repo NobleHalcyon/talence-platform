@@ -751,6 +751,46 @@ select is(
   ) ->> 'quantity_total',
   'structured and analytical views total the same filtered balances'
 );
+select is(
+  public.collection_inventory_filter_page(
+    current_setting('test.collection_id')::uuid,
+    'Formula',
+    '{"id":"root","operator":"and","children":[{"id":"set","field":"set","comparator":"is","value":["P3I"]},{"id":"finish","field":"finish","comparator":"is","value":["nonfoil"]},{"id":"condition","field":"condition","comparator":"is","value":["near_mint"]}]}'::jsonb,
+    'name', null, 100, 'USD'
+  ) ->> 'total_count',
+  '1',
+  'collection inventory reuses printing and ownership rules from the shared compiler'
+);
+select is(
+  public.collection_inventory_filter_page(
+    current_setting('test.collection_id')::uuid,
+    null,
+    '{"id":"root","operator":"and","children":[{"id":"quantity","field":"ownedQuantity","comparator":"between","value":{"min":10,"max":10}}]}'::jsonb,
+    'name', null, 100, 'USD'
+  ) -> 'items' -> 0 ->> 'quantity',
+  '10',
+  'owned-quantity ranges operate on balance rows rather than catalog printings'
+);
+select is(
+  public.collection_filter_analytics(
+    current_setting('test.collection_id')::uuid,
+    'Formula',
+    '{"id":"root","operator":"and","children":[{"id":"set","field":"set","comparator":"is","value":["P3I"]},{"id":"finish","field":"finish","comparator":"is","value":["nonfoil"]},{"id":"condition","field":"condition","comparator":"is","value":["near_mint"]}]}'::jsonb,
+    'USD'
+  ) ->> 'quantity_total',
+  '10',
+  'collection analytics compiles the same shared filter expression as inventory pages'
+);
+select is(
+  public.collection_inventory_filter_page(
+    current_setting('test.collection_id')::uuid,
+    null,
+    '{"id":"root","operator":"and","children":[{"id":"rarity","field":"rarity","comparator":"isNot","value":["uncommon"]}]}'::jsonb,
+    'name', null, 100, 'USD'
+  ) -> 'items' -> 0 -> 'printing' ->> 'rarity',
+  'rare',
+  'collection filtering applies include/exclude against owned printings only'
+);
 select throws_ok(
   format(
     $statement$

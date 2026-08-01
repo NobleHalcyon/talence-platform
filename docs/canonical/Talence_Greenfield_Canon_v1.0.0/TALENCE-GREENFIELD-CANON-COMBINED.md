@@ -621,23 +621,13 @@ No browser request may query Scryfall directly for ordinary search.
 
 ### 5.3 Filters — P0
 
-At minimum:
+Catalog and collection browsing share one validated filter-tree contract. Search is followed by compact quick filters for color identity, card type, set, rarity, and mana value; every active rule appears as an individually removable chip. Advanced filters open in a wide desktop panel or full-screen mobile sheet, with collapsible card, printing, and collection sections, a sticky apply footer, and Sort remaining in the results toolbar.
 
-- set;
-- color identity;
-- color;
-- type line;
-- rarity;
-- mana value range;
-- language;
-- finish availability;
-- price availability;
-- physical/digital;
-- release date range.
+Categorical controls are searchable multi-selectors with explicit include/exclude and any/all/exact states where meaningful. Set options display symbol, full name, and code; language options display human-readable names; card color and color identity use accessible mana symbols. Type line is normalized into separate supertype, card-type, and subtype filters. Numeric controls cover mana value, power, toughness, and loyalty; nonnumeric P/T/L values are included only by an explicit option. Legality, artist, keyword, rules-text, rarity, finish, release date, digital/default-object scope, and supported ownership fields are available. Price-availability, currency, price-range, flavor-text, and raw query-language controls are not browse filters.
 
-Filters are URL-addressable so a result can be refreshed or shared among admitted users.
-All browse filters live in a drawer opened from the search control group at every viewport width.
-The drawer includes an unchecked **Return all variants** checkbox with the tooltip: "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card."
+Normal mode compiles separate fields into an AND group. Logic mode supports AND/OR groups plus NOT on rules or groups, with at most two nested group levels. The server validates the same typed model and compiles it without interpolating values into raw SQL. The serialized tree is URL-addressable so refresh, sharing, and browser navigation preserve state. Quick and advanced controls edit the same state.
+
+The advanced panel includes an unchecked **Return all variants** checkbox with the tooltip: "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card."
 
 Grid presentation is image-first. The browse surface omits import/freshness metadata and the explanatory Oracle-mode sentence. Hover and keyboard focus reveal the Oracle name above the image, compact nonfoil/foil prices below it, and folder-plus/list-plus actions for collection and deck entry. The image area links to card detail. Touch layouts keep the same information and actions available without hover.
 
@@ -1738,6 +1728,9 @@ Fields:
 - `colors text[] not null default '{}'`
 - `color_identity text[] not null default '{}'`
 - `keywords text[] not null default '{}'`
+- `supertypes text[] not null default '{}'`
+- `card_types text[] not null default '{}'`
+- `subtypes text[] not null default '{}'`
 - `reserved boolean not null default false`
 - `search_document tsvector`
 - `active boolean not null default true`
@@ -1775,6 +1768,7 @@ Fields:
 - `frame_effects text[] not null default '{}'`
 - `border_color text null`
 - `artist text null`
+- `artists text[] not null default '{}'` (distinct printing and face artists)
 - `scryfall_uri text null`
 - `image_status text null`
 - `is_default_browse boolean not null`
@@ -1801,8 +1795,14 @@ Fields:
 - `oracle_text text null`
 - `colors text[] not null default '{}'`
 - `power text null`
+- `power_numeric numeric null`
 - `toughness text null`
+- `toughness_numeric numeric null`
 - `loyalty text null`
+- `loyalty_numeric numeric null`
+- `supertypes text[] not null default '{}'`
+- `card_types text[] not null default '{}'`
+- `subtypes text[] not null default '{}'`
 - `defense text null`
 - `artist text null`
 - `image_small_uri text null`
@@ -2451,7 +2451,9 @@ At minimum normalize:
 - combined oracle text/type/name search vector;
 - set code and name;
 - color/color-identity arrays;
-- type-line tokens;
+- normalized supertypes, card types, and subtypes at Oracle and face level;
+- numeric P/T/L projections while preserving raw variable or expression values;
+- distinct printing/face artist identities, canonical keywords, and format legalities;
 - rarity, language, mana value, date, digital/default-browse flags.
 
 ### 6.2 PostgreSQL indexes
@@ -2470,11 +2472,15 @@ Use:
 - cursor or keyset pagination;
 - bounded page size;
 - no unbounded “return everything” request;
+- one server-validated typed filter tree shared by catalog and owned-printing collection queries;
+- bounded searchable facet reads for sets, languages, types, subtypes, artists, keywords, formats, rarities, and finishes;
 - Oracle mode groups eligible results by Oracle-card identity after applying every search filter;
 - the Oracle representative prefers default-browse printings, then the newest release, with deterministic variation, promo, and printing-ID tie-breakers;
 - all-variants mode returns every eligible printing and is part of cursor scope so cursors cannot cross modes;
 - the visual Oracle grid obtains bounded, admitted-user-only foil and nonfoil floors for the result card IDs; set and language filters constrain the eligible printings, while all-variants results use each exact printing's current observations;
 - query plan/performance tests on representative catalog size.
+
+Printing-level rules (set, language, rarity, finish, artist, and release date) filter eligible printings before Oracle representative ranking. Oracle-level rules match canonical card data or normalized face data. Separate face-level numeric rules use existential face matching; multiple rules may be satisfied by different faces of the same Oracle card. A numeric P/T/L range excludes variable values such as `*`, `X`, and expressions unless the rule explicitly includes them.
 
 ## 7. Price model
 
@@ -2542,6 +2548,7 @@ The image-first catalog grid intentionally compresses this to `Nonfoil <amount>`
 - Do not enable paid per-origin image transformation by default.
 - Use responsive dimensions and browser/CDN caching.
 - Provide text/layout fallbacks when an image is unavailable.
+- Serve set and mana-symbol SVGs through allowlisted same-origin Talence routes backed by the framework data cache; source them from Scryfall, reject non-SVG or untrusted upstreams, and provide the Talence emblem when a set symbol is missing.
 
 The implementation must review provider and IP terms before public/commercial use.
 
@@ -3241,9 +3248,13 @@ Feature code composes these primitives instead of recreating controls.
 ### Browse
 
 - the page opens directly on a populated result set without a redundant catalog introduction;
-- search remains visible and shares one control group with Search and Filter actions;
-- active filters are visible as removable chips/summary;
-- all filters live in a drawer at every viewport width;
+- search remains visible above a compact, horizontally scrollable quick-filter row;
+- color identity, card type, set, rarity, and mana value open compact quick-filter popovers without opening the advanced panel;
+- active filters are visible as individually removable chips, with a global Clear all action;
+- advanced filters use a 520-600 px desktop side panel and a full-screen mobile sheet with collapsible sections and a sticky footer;
+- normal mode combines fields with AND; Logic mode exposes AND/OR groups and explicit NOT states up to two nested group levels;
+- searchable multi-selectors stay open for repeated selection, display selected-value pills, and provide keyboard navigation and visible focus/selected states;
+- Sort remains in the results toolbar beside Grid/Table controls rather than inside filtering;
 - the filter drawer exposes an unchecked **Return all variants** checkbox; its tooltip reads "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card.";
 - unchecked Oracle mode shows one representative per card, while checking it shows individual printings; a set filter constrains the Oracle representative to that set;
 - the grid-first table/grid toggle always defaults a bare catalog route to grid; table remains an explicit URL-addressable view and does not become the later default;

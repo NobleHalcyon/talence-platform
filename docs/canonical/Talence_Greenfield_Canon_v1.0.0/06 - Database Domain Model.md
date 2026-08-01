@@ -252,6 +252,9 @@ Fields:
 - `colors text[] not null default '{}'`
 - `color_identity text[] not null default '{}'`
 - `keywords text[] not null default '{}'`
+- `supertypes text[] not null default '{}'`
+- `card_types text[] not null default '{}'`
+- `subtypes text[] not null default '{}'`
 - `reserved boolean not null default false`
 - `search_document tsvector`
 - `active boolean not null default true`
@@ -289,6 +292,7 @@ Fields:
 - `frame_effects text[] not null default '{}'`
 - `border_color text null`
 - `artist text null`
+- `artists text[] not null default '{}'` (distinct printing and face artists)
 - `scryfall_uri text null`
 - `image_status text null`
 - `is_default_browse boolean not null`
@@ -315,8 +319,14 @@ Fields:
 - `oracle_text text null`
 - `colors text[] not null default '{}'`
 - `power text null`
+- `power_numeric numeric null`
 - `toughness text null`
+- `toughness_numeric numeric null`
 - `loyalty text null`
+- `loyalty_numeric numeric null`
+- `supertypes text[] not null default '{}'`
+- `card_types text[] not null default '{}'`
+- `subtypes text[] not null default '{}'`
 - `defense text null`
 - `artist text null`
 - `image_small_uri text null`

@@ -13,6 +13,7 @@ import { createInventoryExportStream } from "@/features/collections/export-strea
 import { createInventoryImportErrorStream } from "@/features/collections/import-error-stream";
 import type { CollectionRpcClient } from "@/features/collections/types";
 import { DATABASE_FUNCTIONS } from "@/lib/database/contracts";
+import { EMPTY_FILTER_GROUP } from "@/features/filters/model";
 
 const COLLECTION_ID = "11111111-1111-4111-8111-111111111111";
 const JOB_ID = "22222222-2222-4222-8222-222222222222";
@@ -314,9 +315,15 @@ describe("filtered collection analytics", () => {
     const rpc = vi.fn().mockResolvedValue({
       data: analyticsEnvelope({
         query: "black lotus",
-        set_code: "lea",
-        finish: "nonfoil",
-        condition: "near_mint",
+        expression: {
+          id: "root",
+          operator: "and",
+          children: [
+            { id: "set", field: "set", comparator: "is", value: ["LEA"] },
+            { id: "finish", field: "finish", comparator: "is", value: ["nonfoil"] },
+            { id: "condition", field: "condition", comparator: "is", value: ["near_mint"] },
+          ],
+        },
       }),
       error: null,
     });
@@ -327,9 +334,15 @@ describe("filtered collection analytics", () => {
       "USD",
       {
         query: "Black Lotus",
-        setCode: "LEA",
-        finish: "nonfoil",
-        condition: "near_mint",
+        filters: {
+          id: "root",
+          operator: "and",
+          children: [
+            { id: "set", field: "set", comparator: "is", value: ["LEA"] },
+            { id: "finish", field: "finish", comparator: "is", value: ["nonfoil"] },
+            { id: "condition", field: "condition", comparator: "is", value: ["near_mint"] },
+          ],
+        },
         sort: "value_desc",
         cursor: "ignored_cursor",
         view: "analytical",
@@ -341,20 +354,23 @@ describe("filtered collection analytics", () => {
       data: {
         filters: {
           query: "black lotus",
-          setCode: "lea",
-          finish: "nonfoil",
-          condition: "near_mint",
+          expression: expect.objectContaining({ operator: "and" }),
         },
         quantityTotal: 1,
         estimatedValue: "25000.0000",
       },
     });
-    expect(rpc).toHaveBeenCalledWith(DATABASE_FUNCTIONS.collectionAnalytics, {
+    expect(rpc).toHaveBeenCalledWith(DATABASE_FUNCTIONS.collectionFilterAnalytics, {
       p_collection_id: COLLECTION_ID,
       p_query: "Black Lotus",
-      p_set_code: "LEA",
-      p_finish: "nonfoil",
-      p_condition: "near_mint",
+      p_filters: expect.objectContaining({
+        operator: "and",
+        children: expect.arrayContaining([
+          expect.objectContaining({ field: "set", value: ["LEA"] }),
+          expect.objectContaining({ field: "finish", value: ["nonfoil"] }),
+          expect.objectContaining({ field: "condition", value: ["near_mint"] }),
+        ]),
+      }),
       p_currency: "USD",
     });
   });
@@ -371,9 +387,7 @@ describe("filtered collection analytics", () => {
       "USD",
       {
         query: "",
-        setCode: "",
-        finish: "",
-        condition: "",
+        filters: EMPTY_FILTER_GROUP,
         sort: "name",
         cursor: null,
         view: "analytical",

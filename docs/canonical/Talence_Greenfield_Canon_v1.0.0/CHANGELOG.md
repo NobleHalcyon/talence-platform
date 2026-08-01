@@ -1,5 +1,12 @@
 # Talence Greenfield Canon Changelog
 
+## 1.0.4 - 2026-08-01
+
+- Replaced the one-level catalog drawer contract with shared progressive quick, advanced, and two-level logic filtering for catalog and collection inventory.
+- Added a URL-serialized, server-validated AND/OR/NOT filter tree and required printing-level filtering before Oracle representative selection.
+- Normalized types, numeric P/T/L projections, multi-artist identity, legalities, and data-derived bounded facets.
+- Established searchable human-readable set/language selectors, accessible mana/set symbols, numeric range behavior, and removal of price-availability/currency filters.
+
 ## 1.0.3 — 2026-08-01
 
 - Made Grid the catalog default for every bare-route visit while retaining Table as an explicit URL-addressable view.

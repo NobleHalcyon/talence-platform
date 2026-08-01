@@ -253,7 +253,7 @@ describe("catalog data boundary", () => {
     expect(deploymentDisabled).toMatchObject({ ok: true, data: { syncEnabled: false } });
   });
 
-  it("calls catalog_search with explicit bounded arguments", async () => {
+  it("calls catalog_filter_search with an explicit bounded shared expression", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: rawSearchResult(), error: null });
     const result = await searchCatalogWithClient({ rpc } as CatalogRpcClient, {
       ...defaultCatalogQuery("table"),
@@ -263,11 +263,11 @@ describe("catalog data boundary", () => {
 
     expect(result.ok).toBe(true);
     expect(rpc).toHaveBeenCalledWith(
-      "catalog_search",
+      "catalog_filter_search",
       expect.objectContaining({
         p_query: "fixture",
         p_game_code: "mtg",
-        p_language: "en",
+        p_filters: { id: "root", operator: "and", children: [] },
         p_after: null,
         p_limit: 18,
         p_return_all_variants: false,

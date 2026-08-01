@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 
 from talence_catalog.normalize import NormalizationError, normalize_catalog_file
-from talence_catalog.normalize.card import normalize_search_name
+from talence_catalog.normalize.card import (
+    normalize_numeric_stat,
+    normalize_search_name,
+    normalize_type_parts,
+)
 
 OBSERVED_AT = "2026-07-26T12:00:00Z"
 INGESTED_AT = "2026-07-26T12:05:00Z"
@@ -48,6 +52,15 @@ def test_representative_fixture_normalizes_without_network(
         "Delver of Secrets",
         "Insectile Aberration",
     ]
+    assert transform_faces[0].card_types == ("Creature",)
+    assert transform_faces[0].subtypes == ("Human", "Wizard")
+    assert transform_faces[0].power_numeric == Decimal("1")
+    transform_printing = next(
+        printing
+        for printing in catalog.printings
+        if printing.printing_id == transform_faces[0].printing_id
+    )
+    assert transform_printing.artists == ("Nils Hamm",)
 
     token = next(
         printing
@@ -71,6 +84,20 @@ def test_representative_fixture_normalizes_without_network(
 
 def test_search_normalization_matches_database_unicode_and_punctuation_rules() -> None:
     assert normalize_search_name("Æther_Gust — Test!") == "æther gust test"
+
+
+def test_type_and_variable_stat_normalization_is_deterministic() -> None:
+    assert normalize_type_parts(
+        "Legendary Snow Creature — Human Wizard // Artifact Creature — Golem"
+    ) == (
+        ("Legendary", "Snow"),
+        ("Artifact", "Creature"),
+        ("Golem", "Human", "Wizard"),
+    )
+    assert normalize_numeric_stat("-1.5") == Decimal("-1.5")
+    assert normalize_numeric_stat("*") is None
+    assert normalize_numeric_stat("1+*") is None
+    assert normalize_numeric_stat("X") is None
 
 
 def test_conflicting_oracle_identity_is_rejected(

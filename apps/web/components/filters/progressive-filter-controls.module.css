@@ -1,0 +1,366 @@
+.filterSystem {
+  display: grid;
+  gap: var(--tl-space-3);
+}
+.searchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--tl-space-3);
+  align-items: end;
+  padding: var(--tl-space-4);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: color-mix(in srgb, var(--tl-color-surface) 92%, transparent);
+}
+.searchRow > label {
+  grid-column: 1 / -1;
+  font-size: var(--tl-font-size-14);
+  font-weight: 700;
+  color: var(--tl-color-text);
+  margin-bottom: calc(var(--tl-space-3) * -1);
+}
+.quickRow {
+  display: flex;
+  gap: var(--tl-space-2);
+  align-items: stretch;
+  overflow-x: auto;
+  padding: 0 1px var(--tl-space-1);
+  scrollbar-width: thin;
+}
+.selector {
+  position: relative;
+  min-width: 0;
+}
+.selectorCompact {
+  flex: 0 0 auto;
+}
+.selectorButton {
+  min-height: var(--tl-control-height);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tl-space-3);
+  padding: 0 var(--tl-space-3);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  color: var(--tl-color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.selectorButton:hover {
+  border-color: var(--tl-color-gold);
+}
+.selectorButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--tl-color-focus) 35%, transparent);
+  outline-offset: 2px;
+}
+.selectorPopover {
+  position: absolute;
+  z-index: var(--tl-z-popover);
+  top: calc(100% + var(--tl-space-2));
+  left: 0;
+  width: min(25rem, calc(100vw - 2rem));
+  display: grid;
+  gap: var(--tl-space-3);
+  padding: var(--tl-space-3);
+  border: 1px solid color-mix(in srgb, var(--tl-color-gold) 45%, var(--tl-color-border));
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+  box-shadow: var(--tl-shadow-overlay);
+}
+.controlLabel {
+  display: grid;
+  gap: var(--tl-space-1);
+  font-size: var(--tl-font-size-14);
+  font-weight: 700;
+}
+.selectedPills,
+.activeChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-2);
+}
+.selectedPills button,
+.activeChips button {
+  min-height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--tl-color-gold) 50%, var(--tl-color-border));
+  border-radius: var(--tl-radius-round);
+  padding: 0.25rem 0.65rem;
+  background: color-mix(in srgb, var(--tl-color-gold) 8%, var(--tl-color-surface));
+  color: var(--tl-color-text);
+  cursor: pointer;
+}
+.selectedPills strong {
+  color: var(--tl-color-action);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.selectedPills .clearField {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.activeChips .clearAll {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.optionList {
+  max-height: 20rem;
+  overflow-y: auto;
+  display: grid;
+  gap: 2px;
+  overscroll-behavior: contain;
+}
+.optionList > button {
+  width: 100%;
+  min-height: 2.75rem;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
+  align-items: center;
+  gap: var(--tl-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--tl-radius);
+  padding: var(--tl-space-2);
+  background: transparent;
+  color: var(--tl-color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.optionList > button:hover,
+.optionList > button:focus-visible {
+  border-color: var(--tl-color-gray-600);
+  background: var(--tl-color-surface-subtle);
+  outline: none;
+}
+.optionList > .optionSelected {
+  border-color: var(--tl-color-gold);
+  background: color-mix(in srgb, var(--tl-color-gold) 12%, var(--tl-color-surface));
+  box-shadow: inset 3px 0 0 var(--tl-color-gold);
+}
+.optionList small {
+  display: block;
+  margin-top: 2px;
+  color: var(--tl-color-text-muted);
+}
+.optionSymbol,
+.fallbackSymbol {
+  width: 1.45rem;
+  height: 1.45rem;
+  object-fit: contain;
+  display: grid;
+  place-items: center;
+}
+.symbolTooltip {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+}
+.optionCheck {
+  color: var(--tl-color-action);
+  font-weight: 800;
+}
+.optionStatus {
+  color: var(--tl-color-text-muted);
+  padding: var(--tl-space-3);
+  margin: 0;
+}
+.rangeControl,
+.textFilter,
+.legalityControl {
+  display: grid;
+  gap: var(--tl-space-2);
+  padding: var(--tl-space-3);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface);
+}
+.rangeCompact {
+  min-width: 12rem;
+  padding: var(--tl-space-2) var(--tl-space-3);
+}
+.rangeHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--tl-space-2);
+  align-items: center;
+}
+.rangeHeader button,
+.drawerFooter > button,
+.logicGroupHeader > button,
+.logicRuleHeader > button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--tl-color-action);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.rangeNumbers {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: var(--tl-space-2);
+}
+.rangeNumbers label {
+  display: grid;
+  gap: 3px;
+  color: var(--tl-color-text-muted);
+  font-size: 0.75rem;
+}
+.rangeNumbers input {
+  min-width: 0;
+  width: 100%;
+  min-height: var(--tl-control-height);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  padding: 0 var(--tl-space-2);
+  background: var(--tl-color-surface);
+  color: var(--tl-color-text);
+  font: inherit;
+}
+.dualSlider {
+  position: relative;
+  min-height: 1.25rem;
+}
+.dualSlider input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  pointer-events: none;
+  accent-color: var(--tl-color-gold);
+  background: transparent;
+}
+.dualSlider input::-webkit-slider-thumb {
+  pointer-events: auto;
+}
+.dualSlider input::-moz-range-thumb {
+  pointer-events: auto;
+}
+.advancedPanel {
+  --tl-overlay-drawer-width: 37rem;
+  width: min(37rem, 100vw);
+  max-width: min(37rem, 100vw);
+}
+.advancedPanel details {
+  border-bottom: 1px solid var(--tl-color-border);
+  padding-bottom: var(--tl-space-4);
+}
+.advancedPanel summary {
+  cursor: pointer;
+  padding: var(--tl-space-3) 0;
+  font-size: var(--tl-font-size-20);
+  font-weight: var(--tl-font-weight-bold);
+  color: var(--tl-color-text);
+}
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--tl-space-3);
+  align-items: start;
+}
+.fieldGrid > :global(*) {
+  min-width: 0;
+}
+.fieldGrid .selectorPopover {
+  left: auto;
+  right: 0;
+}
+.modeToggle {
+  display: flex;
+  gap: var(--tl-space-2);
+  margin-bottom: var(--tl-space-3);
+}
+.drawerFooter {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--tl-space-3);
+  align-items: center;
+}
+.drawerFooter span {
+  justify-self: center;
+  color: var(--tl-color-text-muted);
+}
+.logicGroup {
+  display: grid;
+  gap: var(--tl-space-3);
+  padding: var(--tl-space-3);
+  border: 1px solid var(--tl-color-gray-600);
+  border-left: 3px solid var(--tl-color-gold);
+  border-radius: var(--tl-radius);
+}
+.logicGroup .logicGroup {
+  margin-left: var(--tl-space-3);
+}
+.logicGroupHeader,
+.logicRuleHeader,
+.logicActions {
+  display: flex;
+  gap: var(--tl-space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.logicRule {
+  display: grid;
+  gap: var(--tl-space-2);
+  padding: var(--tl-space-3);
+  border: 1px solid var(--tl-color-border);
+  border-radius: var(--tl-radius);
+  background: var(--tl-color-surface-subtle);
+}
+.logicRuleHeader > :first-child {
+  flex: 1;
+}
+.scopeChecks {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--tl-space-2);
+}
+.scopeChecks p {
+  margin: 0;
+  color: var(--tl-color-text-muted);
+  font-size: var(--tl-font-size-14);
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 46rem) {
+  .searchRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: var(--tl-space-3);
+  }
+  .advancedPanel {
+    --tl-overlay-drawer-width: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+  .selectorPopover {
+    position: fixed;
+    inset: auto var(--tl-space-3) var(--tl-space-3);
+    width: auto;
+    max-height: min(34rem, 75dvh);
+  }
+}

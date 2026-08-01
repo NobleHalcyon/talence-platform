@@ -25,7 +25,10 @@ export function CatalogPageState({
   return (
     <div className={styles.catalogPage}>
       <CatalogBrowseMemory cacheKey={catalogHref(parsed.query)} />
-      <CatalogControls query={parsed.query} />
+      <CatalogControls
+        query={parsed.query}
+        resultCount={result.ok ? result.data.totalCount : null}
+      />
       {parsed.notices.map((notice) => (
         <InlineAlert title="Search adjusted" tone="warning" key={notice}>
           {notice}

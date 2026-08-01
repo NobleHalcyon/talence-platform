@@ -53,6 +53,7 @@ export type Database = {
       catalog_cards: {
         Row: {
           active: boolean;
+          card_types: string[];
           color_identity: string[];
           colors: string[];
           created_at: string;
@@ -69,11 +70,14 @@ export type Database = {
           source_id: string;
           source_provider: string;
           source_updated_at: string | null;
+          subtypes: string[];
+          supertypes: string[];
           type_line: string | null;
           updated_at: string;
         };
         Insert: {
           active?: boolean;
+          card_types?: string[];
           color_identity?: string[];
           colors?: string[];
           created_at?: string;
@@ -90,11 +94,14 @@ export type Database = {
           source_id: string;
           source_provider: string;
           source_updated_at?: string | null;
+          subtypes?: string[];
+          supertypes?: string[];
           type_line?: string | null;
           updated_at?: string;
         };
         Update: {
           active?: boolean;
+          card_types?: string[];
           color_identity?: string[];
           colors?: string[];
           created_at?: string;
@@ -111,6 +118,8 @@ export type Database = {
           source_id?: string;
           source_provider?: string;
           source_updated_at?: string | null;
+          subtypes?: string[];
+          supertypes?: string[];
           type_line?: string | null;
           updated_at?: string;
         };
@@ -153,6 +162,7 @@ export type Database = {
           art_crop_uri: string | null;
           artist: string | null;
           border_crop_uri: string | null;
+          card_types: string[];
           colors: string[];
           created_at: string;
           defense: string | null;
@@ -163,14 +173,19 @@ export type Database = {
           image_png_uri: string | null;
           image_small_uri: string | null;
           loyalty: string | null;
+          loyalty_numeric: number | null;
           mana_cost: string | null;
           name: string;
           normalized_name: string | null;
           oracle_text: string | null;
           power: string | null;
+          power_numeric: number | null;
           printing_id: string;
           search_document: unknown;
+          subtypes: string[];
+          supertypes: string[];
           toughness: string | null;
+          toughness_numeric: number | null;
           type_line: string | null;
           updated_at: string;
         };
@@ -178,6 +193,7 @@ export type Database = {
           art_crop_uri?: string | null;
           artist?: string | null;
           border_crop_uri?: string | null;
+          card_types?: string[];
           colors?: string[];
           created_at?: string;
           defense?: string | null;
@@ -188,14 +204,19 @@ export type Database = {
           image_png_uri?: string | null;
           image_small_uri?: string | null;
           loyalty?: string | null;
+          loyalty_numeric?: number | null;
           mana_cost?: string | null;
           name: string;
           normalized_name?: string | null;
           oracle_text?: string | null;
           power?: string | null;
+          power_numeric?: number | null;
           printing_id: string;
           search_document?: unknown;
+          subtypes?: string[];
+          supertypes?: string[];
           toughness?: string | null;
+          toughness_numeric?: number | null;
           type_line?: string | null;
           updated_at?: string;
         };
@@ -203,6 +224,7 @@ export type Database = {
           art_crop_uri?: string | null;
           artist?: string | null;
           border_crop_uri?: string | null;
+          card_types?: string[];
           colors?: string[];
           created_at?: string;
           defense?: string | null;
@@ -213,14 +235,19 @@ export type Database = {
           image_png_uri?: string | null;
           image_small_uri?: string | null;
           loyalty?: string | null;
+          loyalty_numeric?: number | null;
           mana_cost?: string | null;
           name?: string;
           normalized_name?: string | null;
           oracle_text?: string | null;
           power?: string | null;
+          power_numeric?: number | null;
           printing_id?: string;
           search_document?: unknown;
+          subtypes?: string[];
+          supertypes?: string[];
           toughness?: string | null;
+          toughness_numeric?: number | null;
           type_line?: string | null;
           updated_at?: string;
         };
@@ -353,6 +380,7 @@ export type Database = {
         Row: {
           active: boolean;
           artist: string | null;
+          artists: string[];
           border_color: string | null;
           card_id: string | null;
           collector_number: string;
@@ -385,6 +413,7 @@ export type Database = {
         Insert: {
           active?: boolean;
           artist?: string | null;
+          artists?: string[];
           border_color?: string | null;
           card_id?: string | null;
           collector_number: string;
@@ -417,6 +446,7 @@ export type Database = {
         Update: {
           active?: boolean;
           artist?: string | null;
+          artists?: string[];
           border_color?: string | null;
           card_id?: string | null;
           collector_number?: string;
@@ -2505,6 +2535,40 @@ export type Database = {
         Returns: Json;
       };
       catalog_card_detail: { Args: { p_card_id: string }; Returns: Json };
+      catalog_filter_facets: {
+        Args: {
+          p_after?: string;
+          p_field: string;
+          p_limit?: number;
+          p_query?: string;
+        };
+        Returns: Json;
+      };
+      catalog_filter_price_floors: {
+        Args: {
+          p_card_ids: string[];
+          p_currency?: string;
+          p_filters?: Json;
+          p_include_digital?: boolean;
+          p_include_nondefault?: boolean;
+        };
+        Returns: Json;
+      };
+      catalog_filter_search: {
+        Args: {
+          p_after?: string;
+          p_currency?: string;
+          p_filters?: Json;
+          p_game_code?: string;
+          p_include_digital?: boolean;
+          p_include_nondefault?: boolean;
+          p_limit?: number;
+          p_query?: string;
+          p_return_all_variants?: boolean;
+          p_sort?: string;
+        };
+        Returns: Json;
+      };
       catalog_oracle_price_floors: {
         Args: {
           p_card_ids: string[];
@@ -2557,6 +2621,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      collection_filter_analytics: {
+        Args: {
+          p_collection_id: string;
+          p_currency?: string;
+          p_filters?: Json;
+          p_query?: string;
+        };
+        Returns: Json;
+      };
       collection_archive: {
         Args: { p_collection_id: string; p_expected_updated_at: string };
         Returns: Json;
@@ -2592,6 +2665,18 @@ export type Database = {
           p_limit?: number;
           p_query?: string;
           p_set_code?: string;
+          p_sort?: string;
+        };
+        Returns: Json;
+      };
+      collection_inventory_filter_page: {
+        Args: {
+          p_after?: string;
+          p_collection_id: string;
+          p_currency?: string;
+          p_filters?: Json;
+          p_limit?: number;
+          p_query?: string;
           p_sort?: string;
         };
         Returns: Json;

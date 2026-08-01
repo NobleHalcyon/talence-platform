@@ -1,3 +1,11 @@
+import {
+  EMPTY_FILTER_GROUP,
+  parseFilterParameter,
+  serializeFilterGroup,
+  type FilterGroup,
+  type FilterRule,
+} from "@/features/filters/model";
+
 import type { CollectionInventoryQuery, CollectionStatusFilter, CollectionView } from "./types";
 import { COLLECTION_STATUS_FILTERS, COLLECTION_VIEWS } from "./types";
 
@@ -21,6 +29,28 @@ function first(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
 }
 
+function legacyCollectionFilters(input: CollectionUrlInput, notices: string[]): FilterGroup {
+  const children: FilterRule[] = [];
+  const set = first(input.set).toUpperCase();
+  if (set && SET_CODE_PATTERN.test(set)) {
+    children.push({ id: "legacy-set", field: "set", comparator: "is", value: [set] });
+  } else if (set) notices.push("The legacy set filter was invalid and has been reset.");
+  const finish = first(input.finish).toLowerCase();
+  if (finish && FINISH_VALUES.has(finish)) {
+    children.push({ id: "legacy-finish", field: "finish", comparator: "is", value: [finish] });
+  } else if (finish) notices.push("The legacy finish filter was invalid and has been reset.");
+  const condition = first(input.condition).toLowerCase();
+  if (condition && CONDITION_VALUES.has(condition)) {
+    children.push({
+      id: "legacy-condition",
+      field: "condition",
+      comparator: "is",
+      value: [condition],
+    });
+  } else if (condition) notices.push("The legacy condition filter was invalid and has been reset.");
+  return { ...EMPTY_FILTER_GROUP, children };
+}
+
 export function parseCollectionStatusFilter(input: CollectionUrlInput): CollectionStatusFilter {
   const status = first(input.status_filter);
   return STATUS_VALUES.has(status) ? (status as CollectionStatusFilter) : "active";
@@ -42,44 +72,31 @@ export function parseCollectionInventoryQuery(
 ): { query: CollectionInventoryQuery; notices: string[] } {
   const notices: string[] = [];
   const suppliedQuery = first(input.q);
-  const rawQuery = suppliedQuery.length === 1 ? "" : suppliedQuery.slice(0, 120);
-  const rawSetCode = first(input.set).toUpperCase();
-  const rawFinish = first(input.finish).toLowerCase();
-  const rawCondition = first(input.condition).toLowerCase();
+  const query = suppliedQuery.length === 1 ? "" : suppliedQuery.slice(0, 120);
+  if (suppliedQuery.length === 1) notices.push("Search requires at least two characters.");
+  if (suppliedQuery.length > 120) notices.push("Search text was shortened to 120 characters.");
+
+  const serializedFilters = first(input.filters);
+  const parsedFilters = serializedFilters
+    ? parseFilterParameter(serializedFilters)
+    : { value: legacyCollectionFilters(input, notices), notices: [] };
+  notices.push(...parsedFilters.notices);
+
   const rawSort = first(input.sort);
   const rawView = first(input.view);
   const rawCursor = first(input.cursor);
-
-  if (suppliedQuery.length === 1) {
-    notices.push("Search requires at least two characters and has been reset.");
-  }
-  if (suppliedQuery.length > 120) notices.push("Search text was shortened to 120 characters.");
-  if (rawSetCode && !SET_CODE_PATTERN.test(rawSetCode)) {
-    notices.push("The set filter was invalid and has been reset.");
-  }
-  if (rawFinish && !FINISH_VALUES.has(rawFinish)) {
-    notices.push("The finish filter was invalid and has been reset.");
-  }
-  if (rawCondition && !CONDITION_VALUES.has(rawCondition)) {
-    notices.push("The condition filter was invalid and has been reset.");
-  }
-  if (rawCursor && !CURSOR_PATTERN.test(rawCursor)) {
-    notices.push("The inventory cursor was invalid and has been reset.");
-  }
+  const cursor = CURSOR_PATTERN.test(rawCursor) ? rawCursor : null;
+  if (rawCursor && !cursor) notices.push("The inventory cursor was invalid and has been reset.");
 
   return {
     query: {
-      query: rawQuery,
-      setCode: SET_CODE_PATTERN.test(rawSetCode) ? rawSetCode : "",
-      finish: FINISH_VALUES.has(rawFinish) ? (rawFinish as CollectionInventoryQuery["finish"]) : "",
-      condition: CONDITION_VALUES.has(rawCondition)
-        ? (rawCondition as CollectionInventoryQuery["condition"])
-        : "",
+      query,
+      filters: parsedFilters.value,
       sort: SORT_VALUES.has(rawSort) ? (rawSort as CollectionInventoryQuery["sort"]) : "name",
-      cursor: CURSOR_PATTERN.test(rawCursor) ? rawCursor : null,
+      cursor,
       view: VIEW_VALUES.has(rawView) ? (rawView as CollectionView) : preferredView,
     },
-    notices,
+    notices: Array.from(new Set(notices)),
   };
 }
 
@@ -90,9 +107,8 @@ export function collectionInventorySearchParams(
   const value = { ...query, ...overrides };
   const params = new URLSearchParams();
   if (value.query) params.set("q", value.query);
-  if (value.setCode) params.set("set", value.setCode);
-  if (value.finish) params.set("finish", value.finish);
-  if (value.condition) params.set("condition", value.condition);
+  const filters = serializeFilterGroup(value.filters);
+  if (filters) params.set("filters", filters);
   if (value.sort !== "name") params.set("sort", value.sort);
   if (value.cursor) params.set("cursor", value.cursor);
   params.set("view", value.view);

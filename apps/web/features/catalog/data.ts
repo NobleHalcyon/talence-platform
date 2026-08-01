@@ -11,7 +11,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { catalogSyncEnabled, staticCatalogPreviewEnabled } from "./config";
 import { catalogSearchCache } from "./cache";
 import { catalogPricePair } from "./prices";
-import { ALL_CATALOG_LANGUAGES, DEFAULT_CATALOG_LANGUAGE } from "./query";
 import {
   parseAdminCatalogStatus,
   parseCatalogCardDetail,
@@ -112,36 +111,11 @@ function nullable(value: string): string | null {
   return value || null;
 }
 
-function hasPrice(query: CatalogSearchQuery): boolean | null {
-  if (query.priceAvailability === "available") {
-    return true;
-  }
-  if (query.priceAvailability === "unavailable") {
-    return false;
-  }
-  return null;
-}
-
 export function catalogSearchRpcArgs(query: CatalogSearchQuery): Record<string, unknown> {
   return {
     p_query: nullable(query.query),
+    p_filters: query.filters,
     p_game_code: "mtg",
-    p_set_code: nullable(query.setCode),
-    p_language:
-      query.language === ALL_CATALOG_LANGUAGES
-        ? null
-        : (nullable(query.language) ?? DEFAULT_CATALOG_LANGUAGE),
-    p_rarity: nullable(query.rarity),
-    p_finish: nullable(query.finish),
-    p_colors: query.colors.length ? query.colors : null,
-    p_color_identity: query.colorIdentity.length ? query.colorIdentity : null,
-    p_type_line: nullable(query.typeLine),
-    p_has_price: hasPrice(query),
-    p_currency: nullable(query.currency),
-    p_min_mana_value: query.manaValueMin,
-    p_max_mana_value: query.manaValueMax,
-    p_released_from: nullable(query.releasedFrom),
-    p_released_to: nullable(query.releasedTo),
     p_include_digital: query.includeDigital,
     p_include_nondefault: query.includeNondefault,
     p_return_all_variants: query.returnAllVariants,
@@ -157,7 +131,7 @@ export async function searchCatalogWithClient(
 ): Promise<CatalogLoadResult<CatalogSearchResult>> {
   return rpcLoad(
     client,
-    DATABASE_FUNCTIONS.catalogSearch,
+    DATABASE_FUNCTIONS.catalogFilterSearch,
     catalogSearchRpcArgs(query),
     parseCatalogSearchResult,
   ) as Promise<CatalogLoadResult<CatalogSearchResult>>;
@@ -230,7 +204,7 @@ export async function searchCatalog(
       ...data,
       items: data.items.map((item) => ({
         ...item,
-        displayPrices: catalogPricePair(item.prices, data.currency ?? query.currency),
+        displayPrices: catalogPricePair(item.prices, data.currency),
       })),
     };
   } else {
@@ -240,15 +214,13 @@ export async function searchCatalog(
     if (cardIds.length) {
       try {
         const floorsResult = await clientState.client.rpc(
-          DATABASE_FUNCTIONS.catalogOraclePriceFloors,
+          DATABASE_FUNCTIONS.catalogFilterPriceFloors,
           {
             p_card_ids: cardIds,
-            p_currency: data.currency ?? query.currency ?? null,
-            p_set_code: query.setCode || null,
-            p_language:
-              query.language === ALL_CATALOG_LANGUAGES
-                ? null
-                : query.language || DEFAULT_CATALOG_LANGUAGE,
+            p_filters: query.filters,
+            p_currency: data.currency,
+            p_include_digital: query.includeDigital,
+            p_include_nondefault: query.includeNondefault,
           },
         );
         const floors = floorsResult.error ? null : parseCatalogPriceFloors(floorsResult.data);

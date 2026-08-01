@@ -2,7 +2,12 @@ import "server-only";
 
 import type { PriceObservation } from "@talence/domain";
 
-import { ALL_CATALOG_LANGUAGES, DEFAULT_CATALOG_LANGUAGE } from "./query";
+import {
+  evaluateFilterGroup,
+  isFilterGroup,
+  type FilterRule,
+  type RangeFilterValue,
+} from "@/features/filters/model";
 import { catalogPricePair } from "./prices";
 import type {
   AdminCatalogStatus,
@@ -390,57 +395,82 @@ function oracleRepresentatives(items: CatalogSearchItem[]): CatalogSearchItem[] 
 }
 
 export function previewCatalogSearch(query: CatalogSearchQuery): CatalogSearchResult {
+  function matchesArray(actual: string[], rule: FilterRule): boolean {
+    const selected = Array.isArray(rule.value)
+      ? rule.value.map((value) => value.toLowerCase())
+      : [];
+    const values = actual.map((value) => value.toLowerCase());
+    const overlap = selected.some((value) => values.includes(value));
+    if (rule.comparator === "isNot" || rule.comparator === "excludes") return !overlap;
+    if (rule.comparator === "all") return selected.every((value) => values.includes(value));
+    if (rule.comparator === "exactly")
+      return selected.length === values.length && selected.every((value) => values.includes(value));
+    return overlap;
+  }
+  function matchesRule(item: CatalogSearchItem, rule: FilterRule): boolean {
+    if (rule.field === "set") return matchesArray([item.set.code], rule);
+    if (rule.field === "language") return matchesArray([item.language], rule);
+    if (rule.field === "rarity") return matchesArray(item.rarity ? [item.rarity] : [], rule);
+    if (rule.field === "finish") return matchesArray(item.finishes, rule);
+    if (rule.field === "cardColor")
+      return matchesArray(item.colors.length ? item.colors : ["C"], rule);
+    if (rule.field === "colorIdentity")
+      return matchesArray(item.colorIdentity.length ? item.colorIdentity : ["C"], rule);
+    if (rule.field === "keyword") return matchesArray(item.keywords, rule);
+    if (rule.field === "artist")
+      return matchesArray(
+        item.faces.flatMap((face) => (face.artist ? [face.artist] : [])),
+        rule,
+      );
+    if (rule.field === "supertype" || rule.field === "cardType" || rule.field === "subtype") {
+      return matchesArray((item.typeLine ?? "").replace("—", " ").split(/\s+/), rule);
+    }
+    if (rule.field === "manaValue") {
+      const range = rule.value as RangeFilterValue;
+      return (
+        item.manaValue !== null &&
+        (range.min === null || item.manaValue >= range.min) &&
+        (range.max === null || item.manaValue <= range.max)
+      );
+    }
+    if (rule.field === "releasedAt") {
+      const range = rule.value as RangeFilterValue;
+      const released = item.releasedAt ? Date.parse(`${item.releasedAt}T00:00:00Z`) : null;
+      return (
+        released !== null &&
+        (range.min === null || released >= range.min) &&
+        (range.max === null || released <= range.max)
+      );
+    }
+    if (rule.field === "rulesText") {
+      const text = (item.oracleText ?? "").toLowerCase();
+      const expected = String(rule.value).toLowerCase();
+      const matched = text.includes(expected);
+      return rule.comparator === "doesNotContain" ? !matched : matched;
+    }
+    return true;
+  }
   const filtered = PREVIEW_ITEMS.filter((item) => {
     if (!query.includeDigital && item.digital) return false;
     if (!query.includeNondefault && item.layout === "token") return false;
     if (query.query && !includesText(item, query.query)) return false;
-    if (query.setCode && item.set.code !== query.setCode) return false;
-    if (
-      query.language !== ALL_CATALOG_LANGUAGES &&
-      item.language !== (query.language || DEFAULT_CATALOG_LANGUAGE)
-    ) {
-      return false;
-    }
-    if (query.rarity && item.rarity !== query.rarity) return false;
-    if (query.finish && !item.finishes.includes(query.finish)) return false;
-    if (query.colors.length && !query.colors.every((color) => item.colors.includes(color))) {
-      return false;
-    }
-    if (
-      query.colorIdentity.length &&
-      !query.colorIdentity.every((color) =>
-        color === "C" ? item.colorIdentity.length === 0 : item.colorIdentity.includes(color),
-      )
-    ) {
-      return false;
-    }
-    if (query.typeLine && !item.typeLine?.toLowerCase().includes(query.typeLine.toLowerCase())) {
-      return false;
-    }
-    if (query.manaValueMin !== null && (item.manaValue ?? -1) < query.manaValueMin) return false;
-    if (query.manaValueMax !== null && (item.manaValue ?? Infinity) > query.manaValueMax)
-      return false;
-    if (query.priceAvailability === "available" && !item.bestPrice) return false;
-    if (query.priceAvailability === "unavailable" && item.bestPrice) return false;
-    if (query.currency && item.bestPrice && item.bestPrice.currency !== query.currency)
-      return false;
-    if (query.releasedFrom && (!item.releasedAt || item.releasedAt < query.releasedFrom)) {
-      return false;
-    }
-    if (query.releasedTo && (!item.releasedAt || item.releasedAt > query.releasedTo)) return false;
-    return true;
+    const languageFiltered = query.filters.children.some(
+      (child) => !isFilterGroup(child) && child.field === "language",
+    );
+    if (!languageFiltered && item.language !== "en") return false;
+    return evaluateFilterGroup(query.filters, (rule) => matchesRule(item, rule));
   });
 
   const selected = query.returnAllVariants
     ? filtered.map((item) => ({
         ...item,
-        displayPrices: catalogPricePair(item.prices, query.currency),
+        displayPrices: catalogPricePair(item.prices, "USD"),
       }))
     : oracleRepresentatives(filtered).map((item) => {
         const oraclePrices = filtered
           .filter((candidate) => candidate.cardId === item.cardId)
           .flatMap((candidate) => candidate.prices);
-        return { ...item, displayPrices: catalogPricePair(oraclePrices, query.currency) };
+        return { ...item, displayPrices: catalogPricePair(oraclePrices, "USD") };
       });
 
   selected.sort((left, right) => {
@@ -471,7 +501,7 @@ export function previewCatalogSearch(query: CatalogSearchQuery): CatalogSearchRe
     previousCursor: null,
     totalCount: selected.length,
     resultCount: items.length,
-    currency: query.currency || "USD",
+    currency: "USD",
     catalog: PREVIEW_CATALOG,
   };
 }

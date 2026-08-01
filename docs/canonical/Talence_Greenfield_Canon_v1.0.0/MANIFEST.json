@@ -17,9 +17,9 @@
       "sha256": "013accd55ec4f8f9c4df00f745ae37fc75bb05c9a9f3c40f747d7f3694e48e79"
     },
     {
-      "bytes": 15814,
+      "bytes": 17041,
       "path": "03 - Feature Specification.md",
-      "sha256": "7e45634c03199b260637411e1f8082b1870c75bfff1e948b7fee059ede9eb97b"
+      "sha256": "031259a8d678ed4ffa928c26748344048396756144de47e5a10c38565c98e63d"
     },
     {
       "bytes": 8790,
@@ -32,14 +32,14 @@
       "sha256": "a47156f352cd74588a2eb48c0363fcad3529f31beb5860bab5fbc98ffd89f849"
     },
     {
-      "bytes": 20349,
+      "bytes": 20786,
       "path": "06 - Database Domain Model.md",
-      "sha256": "1e272e345e9190c4496dd18fd9da2f71bfd0e089135e71d80611bec3a8c87d0c"
+      "sha256": "35bb96d418756bbceaf59962f86a4aacf6e2d5b01fae4fdcc95fcd3f7ef46741"
     },
     {
-      "bytes": 10929,
+      "bytes": 12094,
       "path": "07 - Catalog Pricing and Robot Snapshot Pipeline.md",
-      "sha256": "96e4c6321a48fe880e7dc233dc5f609be780d12ef44bb2c20a359ba8003a1260"
+      "sha256": "f4a36f74726a9557eebb71b4d1b89eb9b381fdf4afde69e58a4800d8676e3ac9"
     },
     {
       "bytes": 8986,
@@ -47,9 +47,9 @@
       "sha256": "452925ff4163389edc35246203f2a09947a6b9ddfcba854a8ec9a9ef7420e1d6"
     },
     {
-      "bytes": 12253,
+      "bytes": 12876,
       "path": "09 - Web UX and Design System.md",
-      "sha256": "3a106c3924731553d1b6fb5af5b51c05a738a66fa2a777b05333ce8634d18f8f"
+      "sha256": "7c62c2d8c62d9ccda0540fe50b0f8d2754ce46ea38d2e009e366cb41b4d66621"
     },
     {
       "bytes": 5459,
@@ -87,9 +87,9 @@
       "sha256": "f3eb012fb3f25003435513fa5c4c7753e8ba701a782530d94916d98293473df3"
     },
     {
-      "bytes": 3079,
+      "bytes": 3689,
       "path": "CHANGELOG.md",
-      "sha256": "7da071f9509b0c213b80f37c53118185e9c18dbe84056874595753da9f8df9db"
+      "sha256": "a208dcc415bb35b8d3317605a1c57855d8d44e183a39458aa8578da5cf5cf438"
     },
     {
       "bytes": 3253,
@@ -97,9 +97,9 @@
       "sha256": "dd0bb2b4ceb8e2ff33863cc36c801399d19f23cc415d587cc9477ccd63fb81c2"
     },
     {
-      "bytes": 134853,
+      "bytes": 138305,
       "path": "TALENCE-GREENFIELD-CANON-COMBINED.md",
-      "sha256": "2a2fd64c927c365cb51dc6d1a2a2a9f95b8cd3e6d3b5bab038e133cc2159a06a"
+      "sha256": "2e7472c396977bcaf425c98f44636b2c1c523e487c662d12453f7ea1288eb4d2"
     },
     {
       "bytes": 924,

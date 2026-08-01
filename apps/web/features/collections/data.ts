@@ -278,13 +278,11 @@ export async function loadCollectionInventoryWithClient(
 > {
   return rpcLoad(
     client,
-    DATABASE_FUNCTIONS.collectionInventoryPage,
+    DATABASE_FUNCTIONS.collectionInventoryFilterPage,
     {
       p_collection_id: collectionId,
       p_query: query.query || null,
-      p_set_code: query.setCode || null,
-      p_finish: query.finish || null,
-      p_condition: query.condition || null,
+      p_filters: query.filters,
       p_sort: query.sort,
       p_after: query.cursor,
       p_limit: 50,
@@ -344,7 +342,7 @@ export async function loadCollectionInventoryPage(
       summary: detail.data.summary,
       nextCursor: inventory.data.nextCursor,
       resultCount: inventory.data.resultCount,
-      totalCount: null,
+      totalCount: inventory.data.totalCount,
     },
   };
 }
@@ -357,13 +355,11 @@ export async function loadCollectionAnalyticsWithClient(
 ): Promise<CollectionLoadResult<CollectionAnalytics>> {
   return rpcLoad(
     client,
-    DATABASE_FUNCTIONS.collectionAnalytics,
+    DATABASE_FUNCTIONS.collectionFilterAnalytics,
     {
       p_collection_id: collectionId,
       p_query: query.query || null,
-      p_set_code: query.setCode || null,
-      p_finish: query.finish || null,
-      p_condition: query.condition || null,
+      p_filters: query.filters,
       p_currency: currency,
     },
     parseCollectionAnalytics,

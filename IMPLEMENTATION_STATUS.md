@@ -1,11 +1,13 @@
 # Talence implementation status
 
-Last updated: 2026-07-27
+Last updated: 2026-08-01
 
-Branch: `greenfield/platform-v1`
+Branch: `filter-updates`
 
 Current milestone: Phase 6 implemented and prepared for the prescribed final
 checkpoint.
+
+Current post-greenfield work: the catalog and collection filtering redesign is implemented and validated on `filter-updates`. It is additive, preserves all Auth/catalog/inventory data, and is documented in `docs/catalog-filtering.md` and `docs/dev-logs/catalog-filtering-redesign.md`.
 
 ## Checkpoint commits
 
@@ -28,8 +30,9 @@ after creation with:
 git log -1 --oneline
 ```
 
-No commit was pushed or merged, no production deployment occurred, and no
-hosted Supabase/Auth/Storage state or live provider was changed.
+The Phase 6 checkpoint was not pushed or merged when it was created. Later
+post-greenfield work uses separate branches. No production deployment occurred,
+and no hosted Supabase/Auth/Storage state or live provider was changed.
 
 ## Architecture and repository state
 

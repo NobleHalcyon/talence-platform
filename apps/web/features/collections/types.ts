@@ -1,5 +1,7 @@
 import type { CardCondition, CardFinish, PriceObservation, ResourceStatus } from "@talence/domain";
 
+import type { FilterGroup } from "@/features/filters/model";
+
 export const COLLECTION_VIEWS = ["structured", "gallery", "analytical"] as const;
 export type CollectionView = (typeof COLLECTION_VIEWS)[number];
 
@@ -8,9 +10,7 @@ export type CollectionStatusFilter = (typeof COLLECTION_STATUS_FILTERS)[number];
 
 export interface CollectionInventoryQuery {
   query: string;
-  setCode: string;
-  finish: "" | Exclude<CardFinish, "unknown">;
-  condition: "" | Exclude<CardCondition, "unknown">;
+  filters: FilterGroup;
   sort: "name" | "quantity_desc" | "value_desc" | "updated_desc";
   cursor: string | null;
   view: CollectionView;
@@ -158,6 +158,7 @@ export interface CollectionInventoryResult {
   balances: InventoryBalanceItem[];
   nextCursor: string | null;
   resultCount: number;
+  totalCount: number | null;
   hasMore: boolean;
 }
 
@@ -191,9 +192,7 @@ export interface CollectionAnalytics {
   currency: string;
   filters: {
     query: string | null;
-    setCode: string | null;
-    finish: Exclude<CardFinish, "unknown"> | null;
-    condition: Exclude<CardCondition, "unknown"> | null;
+    expression: FilterGroup;
   };
   quantityTotal: number;
   pricedQuantity: number;

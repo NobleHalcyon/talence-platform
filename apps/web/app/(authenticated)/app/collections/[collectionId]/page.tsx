@@ -29,6 +29,7 @@ import {
   parseCollectionInventoryQuery,
 } from "@/features/collections/query";
 import { validateUuid } from "@/lib/auth/validation";
+import { activeFilterCount } from "@/features/filters/model";
 
 export const metadata = {
   title: "Collection",
@@ -69,9 +70,7 @@ export default async function CollectionPage({
   const returnTo = collectionInventoryHref(validated.value, parsed.query);
   const failure = !detail.ok ? detail : !inventory.ok ? inventory : null;
   const analytical = parsed.query.view === "analytical";
-  const filtersActive = Boolean(
-    parsed.query.query || parsed.query.setCode || parsed.query.finish || parsed.query.condition,
-  );
+  const filtersActive = Boolean(parsed.query.query || activeFilterCount(parsed.query.filters));
 
   return (
     <PageFrame
@@ -148,14 +147,18 @@ export default async function CollectionPage({
               {notice}
             </InlineAlert>
           ))}
-          <CollectionInventoryControls collectionId={validated.value} query={parsed.query} />
+          <CollectionInventoryControls
+            collectionId={validated.value}
+            query={parsed.query}
+            resultCount={inventory.data.totalCount}
+          />
           {analytical ? (
             analytics && analytics.ok ? (
               <Section
                 title="Filtered analysis"
                 description={
                   filtersActive
-                    ? "Grouped quantities and values honor the current search, set, finish, and condition filters."
+                    ? "Grouped quantities and values honor the current shared filter expression."
                     : "No inventory filters are active, so these grouped quantities and values cover the full collection."
                 }
               >

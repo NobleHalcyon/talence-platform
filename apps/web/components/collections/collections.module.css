@@ -49,6 +49,23 @@
   justify-content: space-between;
 }
 
+.sortControl {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2);
+  margin-right: auto;
+}
+
+.sortControl label {
+  font-size: var(--tl-font-size-14);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.sortControl select {
+  width: auto;
+  min-width: 10rem;
+}
+
 .collectionCard h2,
 .transactionHeader h2,
 .inventoryCard h2,

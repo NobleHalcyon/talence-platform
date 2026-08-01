@@ -4,20 +4,18 @@ import Link from "next/link";
 
 import {
   Badge,
+  Button,
   ButtonLink,
   CardImage,
   CursorControls,
   DataTable,
   PriceDisplay,
+  Select,
   StatusBadge,
 } from "@talence/ui";
 
 import { AddToCollection } from "@/components/collections/add-to-collection";
-import {
-  ALL_CATALOG_LANGUAGES,
-  catalogHref,
-  DEFAULT_CATALOG_LANGUAGE,
-} from "@/features/catalog/query";
+import { catalogHref, catalogQueryToSearchParams } from "@/features/catalog/query";
 import type {
   CatalogFreshness,
   CatalogDeckOption,
@@ -92,131 +90,43 @@ function printingHref(item: CatalogSearchItem, from: string): string {
   return `/app/catalog/printings/${item.printingId}?${new URLSearchParams({ from })}`;
 }
 
-function ActiveFilters({ query }: { query: CatalogSearchQuery }) {
-  const filters: Array<{
-    key: string;
-    label: string;
-    overrides: Partial<CatalogSearchQuery>;
-  }> = [];
-
-  if (query.query)
-    filters.push({ key: "q", label: `Search: ${query.query}`, overrides: { query: "" } });
-  if (query.setCode) {
-    filters.push({ key: "set", label: `Set: ${query.setCode}`, overrides: { setCode: "" } });
-  }
-  if (query.language !== DEFAULT_CATALOG_LANGUAGE) {
-    filters.push({
-      key: "language",
-      label:
-        query.language === ALL_CATALOG_LANGUAGES ? "All languages" : `Language: ${query.language}`,
-      overrides: { language: DEFAULT_CATALOG_LANGUAGE },
-    });
-  }
-  if (query.rarity) {
-    filters.push({ key: "rarity", label: query.rarity, overrides: { rarity: "" } });
-  }
-  if (query.finish) {
-    filters.push({ key: "finish", label: query.finish, overrides: { finish: "" } });
-  }
-  if (query.colors.length) {
-    filters.push({
-      key: "colors",
-      label: `Color: ${query.colors.join("")}`,
-      overrides: { colors: [] },
-    });
-  }
-  if (query.colorIdentity.length) {
-    filters.push({
-      key: "identity",
-      label: `Identity: ${query.colorIdentity.join("")}`,
-      overrides: { colorIdentity: [] },
-    });
-  }
-  if (query.typeLine) {
-    filters.push({ key: "type", label: `Type: ${query.typeLine}`, overrides: { typeLine: "" } });
-  }
-  if (query.manaValueMin !== null || query.manaValueMax !== null) {
-    filters.push({
-      key: "mana",
-      label: `Mana: ${query.manaValueMin ?? "0"}–${query.manaValueMax ?? "any"}`,
-      overrides: { manaValueMin: null, manaValueMax: null },
-    });
-  }
-  if (query.priceAvailability !== "any") {
-    filters.push({
-      key: "price",
-      label: query.priceAvailability === "available" ? "Priced" : "Unpriced",
-      overrides: { priceAvailability: "any" },
-    });
-  }
-  if (query.currency) {
-    filters.push({ key: "currency", label: query.currency, overrides: { currency: "" } });
-  }
-  if (query.includeDigital) {
-    filters.push({
-      key: "digital",
-      label: "Digital included",
-      overrides: { includeDigital: false },
-    });
-  }
-  if (query.includeNondefault) {
-    filters.push({
-      key: "nondefault",
-      label: "Nondefault objects included",
-      overrides: { includeNondefault: false },
-    });
-  }
-  if (query.returnAllVariants) {
-    filters.push({
-      key: "variants",
-      label: "All variants",
-      overrides: { returnAllVariants: false },
-    });
-  }
-  if (query.releasedFrom || query.releasedTo) {
-    filters.push({
-      key: "release",
-      label: `Released ${query.releasedFrom || "any"}–${query.releasedTo || "now"}`,
-      overrides: { releasedFrom: "", releasedTo: "" },
-    });
-  }
-
-  if (filters.length === 0) {
-    return null;
-  }
-
-  return (
-    <ul className={styles.filterChips} aria-label="Active filters">
-      {filters.map((filter) => (
-        <li key={filter.key}>
-          <Link href={catalogHref(query, { ...filter.overrides, cursor: null })}>
-            {filter.label} <span aria-hidden="true">×</span>
-            <span className={styles.visuallyHidden}>Remove filter</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function CatalogViewToggle({ query }: { query: CatalogSearchQuery }) {
+  const preserved = catalogQueryToSearchParams(query, { cursor: null });
+  preserved.delete("sort");
   return (
-    <div className={styles.viewToggle} role="group" aria-label="Catalog result view">
-      {(["grid", "table"] as const).map((view) => {
-        const selected = query.view === view;
-        const returnTo = catalogHref(query, { cursor: null, view });
-        return (
-          <ButtonLink
-            href={returnTo}
-            size="small"
-            variant={selected ? "primary" : "secondary"}
-            aria-pressed={selected}
-            key={view}
-          >
-            {view === "table" ? "Table" : "Grid"}
-          </ButtonLink>
-        );
-      })}
+    <div className={styles.resultActions}>
+      <form action="/app/catalog" method="get" className={styles.sortControl}>
+        {Array.from(preserved.entries()).map(([name, value]) => (
+          <input type="hidden" name={name} value={value} key={`${name}-${value}`} />
+        ))}
+        <label htmlFor="catalog-sort">Sort</label>
+        <Select id="catalog-sort" name="sort" defaultValue={query.sort}>
+          <option value="name">Name</option>
+          <option value="newest">Newest printing</option>
+          <option value="price_asc">Price, low to high</option>
+          <option value="price_desc">Price, high to low</option>
+        </Select>
+        <Button type="submit" size="small" variant="secondary">
+          Apply sort
+        </Button>
+      </form>
+      <div className={styles.viewToggle} role="group" aria-label="Catalog result view">
+        {(["grid", "table"] as const).map((view) => {
+          const selected = query.view === view;
+          const returnTo = catalogHref(query, { cursor: null, view });
+          return (
+            <ButtonLink
+              href={returnTo}
+              size="small"
+              variant={selected ? "primary" : "secondary"}
+              aria-current={selected ? "page" : undefined}
+              key={view}
+            >
+              {view === "table" ? "Table" : "Grid"}
+            </ButtonLink>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -394,7 +304,6 @@ export function CatalogResults({
         <h2 id="catalog-results-title">{countLabel}</h2>
         <CatalogViewToggle query={query} />
       </div>
-      <ActiveFilters query={query} />
       {query.view === "grid" ? (
         <CatalogGrid items={result.items} from={from} decks={deckOptions} />
       ) : (

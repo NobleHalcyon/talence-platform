@@ -1,6 +1,6 @@
 begin;
 
-select plan(44);
+select plan(74);
 
 create function pg_temp.create_auth_user(
   p_user_id uuid,
@@ -454,6 +454,43 @@ values
     'Tie Card deals 1 damage.',
     array['R']
   );
+
+update public.catalog_cards
+set keywords = case id
+  when '86000000-0000-4000-8000-000000000001' then array['Kicker']::text[]
+  else array['Flash', 'Flying', 'Vigilance']::text[]
+end
+where id in (
+  '86000000-0000-4000-8000-000000000001',
+  '86000000-0000-4000-8000-000000000002'
+);
+
+update public.catalog_printings
+set artist = case when set_id = '85000000-0000-4000-8000-000000000001'
+  then 'Alice Example' else 'Bob Example' end
+where id between '87000000-0000-4000-8000-000000000001'
+  and '87000000-0000-4000-8000-000000000006';
+
+update public.catalog_faces
+set power = case when printing_id in (
+    '87000000-0000-4000-8000-000000000001',
+    '87000000-0000-4000-8000-000000000002',
+    '87000000-0000-4000-8000-000000000006'
+  ) then 'X' else '4' end,
+  toughness = case when printing_id in (
+    '87000000-0000-4000-8000-000000000001',
+    '87000000-0000-4000-8000-000000000002',
+    '87000000-0000-4000-8000-000000000006'
+  ) then 'X' else '4' end,
+  loyalty = case when printing_id = '87000000-0000-4000-8000-000000000003'
+    and face_index = 1 then '3' else null end;
+
+insert into public.catalog_legalities (card_id, format_code, legality)
+values
+  ('86000000-0000-4000-8000-000000000001', 'commander', 'legal'),
+  ('86000000-0000-4000-8000-000000000001', 'modern', 'banned'),
+  ('86000000-0000-4000-8000-000000000002', 'commander', 'legal'),
+  ('86000000-0000-4000-8000-000000000002', 'modern', 'legal');
 
 insert into public.current_prices (
   printing_id,
@@ -943,6 +980,111 @@ select throws_ok(
   'talence_catalog_card_ids_invalid',
   'Oracle price-floor reads reject empty card lists'
 );
+
+select is(
+  public.catalog_filter_facets('set', '100% Real', 10, null) -> 'items' -> 0 ->> 'code',
+  'AAA',
+  'set facets search full names and retain the set code'
+);
+select is(
+  (public.catalog_filter_facets('language', 'Japanese', 10, null) -> 'items' -> 0 ->> 'label')
+    || '|' || (public.catalog_filter_facets('language', 'Japanese', 10, null) -> 'items' -> 0 ->> 'secondary'),
+  'Japanese|ja',
+  'language facets expose human-readable names plus provider codes'
+);
+select is(
+  public.catalog_filter_facets('subtype', 'Angel', 10, null) -> 'items' -> 0 ->> 'value',
+  'Angel',
+  'subtype facets come from normalized canonical types'
+);
+select is(
+  public.catalog_filter_facets('artist', 'Alice', 10, null) -> 'items' -> 0 ->> 'value',
+  'Alice Example',
+  'artist facets use bounded indexed option search'
+);
+select is(
+  public.catalog_filter_facets('keyword', 'Flying', 10, null) -> 'items' -> 0 ->> 'value',
+  'Flying',
+  'keyword facets use canonical keyword identity'
+);
+select is(
+  public.catalog_filter_facets('format', 'modern', 10, null) -> 'items' -> 0 ->> 'value',
+  'modern',
+  'format facets derive from imported legalities'
+);
+
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"set","field":"set","comparator":"is","value":["BBB"]}]}'::jsonb) ->> 'total_count')::integer, 2,
+  'set filters match Oracle cards through eligible printings');
+select is(public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"set","field":"set","comparator":"is","value":["BBB"]}]}'::jsonb) -> 'items' -> 0 -> 'set' ->> 'code', 'BBB',
+  'printing-level set filters choose a matching representative printing');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"lang","field":"language","comparator":"is","value":["ja"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'language filters replace the default English printing scope');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"rarity","field":"rarity","comparator":"is","value":["uncommon","mythic"]}]}'::jsonb) ->> 'total_count')::integer, 2,
+  'rarity accepts multiple values');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"finish","field":"finish","comparator":"is","value":["foil"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'finish is evaluated against eligible printings');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"color","field":"cardColor","comparator":"any","value":["W"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'card color uses normalized Oracle or face color data');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"identity","field":"colorIdentity","comparator":"exactly","value":["W","R"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'color identity exact matching is distinct from card color');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"identity","field":"colorIdentity","comparator":"exactly","value":["C"]}]}'::jsonb, p_include_nondefault => true) ->> 'total_count')::integer, 1,
+  'colorless is matched explicitly as an empty identity');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"super","field":"supertype","comparator":"any","value":["Legendary"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'supertypes are filtered independently');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"type","field":"cardType","comparator":"any","value":["Creature"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'card types are filtered independently');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"subtype","field":"subtype","comparator":"any","value":["Angel"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'subtypes are filtered independently across multi-face cards');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"mv","field":"manaValue","comparator":"between","value":{"min":4.5,"max":5.5}}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'fractional mana-value ranges are evaluated numerically');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"power","field":"power","comparator":"between","value":{"min":4,"max":4}}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'numeric power ranges use normalized numeric projections');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"power","field":"power","comparator":"between","value":{"min":0,"max":1,"includeVariable":true}}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'variable P/T/L values are included only when explicitly requested');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"legal","field":"legality","comparator":"is","value":{"state":"legal","formats":["commander","modern"]}}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'one legality rule requires every selected format to have the selected state');
+select is(public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"artist","field":"artist","comparator":"is","value":["Alice Example"]}]}'::jsonb) -> 'items' -> 0 -> 'set' ->> 'code', 'AAA',
+  'artist filters select a representative from matching printings');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"keyword","field":"keyword","comparator":"all","value":["Flash","Flying"]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'keyword filtering matches canonical keyword arrays');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"rules","field":"rulesText","comparator":"contains","value":"flying vigilance"}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'rules text contains normalizes whitespace and requires every term');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"rules","field":"rulesText","comparator":"doesNotContain","value":"damage"}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'rules text exclusion negates the phrase match');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"rules","field":"rulesText","comparator":"exactPhrase","value":"Flash, flying, vigilance."}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'rules text exact phrase matching does not enable regular expressions');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"release","field":"releasedAt","comparator":"between","value":{"min":1782950400000,"max":1782950400000}}]}'::jsonb) ->> 'total_count')::integer, 2,
+  'release-date ranges constrain eligible printings');
+select is((public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"logic","operator":"or","negated":true,"children":[{"id":"set","field":"set","comparator":"is","value":["AAA"]},{"id":"type","field":"cardType","comparator":"any","value":["Instant"],"negated":true}]}]}'::jsonb) ->> 'total_count')::integer, 1,
+  'AND/OR plus rule and group NOT are evaluated server-side');
+select throws_ok(
+  $$select public.catalog_filter_search(p_filters => '{"id":"root","operator":"and","children":[{"id":"one","operator":"and","children":[{"id":"two","operator":"and","children":[{"id":"three","operator":"and","children":[]}]}]}]}'::jsonb)$$,
+  '22023', 'talence_catalog_filter_invalid',
+  'server validation rejects groups nested beyond two levels'
+);
+with first_page as (
+  select public.catalog_filter_search(
+    p_query => 'Tie Card',
+    p_filters => '{"id":"root","operator":"and","children":[{"id":"lang","field":"language","comparator":"is","value":["en","ja"]}]}'::jsonb,
+    p_return_all_variants => true,
+    p_limit => 1
+  ) as result
+), second_page as (
+  select public.catalog_filter_search(
+    p_query => 'Tie Card',
+    p_filters => '{"id":"root","operator":"and","children":[{"id":"lang","field":"language","comparator":"is","value":["en","ja"]}]}'::jsonb,
+    p_return_all_variants => true,
+    p_limit => 1,
+    p_after => first_page.result ->> 'next_cursor'
+  ) as result
+  from first_page
+)
+select isnt(
+  first_page.result -> 'items' -> 0 ->> 'printing_id',
+  second_page.result -> 'items' -> 0 ->> 'printing_id',
+  'filtered keyset pagination remains stable without duplicate rows'
+)
+from first_page cross join second_page;
 
 reset role;
 set local role service_role;

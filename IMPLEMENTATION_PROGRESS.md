@@ -1,8 +1,14 @@
 # Talence implementation progress
 
-Last updated: 2026-07-27
+Last updated: 2026-08-01
 
-Branch: `greenfield/platform-v1`
+Branch: `filter-updates`
+
+## Post-greenfield catalog filtering redesign
+
+The `filter-updates` branch adds the shared progressive catalog/collection filtering system without changing authentication, inventory ownership, device contracts, or existing database rows. It includes a typed URL filter tree, server-side AND/OR/NOT compiler, normalized types and numeric P/T/L, multi-artist and legality filters, bounded data-derived facets, matching Oracle representatives, debounced quick filters, wide/mobile advanced panels, shared owned-printing collection filtering, and desktop/mobile browser coverage.
+
+Implementation and current validation evidence are recorded in `docs/dev-logs/catalog-filtering-redesign.md`; steady-state behavior is documented in `docs/catalog-filtering.md`.
 
 ## Checkpoint position
 
@@ -20,8 +26,9 @@ phase 6: private beta hardening and delivery
 ```
 
 The Phase 6 SHA is intentionally not embedded in the commit that defines it.
-Resolve it with `git log -1 --oneline` after the checkpoint. Nothing was pushed,
-deployed, or applied to hosted Supabase/Auth/Storage or Vercel.
+Resolve it with `git log -1 --oneline` after the checkpoint. Post-greenfield
+feature work uses separate branches; nothing was deployed or applied to hosted
+Supabase/Auth/Storage or Vercel.
 
 ## Completed phases
 

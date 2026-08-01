@@ -157,7 +157,9 @@ At minimum normalize:
 - combined oracle text/type/name search vector;
 - set code and name;
 - color/color-identity arrays;
-- type-line tokens;
+- normalized supertypes, card types, and subtypes at Oracle and face level;
+- numeric P/T/L projections while preserving raw variable or expression values;
+- distinct printing/face artist identities, canonical keywords, and format legalities;
 - rarity, language, mana value, date, digital/default-browse flags.
 
 ### 6.2 PostgreSQL indexes
@@ -176,11 +178,15 @@ Use:
 - cursor or keyset pagination;
 - bounded page size;
 - no unbounded “return everything” request;
+- one server-validated typed filter tree shared by catalog and owned-printing collection queries;
+- bounded searchable facet reads for sets, languages, types, subtypes, artists, keywords, formats, rarities, and finishes;
 - Oracle mode groups eligible results by Oracle-card identity after applying every search filter;
 - the Oracle representative prefers default-browse printings, then the newest release, with deterministic variation, promo, and printing-ID tie-breakers;
 - all-variants mode returns every eligible printing and is part of cursor scope so cursors cannot cross modes;
 - the visual Oracle grid obtains bounded, admitted-user-only foil and nonfoil floors for the result card IDs; set and language filters constrain the eligible printings, while all-variants results use each exact printing's current observations;
 - query plan/performance tests on representative catalog size.
+
+Printing-level rules (set, language, rarity, finish, artist, and release date) filter eligible printings before Oracle representative ranking. Oracle-level rules match canonical card data or normalized face data. Separate face-level numeric rules use existential face matching; multiple rules may be satisfied by different faces of the same Oracle card. A numeric P/T/L range excludes variable values such as `*`, `X`, and expressions unless the rule explicitly includes them.
 
 ## 7. Price model
 
@@ -248,6 +254,7 @@ The image-first catalog grid intentionally compresses this to `Nonfoil <amount>`
 - Do not enable paid per-origin image transformation by default.
 - Use responsive dimensions and browser/CDN caching.
 - Provide text/layout fallbacks when an image is unavailable.
+- Serve set and mana-symbol SVGs through allowlisted same-origin Talence routes backed by the framework data cache; source them from Scryfall, reject non-SVG or untrusted upstreams, and provide the Talence emblem when a set symbol is missing.
 
 The implementation must review provider and IP terms before public/commercial use.
 

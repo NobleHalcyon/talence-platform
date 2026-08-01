@@ -15,6 +15,9 @@ describe("web security headers", () => {
     });
 
     expect(policy).toContain("script-src 'self' 'nonce-fixtureNonce123' 'strict-dynamic'");
+    expect(policy).toContain(
+      "script-src-elem 'self' 'nonce-fixtureNonce123' https://challenges.cloudflare.com",
+    );
     expect(policy).not.toContain("'unsafe-eval'");
     expect(policy).not.toContain("script-src 'self' 'unsafe-inline'");
     expect(policy).toContain("img-src 'self' blob: data: https://cards.scryfall.io");

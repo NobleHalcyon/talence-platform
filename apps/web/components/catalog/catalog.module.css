@@ -89,6 +89,30 @@
   margin: 0;
 }
 
+.resultActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--tl-space-3);
+  flex-wrap: wrap;
+}
+
+.sortControl {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2);
+}
+
+.sortControl label {
+  font-size: var(--tl-font-size-14);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.sortControl select {
+  width: auto;
+  min-width: 10rem;
+}
+
 .defaultPredicate {
   margin: 0;
   color: var(--tl-color-text-muted);

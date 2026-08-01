@@ -64,6 +64,7 @@ export function contentSecurityPolicy(input: {
     "media-src 'none'",
     "object-src 'none'",
     `script-src ${scriptSources.join(" ")}`,
+    `script-src-elem 'self' 'nonce-${input.nonce}' https://challenges.cloudflare.com`,
     "style-src 'self' 'unsafe-inline'",
     "worker-src 'self' blob:",
     ...(input.production ? ["upgrade-insecure-requests"] : []),

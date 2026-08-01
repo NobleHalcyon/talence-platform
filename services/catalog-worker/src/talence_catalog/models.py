@@ -36,6 +36,9 @@ class OracleCard:
     color_identity: tuple[str, ...]
     keywords: tuple[str, ...]
     reserved: bool
+    supertypes: tuple[str, ...] = ()
+    card_types: tuple[str, ...] = ()
+    subtypes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +64,7 @@ class Printing:
     scryfall_uri: str | None
     image_status: str | None
     default_browse: bool
+    artists: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +88,12 @@ class Face:
     image_png_uri: str | None
     art_crop_uri: str | None
     border_crop_uri: str | None
+    supertypes: tuple[str, ...] = ()
+    card_types: tuple[str, ...] = ()
+    subtypes: tuple[str, ...] = ()
+    power_numeric: Decimal | None = None
+    toughness_numeric: Decimal | None = None
+    loyalty_numeric: Decimal | None = None
 
 
 @dataclass(frozen=True, slots=True)

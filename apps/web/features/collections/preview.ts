@@ -3,6 +3,12 @@ import "server-only";
 import type { PriceObservation } from "@talence/domain";
 
 import { previewCatalogPrintingDetail } from "@/features/catalog/preview";
+import {
+  EMPTY_FILTER_GROUP,
+  evaluateFilterGroup,
+  type FilterRule,
+  type RangeFilterValue,
+} from "@/features/filters/model";
 
 import { INVENTORY_IMPORT_PARSER_VERSION } from "./csv";
 import {
@@ -273,13 +279,7 @@ export function previewCollectionDetail(
 
 export function previewCollectionInventory(
   collectionId: string,
-  filters: {
-    query?: string | null;
-    setCode?: string | null;
-    finish?: string | null;
-    condition?: string | null;
-    sort?: string;
-  } = {},
+  filters: Partial<CollectionInventoryQuery> = {},
 ): CollectionInventoryResult | null {
   if (!COLLECTIONS.some((item) => item.id === collectionId)) return null;
   let balances =
@@ -300,10 +300,37 @@ export function previewCollectionInventory(
     ) {
       return false;
     }
-    if (filters.setCode && item.printing.setCode !== filters.setCode) return false;
-    if (filters.finish && item.finish !== filters.finish) return false;
-    if (filters.condition && item.condition !== filters.condition) return false;
-    return true;
+    return evaluateFilterGroup(filters.filters ?? EMPTY_FILTER_GROUP, (rule: FilterRule) => {
+      const selected = Array.isArray(rule.value)
+        ? rule.value.map((value) => value.toLowerCase())
+        : [];
+      const actual =
+        rule.field === "set"
+          ? [item.printing.setCode.toLowerCase()]
+          : rule.field === "finish"
+            ? [item.finish]
+            : rule.field === "condition"
+              ? [item.condition]
+              : rule.field === "rarity" && item.printing.rarity
+                ? [item.printing.rarity]
+                : rule.field === "cardColor"
+                  ? item.printing.colors
+                  : rule.field === "colorIdentity"
+                    ? item.printing.colorIdentity
+                    : [];
+      if (rule.field === "ownedQuantity") {
+        const range = rule.value as RangeFilterValue;
+        return (
+          (range.min === null || item.quantity >= range.min) &&
+          (range.max === null || item.quantity <= range.max)
+        );
+      }
+      if (!actual.length && !selected.length) return true;
+      const overlap = selected.some((value) =>
+        actual.map((entry) => entry.toLowerCase()).includes(value),
+      );
+      return rule.comparator === "isNot" || rule.comparator === "excludes" ? !overlap : overlap;
+    });
   });
   balances.sort((left, right) => {
     if (filters.sort === "quantity_desc") return right.quantity - left.quantity;
@@ -322,6 +349,7 @@ export function previewCollectionInventory(
     balances,
     nextCursor: null,
     resultCount: balances.length,
+    totalCount: balances.length,
     hasMore: false,
   };
 }
@@ -440,9 +468,7 @@ export function previewCollectionAnalytics(
     currency: "USD",
     filters: {
       query: filters.query ? filters.query.toLocaleLowerCase("en-US") : null,
-      setCode: filters.setCode ? filters.setCode.toLocaleLowerCase("en-US") : null,
-      finish: filters.finish || null,
-      condition: filters.condition || null,
+      expression: filters.filters,
     },
     quantityTotal,
     pricedQuantity,

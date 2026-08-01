@@ -33,6 +33,7 @@ import type {
   MoneyAmount,
   QuantityBreakdown,
 } from "./types";
+import { validateFilterGroup } from "@/features/filters/model";
 
 const FINISHES = new Set<string>(CARD_FINISHES);
 const CONDITIONS = new Set<string>(CARD_CONDITIONS);
@@ -452,6 +453,7 @@ export function parseCollectionInventoryResult(value: unknown): CollectionInvent
     balances,
     nextCursor: nullableString(page.next_cursor),
     resultCount: balances.length,
+    totalCount: integer(page.total_count),
     hasMore: boolean(page.has_more) ?? Boolean(page.next_cursor),
   };
 }
@@ -535,10 +537,7 @@ export function parseCollectionAnalytics(value: unknown): CollectionAnalytics | 
   const groups = record(analytics?.groups);
   const collectionId = string(analytics?.collection_id);
   const currency = string(analytics?.currency);
-  const rawFinish = filters?.finish;
-  const rawCondition = filters?.condition;
-  const parsedFinish = rawFinish === null ? null : finish(rawFinish);
-  const parsedCondition = rawCondition === null ? null : condition(rawCondition);
+  const expression = validateFilterGroup(filters?.expression).value;
   const quantityTotal = integer(analytics?.quantity_total);
   const pricedQuantity = integer(analytics?.priced_quantity);
   const unpricedQuantity = integer(analytics?.unpriced_quantity);
@@ -549,10 +548,8 @@ export function parseCollectionAnalytics(value: unknown): CollectionAnalytics | 
     !groups ||
     !collectionId ||
     !currency ||
+    !filters.expression ||
     (filters.query !== null && string(filters.query) === null) ||
-    (filters.set_code !== null && string(filters.set_code) === null) ||
-    (rawFinish !== null && (!parsedFinish || parsedFinish === "unknown")) ||
-    (rawCondition !== null && (!parsedCondition || parsedCondition === "unknown")) ||
     quantityTotal === null ||
     pricedQuantity === null ||
     unpricedQuantity === null ||
@@ -575,9 +572,7 @@ export function parseCollectionAnalytics(value: unknown): CollectionAnalytics | 
     currency,
     filters: {
       query: nullableString(filters.query),
-      setCode: nullableString(filters.set_code),
-      finish: parsedFinish as CollectionAnalytics["filters"]["finish"],
-      condition: parsedCondition as CollectionAnalytics["filters"]["condition"],
+      expression,
     },
     quantityTotal,
     pricedQuantity,
