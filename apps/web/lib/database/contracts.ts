@@ -15,6 +15,7 @@ export const DATABASE_TABLES = {
 export const DATABASE_FUNCTIONS = {
   currentUserContext: "current_user_context",
   finalizeAdmittedUser: "finalize_admitted_user",
+  serverResolveLoginEmail: "server_resolve_login_email",
   adminGetInvitedUser: "admin_get_invited_user",
   adminListInvitedUsers: "admin_list_invited_users",
   adminMarkInvitedUserFailed: "admin_mark_invited_user_failed",

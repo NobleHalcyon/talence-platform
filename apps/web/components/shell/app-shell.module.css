@@ -1,25 +1,84 @@
 .shell {
+  --shell-geometry-image: url("/brand/talence_celestial_background.svg");
+  --shell-geometry-size: max(100vw, 177.7778svh) auto;
+
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   background: var(--tl-color-canvas);
+}
+
+.shell::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background: var(--tl-color-gray-800);
+  content: "";
+  mask-image: var(--shell-geometry-image);
+  mask-position: center top;
+  mask-repeat: no-repeat;
+  mask-size: var(--shell-geometry-size);
+  opacity: 0.13;
+  pointer-events: none;
+  -webkit-mask-image: var(--shell-geometry-image);
+  -webkit-mask-position: center top;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: var(--shell-geometry-size);
 }
 
 .topBar {
   position: sticky;
   z-index: 20;
+  isolation: isolate;
   inset-block-start: 0;
   display: flex;
   min-height: var(--tl-shell-top-height);
   align-items: center;
   justify-content: space-between;
   gap: var(--tl-space-3);
-  border-block-end: 1px solid var(--tl-color-border);
-  background: rgb(255 255 255 / 96%);
+  border-block-end: 1px solid rgb(194 154 58 / 42%);
+  background: var(--tl-color-deep-navy);
+  box-shadow: 0 0.25rem 1rem rgb(7 24 39 / 16%);
   padding-inline: var(--tl-space-4);
 }
 
+.topBar::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: var(--tl-color-gold);
+  content: "";
+  mask-image: var(--shell-geometry-image);
+  mask-position: center top;
+  mask-repeat: no-repeat;
+  mask-size: var(--shell-geometry-size);
+  opacity: 0.8;
+  pointer-events: none;
+  -webkit-mask-image: var(--shell-geometry-image);
+  -webkit-mask-position: center top;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: var(--shell-geometry-size);
+}
+
+.topBar > * {
+  position: relative;
+  z-index: 1;
+}
+
 .brandLink {
+  display: inline-flex;
+  min-width: var(--tl-touch-target);
+  min-height: var(--tl-touch-target);
+  align-items: center;
+  justify-content: flex-start;
   flex: 0 0 auto;
   text-decoration: none;
+}
+
+.brandEmblem {
+  width: 2.35rem;
+  height: auto;
+  filter: drop-shadow(0 0.25rem 0.55rem rgb(0 0 0 / 28%));
 }
 
 .desktopNavigation {
@@ -45,7 +104,7 @@
   display: inline-flex;
   height: 100%;
   align-items: center;
-  color: var(--tl-color-text-muted);
+  color: rgb(255 255 255 / 72%);
   padding-inline: var(--tl-space-3);
   font-size: var(--tl-font-size-14);
   font-weight: var(--tl-font-weight-semibold);
@@ -54,7 +113,7 @@
 
 .navLink:hover,
 .navLinkActive {
-  color: var(--tl-color-navy);
+  color: var(--tl-color-white);
 }
 
 .navLinkActive::after {
@@ -72,10 +131,10 @@
   min-height: var(--tl-touch-target);
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--tl-color-border);
+  border: 1px solid rgb(194 154 58 / 68%);
   border-radius: var(--tl-radius);
-  background: var(--tl-color-white);
-  color: var(--tl-color-navy);
+  background: rgb(255 255 255 / 6%);
+  color: #ead393;
   font-size: var(--tl-font-size-12);
   font-weight: var(--tl-font-weight-bold);
   text-decoration: none;
@@ -90,7 +149,7 @@
 
 .adminLink {
   display: none;
-  color: var(--tl-color-navy);
+  color: #ead393;
   font-size: var(--tl-font-size-12);
   font-weight: var(--tl-font-weight-semibold);
   text-decoration: none;
@@ -100,7 +159,7 @@
   min-height: var(--tl-touch-target);
   border: 0;
   background: transparent;
-  color: var(--tl-color-text-muted);
+  color: rgb(255 255 255 / 72%);
   cursor: pointer;
   font: inherit;
   font-size: var(--tl-font-size-12);
@@ -109,7 +168,7 @@
 
 .logoutButton:hover,
 .adminLink:hover {
-  color: var(--tl-color-navy);
+  color: var(--tl-color-white);
   text-decoration: underline;
 }
 
@@ -129,87 +188,6 @@
 
 .body {
   min-height: calc(100vh - var(--tl-shell-top-height));
-}
-
-.contextRail {
-  display: none;
-}
-
-.railHeader {
-  border-block-end: 1px solid var(--tl-color-border);
-  padding-block-end: var(--tl-space-4);
-}
-
-.railEyebrow {
-  margin-block-end: var(--tl-space-1);
-  color: var(--tl-color-text-muted);
-  font-size: var(--tl-font-size-12);
-  font-weight: var(--tl-font-weight-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.railTitle {
-  margin: 0;
-  color: var(--tl-color-navy);
-  font-size: var(--tl-font-size-16);
-}
-
-.railList {
-  display: grid;
-  gap: var(--tl-space-2);
-  margin: var(--tl-space-4) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.workspaceForm {
-  display: grid;
-  gap: var(--tl-space-2);
-  margin-block-start: var(--tl-space-4);
-}
-
-.workspaceLabel {
-  color: var(--tl-color-text-muted);
-  font-size: var(--tl-font-size-12);
-  font-weight: var(--tl-font-weight-semibold);
-}
-
-.workspaceSelect,
-.workspaceButton {
-  width: 100%;
-  min-height: 2.5rem;
-  border: 1px solid var(--tl-color-border);
-  border-radius: var(--tl-radius);
-  background: var(--tl-color-white);
-  color: var(--tl-color-text);
-  padding-inline: var(--tl-space-3);
-  font: inherit;
-  font-size: var(--tl-font-size-12);
-}
-
-.workspaceButton {
-  background: var(--tl-color-navy);
-  color: var(--tl-color-white);
-  cursor: pointer;
-  font-weight: var(--tl-font-weight-semibold);
-}
-
-.railItem {
-  display: grid;
-  grid-template-columns: 0.5rem 1fr;
-  gap: var(--tl-space-2);
-  align-items: center;
-  color: var(--tl-color-text-muted);
-  font-size: var(--tl-font-size-12);
-}
-
-.railItem::before {
-  width: 0.375rem;
-  height: 0.375rem;
-  border: 1px solid var(--tl-color-gold);
-  border-radius: var(--tl-radius-round);
-  content: "";
 }
 
 .main {
@@ -315,22 +293,6 @@
 @media (min-width: 64rem) {
   .desktopNavigation {
     display: flex;
-  }
-
-  .body {
-    display: grid;
-    grid-template-columns: var(--tl-shell-rail-width) minmax(0, 1fr);
-  }
-
-  .contextRail {
-    position: sticky;
-    inset-block-start: var(--tl-shell-top-height);
-    display: block;
-    height: calc(100vh - var(--tl-shell-top-height));
-    overflow-y: auto;
-    border-inline-end: 1px solid var(--tl-color-border);
-    background: var(--tl-color-surface);
-    padding: var(--tl-space-6);
   }
 
   .main {

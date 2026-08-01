@@ -8,6 +8,7 @@ import {
   signOutAction,
   updateMinimalProfileAction,
 } from "@/features/auth/actions";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const mocks = vi.hoisted(() => ({
@@ -29,6 +30,10 @@ vi.mock("@/lib/supabase/config", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminSupabaseClient: vi.fn(),
 }));
 
 function redirectError(href: string): Error {
@@ -61,8 +66,14 @@ function validInvitationForm(): FormData {
 
 function validSignInForm(): FormData {
   const formData = new FormData();
-  formData.set("email", "invited@example.com");
+  formData.set("identifier", "invited@example.com");
   formData.set("password", "  password with intentional spaces  ");
+  return formData;
+}
+
+function validUsernameSignInForm(): FormData {
+  const formData = validSignInForm();
+  formData.set("identifier", "Invited_Collector");
   return formData;
 }
 
@@ -79,7 +90,67 @@ describe("managed-auth server action failure boundaries", () => {
     mocks.redirect.mockImplementation((href: string) => {
       throw redirectError(href);
     });
+    vi.mocked(createAdminSupabaseClient).mockReturnValue(null);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  it("resolves a normalized username only on the trusted server before managed auth", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({ data: {}, error: null });
+    const rpc = vi.fn().mockResolvedValue({
+      data: "invited@example.com",
+      error: null,
+    });
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      auth: { signInWithPassword },
+    } as never);
+    vi.mocked(createAdminSupabaseClient).mockReturnValue({ rpc } as never);
+
+    await expect(signInAction(validUsernameSignInForm())).rejects.toThrow("NEXT_REDIRECT:/app");
+
+    expect(rpc).toHaveBeenCalledWith("server_resolve_login_email", {
+      p_handle: "invited_collector",
+    });
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: "invited@example.com",
+      password: "  password with intentional spaces  ",
+      options: { captchaToken: undefined },
+    });
+  });
+
+  it("keeps unknown usernames on the same generic provider-rejection boundary", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({
+      data: {},
+      error: new Error("invalid credentials"),
+    });
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      auth: { signInWithPassword },
+    } as never);
+    vi.mocked(createAdminSupabaseClient).mockReturnValue({
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    } as never);
+
+    await expect(signInAction(validUsernameSignInForm())).rejects.toThrow("NEXT_REDIRECT:");
+
+    expect(signInWithPassword).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "unknown-login@invalid.example",
+      }),
+    );
+    expectRedirect("/login", "sign_in_failed");
+  });
+
+  it("does not invoke the trusted resolver for an email login", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({ data: {}, error: null });
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      auth: { signInWithPassword },
+    } as never);
+
+    await expect(signInAction(validSignInForm())).rejects.toThrow("NEXT_REDIRECT:/app");
+
+    expect(createAdminSupabaseClient).not.toHaveBeenCalled();
+    expect(signInWithPassword).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "invited@example.com" }),
+    );
   });
 
   it("normalizes sign-in client initialization failures", async () => {

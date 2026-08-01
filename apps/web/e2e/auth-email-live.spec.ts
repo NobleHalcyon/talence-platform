@@ -61,10 +61,14 @@ function managedClient(key: string) {
   });
 }
 
-function issueLocalInvitation(email: string): void {
+function issueLocalInvitation(email: string, actorUserId: string | null): void {
   const tsxCli = path.join(repositoryRoot, "node_modules", "tsx", "dist", "cli.mjs");
   const inviteScript = path.join(repositoryRoot, "scripts", "admin", "invite-user.ts");
-  const result = spawnSync(process.execPath, [tsxCli, inviteScript, "--email", email], {
+  const invitationArguments = [tsxCli, inviteScript, "--email", email];
+  if (actorUserId) {
+    invitationArguments.push("--actor-user-id", actorUserId);
+  }
+  const result = spawnSync(process.execPath, invitationArguments, {
     cwd: repositoryRoot,
     encoding: "utf8",
     env: {
@@ -80,6 +84,27 @@ function issueLocalInvitation(email: string): void {
     windowsHide: true,
   });
   invariant(!result.error && result.status === 0, "trusted_local_invitation_failed");
+}
+
+async function currentInvitationActor(database: pg.Client): Promise<string | null> {
+  const result = await database.query<{ user_id: string }>(
+    `
+      select role.user_id::text
+      from public.platform_user_roles as role
+      join public.profiles as profile
+        on profile.user_id = role.user_id
+      join app_private.invited_users as invitation
+        on invitation.id = profile.admission_invite_id
+      where role.role = 'platform_admin'
+        and profile.status = 'active'
+        and invitation.status = 'accepted'
+        and invitation.auth_user_id = role.user_id
+        and invitation.revoked_at is null
+      order by role.created_at, role.user_id
+      limit 1
+    `,
+  );
+  return result.rows[0]?.user_id ?? null;
 }
 
 function messageBody(value: string | string[] | undefined): string {
@@ -348,6 +373,7 @@ test("real invite and recovery emails complete securely through the browser", as
   await database.connect();
 
   try {
+    const invitationActorUserId = await currentInvitationActor(database);
     const uninvitedEmail = syntheticEmail("uninvited");
     const admin = managedClient(localSupabase.secretKey);
     await expect
@@ -370,7 +396,7 @@ test("real invite and recovery emails complete securely through the browser", as
     );
 
     const expiredEmail = syntheticEmail("expired-invite");
-    issueLocalInvitation(expiredEmail);
+    issueLocalInvitation(expiredEmail, invitationActorUserId);
     const expiredMessage = await waitForCapturedEmail(expiredEmail, "You are invited to Talence");
     const expiredCallback = callbackFromEmail(expiredMessage, "invite", "/invite/complete");
     await expireManagedInvite(database, expiredEmail);
@@ -408,7 +434,7 @@ test("real invite and recovery emails complete securely through the browser", as
     await invalidBrowser.context.close();
 
     const admittedEmail = syntheticEmail("accepted-invite");
-    issueLocalInvitation(admittedEmail);
+    issueLocalInvitation(admittedEmail, invitationActorUserId);
     const invitationMessage = await waitForCapturedEmail(
       admittedEmail,
       "You are invited to Talence",
@@ -434,7 +460,7 @@ test("real invite and recovery emails complete securely through the browser", as
 
     await admittedBrowser.page.getByRole("button", { name: "Sign out" }).click();
     await waitForLocation(admittedBrowser.page, "/login", "signed_out");
-    await admittedBrowser.page.getByLabel("Email address").fill(admittedEmail);
+    await admittedBrowser.page.getByLabel("Username or email").fill(handle);
     await admittedBrowser.page.getByLabel("Password").fill(initialPassword);
     await admittedBrowser.page.getByRole("button", { name: "Sign in" }).click();
     await waitForLocation(admittedBrowser.page, "/app");
@@ -474,7 +500,7 @@ test("real invite and recovery emails complete securely through the browser", as
       .fill(recoveredPassword);
     await admittedBrowser.page.getByRole("button", { name: "Update password" }).click();
     await waitForLocation(admittedBrowser.page, "/login", "password_updated");
-    await admittedBrowser.page.getByLabel("Email address").fill(admittedEmail);
+    await admittedBrowser.page.getByLabel("Username or email").fill(admittedEmail);
     await admittedBrowser.page.getByLabel("Password").fill(recoveredPassword);
     await admittedBrowser.page.getByRole("button", { name: "Sign in" }).click();
     await waitForLocation(admittedBrowser.page, "/app");

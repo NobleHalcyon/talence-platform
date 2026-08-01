@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 
 import { statusHref } from "@/lib/auth/safe-status";
+import { resolveLoginEmail } from "@/lib/auth/login-email";
 import {
   normalizeDisplayName,
   normalizeEmail,
@@ -73,10 +74,20 @@ export async function signInAction(formData: FormData): Promise<never> {
     return redirectWithStatus("/login", "configuration_required", requestId);
   }
 
+  const loginEmail = await resolveLoginEmail(credentials.value.identifier);
+  if (loginEmail.status === "unconfigured") {
+    safeFailure("sign_in", requestId, "trusted_client_unavailable");
+    return redirectWithStatus("/login", "configuration_required", requestId);
+  }
+  if (loginEmail.status === "unavailable") {
+    safeFailure("sign_in", requestId, "identifier_resolution_unavailable");
+    return redirectWithStatus("/login", "sign_in_failed", requestId);
+  }
+
   let signInResult;
   try {
     signInResult = await supabase.auth.signInWithPassword({
-      email: credentials.value.email,
+      email: loginEmail.email,
       password: credentials.value.password,
       options: {
         captchaToken: credentials.value.captchaToken,

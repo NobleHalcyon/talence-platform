@@ -1,27 +1,47 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import LandingPage from "@/app/(public)/page";
+import { getVerifiedAuthState } from "@/lib/auth/auth-state";
 
-describe("landing page", () => {
-  it("describes private admission and never offers registration", () => {
-    render(<LandingPage />);
+const mocks = vi.hoisted(() => ({
+  redirect: vi.fn(),
+}));
 
-    expect(
-      screen.getByRole("heading", {
-        name: "Know every card. Trust every change.",
-      }),
-    ).toBeVisible();
-    expect(screen.getByText(/Access requires an administrator-issued invitation/)).toBeVisible();
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
+}));
+
+vi.mock("@/lib/auth/auth-state", () => ({
+  getVerifiedAuthState: vi.fn(),
+}));
+
+describe("unauthenticated landing page", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getVerifiedAuthState).mockResolvedValue({ status: "unauthenticated" });
+  });
+
+  it("is the private-beta sign-in surface and never offers registration", async () => {
+    render(await LandingPage({}));
+
+    expect(screen.getByRole("heading", { name: "Talence" })).toBeVisible();
+    expect(screen.getByText("Private Beta Underway")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    expect(screen.getByLabelText("Username or email")).toBeRequired();
     expect(screen.queryByRole("link", { name: /register|sign up/i })).not.toBeInTheDocument();
   });
 
-  it("exposes the primary platform boundaries as readable content", () => {
-    render(<LandingPage />);
+  it("sends an authenticated visitor directly to the dashboard", async () => {
+    vi.mocked(getVerifiedAuthState).mockResolvedValue({
+      status: "authenticated",
+      claims: { sub: "11111111-1111-4111-8111-111111111111" } as never,
+    });
+    mocks.redirect.mockImplementation((href: string) => {
+      throw new Error(`NEXT_REDIRECT:${href}`);
+    });
 
-    expect(screen.getByText("Catalog precision")).toBeVisible();
-    expect(screen.getByText("Auditable inventory")).toBeVisible();
-    expect(screen.getByText("Deck ownership")).toBeVisible();
-    expect(screen.getByText("Machine ready")).toBeVisible();
+    await expect(LandingPage({})).rejects.toThrow("NEXT_REDIRECT:/app");
+    expect(mocks.redirect).toHaveBeenCalledWith("/app");
   });
 });

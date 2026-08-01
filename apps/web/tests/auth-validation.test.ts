@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeEmail,
   normalizeHandle,
+  normalizeLoginIdentifier,
   parseCredentials,
   parseDateExpiration,
   parseProfileCompletion,
@@ -30,16 +31,46 @@ describe("managed-auth input validation", () => {
     expect(readCaptchaToken(formData)).toBe("bounded-token");
   });
 
+  it("normalizes either admitted login identifier without conflating their shapes", () => {
+    expect(normalizeLoginIdentifier(" Collector@Example.COM ")).toEqual({
+      ok: true,
+      value: { kind: "email", value: "collector@example.com" },
+    });
+    expect(normalizeLoginIdentifier(" Arcane_User ")).toEqual({
+      ok: true,
+      value: { kind: "handle", value: "arcane_user" },
+    });
+    expect(normalizeLoginIdentifier("../admin")).toEqual({
+      ok: false,
+      code: "handle_invalid",
+    });
+  });
+
   it("parses credentials but never offers account creation input", () => {
     const formData = new FormData();
-    formData.set("email", "invited@example.com");
+    formData.set("identifier", "invited@example.com");
     formData.set("password", " correct horse battery staple ");
 
     expect(parseCredentials(formData)).toEqual({
       ok: true,
       value: {
-        email: "invited@example.com",
+        identifier: { kind: "email", value: "invited@example.com" },
         password: " correct horse battery staple ",
+        captchaToken: undefined,
+      },
+    });
+  });
+
+  it("parses a username while preserving password whitespace", () => {
+    const formData = new FormData();
+    formData.set("identifier", " Invited_Collector ");
+    formData.set("password", " password with intentional spaces ");
+
+    expect(parseCredentials(formData)).toEqual({
+      ok: true,
+      value: {
+        identifier: { kind: "handle", value: "invited_collector" },
+        password: " password with intentional spaces ",
         captchaToken: undefined,
       },
     });

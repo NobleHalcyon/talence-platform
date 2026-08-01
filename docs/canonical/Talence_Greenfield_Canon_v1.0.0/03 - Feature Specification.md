@@ -5,7 +5,7 @@ Status: Locked for the private-beta build unless marked Deferred
 
 ## 1. Release framing
 
-The initial implementation is a **private beta**, not a public launch. Every dynamic application route requires an admitted user. The only anonymous surfaces are static landing/legal pages, login, and the invite/auth callback flow.
+The initial implementation is a **private beta**, not a public launch. Every dynamic application route requires an admitted user. The only anonymous surfaces are the branded sign-in landing/legal pages, login, and the invite/auth callback flow.
 
 Features are prioritized as:
 
@@ -51,7 +51,7 @@ Repeated finalization must be safe and return the existing resources.
 
 ### 2.3 Login, logout, recovery — P0
 
-- Email/password login.
+- Username-or-email/password login. Handle-to-email resolution is trusted-server-only; Supabase Auth remains the credential and session authority, and failures do not disclose whether a handle exists.
 - Logout from the current session.
 - Password recovery for admitted users.
 - Authenticated requests with inactive/suspended profiles are denied.

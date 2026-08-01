@@ -4,13 +4,20 @@
 }
 
 .section {
-  display: grid;
-  gap: var(--tl-space-5);
+  display: block;
 }
 
 .sectionHeader {
   display: grid;
+  grid-column: 1 / -1;
   gap: var(--tl-space-1);
+  margin-block-start: var(--tl-space-4);
+  border-block-end: 1px solid var(--tl-color-border);
+  padding-block-end: var(--tl-space-3);
+}
+
+.sectionHeader:first-child {
+  margin-block-start: 0;
 }
 
 .sectionHeader h2,
@@ -31,6 +38,36 @@
 .fieldGrid {
   display: grid;
   gap: var(--tl-space-4);
+  align-items: stretch;
+}
+
+.settingsField {
+  min-width: 0;
+  align-self: stretch;
+  grid-template-rows: auto minmax(0, 1fr) var(--tl-control-height);
+  row-gap: 0;
+}
+
+.settingsField > label {
+  grid-row: 1;
+  margin-block-end: var(--tl-space-2);
+}
+
+.settingsField > p {
+  grid-row: 2;
+  align-self: end;
+  margin-block-end: var(--tl-space-2);
+}
+
+.settingsField > input,
+.settingsField > select {
+  height: var(--tl-control-height);
+  min-height: var(--tl-control-height);
+  grid-row: 3;
+}
+
+.gridNotice {
+  grid-column: 1 / -1;
 }
 
 .actions {

@@ -227,7 +227,7 @@ test("real Auth, RLS, device admin, all v1 routes, contracts, and revocation fai
   request,
 }) => {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill(fixture.email);
+  await page.getByLabel("Username or email").fill(fixture.email);
   await page.getByLabel("Password").fill(fixture.password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/app$/);

@@ -1,0 +1,309 @@
+.page {
+  --landing-navy: var(--tl-color-deep-navy);
+  --landing-gray: #dfe5ea;
+  --landing-gold: #c29a3a;
+
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  width: 100%;
+  min-height: 100svh;
+  grid-template-rows: 56svh 44svh;
+  background: linear-gradient(
+    to bottom,
+    var(--landing-navy) 0%,
+    var(--landing-navy) 74%,
+    #0a1d2d 77%,
+    #10283a 80%,
+    #1b3548 83%,
+    #2d485a 86%,
+    #496271 89%,
+    #6e828f 92%,
+    #96a6b0 95%,
+    #bdc7ce 98%,
+    var(--landing-gray) 100%
+  );
+  color: var(--tl-color-text);
+}
+
+.geometry {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background-image: url("/brand/talence_celestial_background.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.pageWithStatus {
+  grid-template-rows: 48svh 52svh;
+}
+
+.identity,
+.access {
+  position: relative;
+}
+
+.identity {
+  overflow: hidden;
+  color: var(--tl-color-white);
+}
+
+.identityInner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: clamp(2.75rem, 8svh, 5.5rem) var(--tl-space-4) 7rem;
+  text-align: center;
+}
+
+.emblem {
+  width: clamp(6.5rem, 10vw, 8.75rem);
+  height: auto;
+  filter: drop-shadow(0 0.8rem 1.8rem rgb(0 0 0 / 24%));
+}
+
+.wordmark {
+  margin: 0.4rem 0 0;
+  color: #ead393;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-size: clamp(2.65rem, 5vw, 4rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-indent: 0.08em;
+  text-shadow: 0 0.35rem 1.2rem rgb(0 0 0 / 28%);
+}
+
+.betaLine {
+  margin: clamp(1rem, 2.5svh, 1.6rem) 0 0;
+  color: var(--tl-color-white);
+  font-size: clamp(0.9rem, 1.7vw, 1.05rem);
+  font-weight: var(--tl-font-weight-bold);
+  letter-spacing: 0.045em;
+}
+
+.access {
+  display: grid;
+  justify-items: center;
+  padding: clamp(1rem, 2.5svh, 1.75rem) var(--tl-space-4) clamp(0.75rem, 2svh, 1.5rem);
+}
+
+.accessInner {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 27rem);
+}
+
+.formHeader {
+  margin-block-end: var(--tl-space-4);
+  text-align: center;
+}
+
+.divider {
+  display: block;
+  width: 4.5rem;
+  height: 1px;
+  margin: 0 auto var(--tl-space-4);
+  background: var(--landing-gold);
+}
+
+.divider::after {
+  display: block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin: -0.22rem auto 0;
+  border: 1px solid var(--landing-gold);
+  background: var(--landing-gray);
+  content: "";
+  rotate: 45deg;
+}
+
+.formTitle {
+  margin: 0;
+  color: #ead393;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 1.6rem);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-shadow: 0 0.2rem 0.8rem rgb(0 0 0 / 28%);
+}
+
+.form {
+  display: grid;
+  gap: var(--tl-space-3);
+}
+
+.form :global(input) {
+  border-color: rgb(7 24 39 / 25%);
+  background: rgb(255 255 255 / 74%);
+  box-shadow: 0 0.2rem 0.8rem rgb(7 24 39 / 4%);
+}
+
+.form :global(input:focus-visible) {
+  border-color: var(--landing-gold);
+}
+
+.form :global(label) {
+  color: #f6f2e8;
+  text-shadow: 0 0.15rem 0.45rem rgb(0 0 0 / 48%);
+}
+
+.formActions {
+  display: grid;
+  gap: var(--tl-space-3);
+  margin-block-start: var(--tl-space-2);
+}
+
+.form .submit {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  border: 1px solid var(--landing-gold);
+  background: var(--landing-navy);
+  box-shadow: 0 0.5rem 1.2rem rgb(7 24 39 / 12%);
+  color: #e6c565;
+}
+
+.form .submit::before,
+.form .submit::after {
+  position: absolute;
+  z-index: 0;
+  width: 3.5rem;
+  height: 1.55rem;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(230 197 101 / 52%) 0,
+    rgb(230 197 101 / 52%) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+  content: "";
+  pointer-events: none;
+  rotate: -45deg;
+}
+
+.form .submit::before {
+  top: -0.2rem;
+  right: -1rem;
+}
+
+.form .submit::after {
+  bottom: -0.2rem;
+  left: -1rem;
+}
+
+.form .submit:hover:not(:disabled) {
+  border-color: #e6c565;
+  background: #102e49;
+  color: #f0d887;
+}
+
+.recovery {
+  display: inline-flex;
+  min-height: var(--tl-touch-target);
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  padding-inline: var(--tl-space-2);
+  color: var(--landing-navy);
+  font-size: var(--tl-font-size-14);
+  font-weight: var(--tl-font-weight-bold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--tl-duration-fast) var(--tl-ease-standard);
+}
+
+.recovery:hover {
+  color: #745716;
+  text-decoration-thickness: 2px;
+}
+
+.status:empty,
+.notice:empty {
+  display: none;
+}
+
+.status,
+.notice {
+  margin-block-end: var(--tl-space-4);
+}
+
+.pageWithStatus .access {
+  padding-block: clamp(0.5rem, 1.5svh, 1rem);
+}
+
+.pageWithStatus .accessInner {
+  width: min(100%, 30rem);
+}
+
+.pageWithStatus .formHeader {
+  margin-block-end: var(--tl-space-2);
+}
+
+.pageWithStatus .divider {
+  margin-block-end: var(--tl-space-2);
+}
+
+.pageWithStatus .status {
+  margin-block-end: var(--tl-space-2);
+}
+
+.pageWithStatus .form {
+  gap: var(--tl-space-2);
+}
+
+.pageWithStatus .formActions {
+  gap: var(--tl-space-1);
+  margin-block-start: 0;
+}
+
+@media (max-width: 39.99rem) {
+  .identityInner {
+    padding-block-start: clamp(2.5rem, 7svh, 4rem);
+  }
+}
+
+@media (max-height: 48rem) {
+  .page {
+    grid-template-rows: 48svh 52svh;
+  }
+
+  .pageWithStatus {
+    grid-template-rows: 35svh 65svh;
+  }
+
+  .identityInner {
+    padding-block-start: 1.5rem;
+  }
+
+  .emblem {
+    width: 5.25rem;
+  }
+
+  .wordmark {
+    font-size: 2.25rem;
+  }
+
+  .betaLine {
+    margin-block-start: 0.75rem;
+  }
+
+  .access {
+    padding-block: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submit,
+  .recovery {
+    transition: none;
+  }
+}

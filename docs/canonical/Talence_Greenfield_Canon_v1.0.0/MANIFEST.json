@@ -17,9 +17,9 @@
       "sha256": "013accd55ec4f8f9c4df00f745ae37fc75bb05c9a9f3c40f747d7f3694e48e79"
     },
     {
-      "bytes": 13021,
+      "bytes": 13211,
       "path": "03 - Feature Specification.md",
-      "sha256": "f7e1c5ef65a08e1af62ea64198a798f0dfea5709b32f3df16986d8d92e4db9f6"
+      "sha256": "7d1d3cc50e2b4da1f4245676a6ea51c14d860b0e4085ef4ced96d857c06f9e51"
     },
     {
       "bytes": 8790,
@@ -47,9 +47,9 @@
       "sha256": "452925ff4163389edc35246203f2a09947a6b9ddfcba854a8ec9a9ef7420e1d6"
     },
     {
-      "bytes": 8722,
+      "bytes": 10423,
       "path": "09 - Web UX and Design System.md",
-      "sha256": "49aa22d10eabbfc70cc0bab9c861a650e97674e4fa46077c488fcc16fe3300b0"
+      "sha256": "b6e92a57b90d5154c48594b48cd7b25bd494246882da90b77b4d7b5423c54272"
     },
     {
       "bytes": 5459,
@@ -87,9 +87,9 @@
       "sha256": "f3eb012fb3f25003435513fa5c4c7753e8ba701a782530d94916d98293473df3"
     },
     {
-      "bytes": 745,
+      "bytes": 1587,
       "path": "CHANGELOG.md",
-      "sha256": "205089a9cc0c2e017dd247baefd24b0d038cc4473beeaf81da0022d7dcd81c3f"
+      "sha256": "d181c23db4ea1364fe98a4b1727fa85545c1e37fce99cbe141f88322c904d8eb"
     },
     {
       "bytes": 3253,
@@ -97,9 +97,9 @@
       "sha256": "dd0bb2b4ceb8e2ff33863cc36c801399d19f23cc415d587cc9477ccd63fb81c2"
     },
     {
-      "bytes": 127599,
+      "bytes": 129490,
       "path": "TALENCE-GREENFIELD-CANON-COMBINED.md",
-      "sha256": "ee6db16a267002414051f7bcf6bd3e3e35675dc9968136584d122a1de2206e70"
+      "sha256": "8c242190a3d321295bbfb090734ab91805028118b47054aa3dc0fc12a75dff45"
     },
     {
       "bytes": 924,

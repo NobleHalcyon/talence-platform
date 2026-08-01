@@ -101,7 +101,9 @@
 .input,
 .select {
   width: 100%;
+  height: var(--tl-control-height);
   min-height: var(--tl-control-height);
+  box-sizing: border-box;
   border: 1px solid var(--tl-color-border);
   border-radius: var(--tl-radius);
   background: var(--tl-color-surface);

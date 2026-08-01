@@ -90,12 +90,16 @@ export default async function SettingsPage({
       </div>
       <form className={styles.form} action={updateSettingsAction}>
         <Panel className={styles.section}>
-          <header className={styles.sectionHeader}>
-            <h2>Profile</h2>
-            <p>Email identity and passwords remain in managed authentication.</p>
-          </header>
           <div className={styles.fieldGrid}>
-            <FormField inputId="settings-display-name" label="Display name">
+            <header className={styles.sectionHeader}>
+              <h2>Profile</h2>
+              <p>Email identity and passwords remain in managed authentication.</p>
+            </header>
+            <FormField
+              className={styles.settingsField}
+              inputId="settings-display-name"
+              label="Display name"
+            >
               <TextInput
                 id="settings-display-name"
                 name="displayName"
@@ -106,6 +110,7 @@ export default async function SettingsPage({
               />
             </FormField>
             <FormField
+              className={styles.settingsField}
               inputId="settings-handle"
               label="Handle"
               hint="Three to thirty lowercase letters, numbers, underscores, or hyphens."
@@ -121,28 +126,27 @@ export default async function SettingsPage({
                 required
               />
             </FormField>
-          </div>
-          <input
-            type="hidden"
-            name="avatarPath"
-            value={contextState.context.profile.avatar_path ?? ""}
-          />
-          <InlineAlert title="Avatar storage" tone="information">
-            Your profile is avatar-ready. Upload controls remain disabled until the private Supabase
-            Storage bucket and MIME limits are configured.
-          </InlineAlert>
-        </Panel>
+            <input
+              type="hidden"
+              name="avatarPath"
+              value={contextState.context.profile.avatar_path ?? ""}
+            />
+            <div className={styles.gridNotice}>
+              <InlineAlert title="Avatar storage" tone="information">
+                Your profile is avatar-ready. Upload controls remain disabled until the private
+                Supabase Storage bucket and MIME limits are configured.
+              </InlineAlert>
+            </div>
 
-        <Panel className={styles.section}>
-          <header className={styles.sectionHeader}>
-            <h2>Workspace defaults</h2>
-            <p>All mutable resources continue to be scoped to an accessible workspace.</p>
-          </header>
-          <div className={styles.fieldGrid}>
+            <header className={styles.sectionHeader}>
+              <h2>Workspace defaults</h2>
+              <p>All mutable resources continue to be scoped to an accessible workspace.</p>
+            </header>
             <FormField
+              className={styles.settingsField}
               inputId="settings-workspace"
               label="Default workspace"
-              hint="Switch workspaces from the workspace rail before selecting its collection."
+              hint="This workspace becomes the default context after settings are saved."
             >
               <Select
                 id="settings-workspace"
@@ -156,7 +160,11 @@ export default async function SettingsPage({
                 ))}
               </Select>
             </FormField>
-            <FormField inputId="settings-collection" label="Default collection">
+            <FormField
+              className={styles.settingsField}
+              inputId="settings-collection"
+              label="Default collection"
+            >
               <Select
                 id="settings-collection"
                 name="defaultCollectionId"
@@ -176,16 +184,16 @@ export default async function SettingsPage({
                 ))}
               </Select>
             </FormField>
-          </div>
-        </Panel>
 
-        <Panel className={styles.section}>
-          <header className={styles.sectionHeader}>
-            <h2>Display preferences</h2>
-            <p>These settings change presentation only; they never authorize access.</p>
-          </header>
-          <div className={styles.fieldGrid}>
-            <FormField inputId="settings-currency" label="Preferred currency">
+            <header className={styles.sectionHeader}>
+              <h2>Display preferences</h2>
+              <p>These settings change presentation only; they never authorize access.</p>
+            </header>
+            <FormField
+              className={styles.settingsField}
+              inputId="settings-currency"
+              label="Preferred currency"
+            >
               <Select
                 id="settings-currency"
                 name="preferredCurrency"
@@ -196,7 +204,11 @@ export default async function SettingsPage({
                 <option value="TIX">TIX</option>
               </Select>
             </FormField>
-            <FormField inputId="settings-collection-view" label="Collection view">
+            <FormField
+              className={styles.settingsField}
+              inputId="settings-collection-view"
+              label="Collection view"
+            >
               <Select
                 id="settings-collection-view"
                 name="collectionView"
@@ -207,7 +219,11 @@ export default async function SettingsPage({
                 <option value="analytical">Analytical</option>
               </Select>
             </FormField>
-            <FormField inputId="settings-deck-view" label="Deck view">
+            <FormField
+              className={styles.settingsField}
+              inputId="settings-deck-view"
+              label="Deck view"
+            >
               <Select
                 id="settings-deck-view"
                 name="deckView"

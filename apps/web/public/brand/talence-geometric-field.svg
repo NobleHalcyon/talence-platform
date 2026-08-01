@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1200" viewBox="0 0 1440 1200" fill="none">
+  <defs>
+    <pattern id="arcane-grid" width="360" height="360" patternUnits="userSpaceOnUse">
+      <g stroke="#C29A3A" stroke-width="0.8">
+        <path d="M180 0 360 180 180 360 0 180 180 0Z"/>
+        <path d="m180 36 144 144-144 144L36 180 180 36Z"/>
+        <path d="m180 78 102 102-102 102L78 180 180 78Z"/>
+        <path d="M180 0v360M0 180h360M53 53l254 254M307 53 53 307"/>
+        <path d="m90 0 90 90 90-90M90 360l90-90 90 90M0 90l90 90-90 90M360 90l-90 90 90 90"/>
+        <path d="M126 126h108v108H126z"/>
+        <circle cx="180" cy="180" r="72"/>
+        <circle cx="180" cy="180" r="18"/>
+        <circle cx="180" cy="180" r="5"/>
+        <path d="m180 108 62 36v72l-62 36-62-36v-72l62-36Z"/>
+        <path d="m180 126 47 27v54l-47 27-47-27v-54l47-27Z"/>
+        <path d="M90 180h36m108 0h36M180 90v36m0 108v36"/>
+        <path d="M0 0h72L0 72M360 0h-72l72 72M0 360h72l-72-72M360 360h-72l72-72"/>
+      </g>
+      <g fill="#C29A3A">
+        <circle cx="0" cy="0" r="2"/>
+        <circle cx="180" cy="0" r="2"/>
+        <circle cx="360" cy="0" r="2"/>
+        <circle cx="0" cy="180" r="2"/>
+        <circle cx="360" cy="180" r="2"/>
+        <circle cx="0" cy="360" r="2"/>
+        <circle cx="180" cy="360" r="2"/>
+        <circle cx="360" cy="360" r="2"/>
+      </g>
+    </pattern>
+    <linearGradient id="line-fade" x1="0" y1="0" x2="1440" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C29A3A" stop-opacity="0.15"/>
+      <stop offset="0.5" stop-color="#E0BF6B" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#C29A3A" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1440" height="1200" fill="url(#arcane-grid)" opacity="0.5"/>
+  <g stroke="url(#line-fade)" stroke-width="1">
+    <path d="M-120 194 289-34l421 236 426-236 424 238"/>
+    <path d="m-84 905 354-204 448 258 450-260 354 204"/>
+    <path d="M80-80 720 289 1360-80M80 1280l640-369 640 369"/>
+    <path d="m-48 600 258-149 255 147 255-147 255 147 255-147 258 149"/>
+    <path d="m-48 600 258 149 255-147 255 147 255-147 255 147 258-149"/>
+    <path d="M210 451v298M465 598v4M720 451v298M975 598v4M1230 451v298"/>
+    <circle cx="720" cy="600" r="420"/>
+    <circle cx="720" cy="600" r="312"/>
+    <path d="m720 180 364 210v420l-364 210-364-210V390l364-210Z"/>
+    <path d="m720 288 270 156v312L720 912 450 756V444l270-156Z"/>
+  </g>
+</svg>

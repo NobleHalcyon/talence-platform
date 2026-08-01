@@ -72,18 +72,43 @@ export function readCaptchaToken(formData: FormData): string | undefined {
   return turnstileToken || genericToken || undefined;
 }
 
+export type LoginIdentifier =
+  | {
+      kind: "email";
+      value: string;
+    }
+  | {
+      kind: "handle";
+      value: string;
+    };
+
+export function normalizeLoginIdentifier(value: string): ValidationResult<LoginIdentifier> {
+  const candidate = value.trim();
+
+  if (candidate.includes("@")) {
+    const email = normalizeEmail(candidate);
+    return email.ok ? { ok: true, value: { kind: "email", value: email.value } } : email;
+  }
+
+  const handle = normalizeHandle(candidate);
+  return handle.ok ? { ok: true, value: { kind: "handle", value: handle.value } } : handle;
+}
+
 export interface CredentialsInput {
-  email: string;
+  identifier: LoginIdentifier;
   password: string;
   captchaToken?: string;
 }
 
 export function parseCredentials(formData: FormData): ValidationResult<CredentialsInput> {
-  const email = normalizeEmail(formString(formData, "email"));
+  // Keep accepting the former field name for a bounded deployment window so a
+  // form loaded immediately before this release does not fail unexpectedly.
+  const identifierValue = formString(formData, "identifier") || formString(formData, "email");
+  const identifier = normalizeLoginIdentifier(identifierValue);
   const password = validatePassword(rawFormString(formData, "password"));
 
-  if (!email.ok) {
-    return email;
+  if (!identifier.ok) {
+    return identifier;
   }
   if (!password.ok) {
     return password;
@@ -92,7 +117,7 @@ export function parseCredentials(formData: FormData): ValidationResult<Credentia
   return {
     ok: true,
     value: {
-      email: email.value,
+      identifier: identifier.value,
       password: password.value,
       captchaToken: readCaptchaToken(formData),
     },

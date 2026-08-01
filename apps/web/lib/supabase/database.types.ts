@@ -3014,6 +3014,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      server_resolve_login_email: {
+        Args: { p_handle: string };
+        Returns: string;
+      };
       transfer_inventory: {
         Args: {
           p_destination_collection_id: string;

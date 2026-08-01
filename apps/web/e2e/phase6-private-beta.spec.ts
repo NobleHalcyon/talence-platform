@@ -139,18 +139,21 @@ test("real private-beta critical journey remains secure, accessible, and workspa
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   );
 
-  const email = page.getByLabel("Email address");
+  const identifier = page.getByLabel("Username or email");
   const password = page.getByLabel("Password");
-  await email.focus();
+  await identifier.focus();
   await page.keyboard.press("Tab");
   await expect(password).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: "Sign in" })).toBeFocused();
   await expectNoSeriousAccessibilityViolations(page, "login");
 
-  await email.fill(fixture.ownerA.email);
+  await identifier.fill(fixture.ownerA.email);
   await password.fill(fixture.ownerA.password);
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/app$/);
+
+  await page.goto("/");
   await expect(page).toHaveURL(/\/app$/);
 
   await page.goto("/app/catalog?q=Lightning%20Bolt&view=table");

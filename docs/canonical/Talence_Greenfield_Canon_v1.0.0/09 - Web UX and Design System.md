@@ -25,8 +25,8 @@ Components own responsive behavior through shared media-query tokens. No page ma
 
 ### Anonymous
 
-- `/` — static landing/private-beta explanation
-- `/login`
+- `/` — branded private-beta sign-in landing; an authenticated visitor redirects directly to `/app`
+- `/login` — the same sign-in surface for callback and recovery statuses
 - `/auth/callback`
 - `/invite/complete`
 - `/forgot-password`
@@ -64,8 +64,8 @@ Admin routes remain invisible and denied to ordinary users.
 
 ### Wide layout
 
-- sticky top navigation, 56px;
-- optional fixed contextual left rail, 240px;
+- sticky deep-navy top navigation, 56px, using the canonical gold Talence emblem;
+- no persistent active-workspace rail; workspace defaults and switching live in Settings;
 - independently scrolling main content;
 - page header with title, context, and primary action;
 - main content may be constrained or full-width.
@@ -87,6 +87,7 @@ Forms, prose, settings, and focused detail sections.
 - maximum width approximately 960–1200px depending on content;
 - centered;
 - 16px compact / 24px wide horizontal padding.
+- settings fields share one responsive grid, with controls in the same horizontal row bottom-aligned independently of label or hint height.
 
 ### Full width
 
@@ -108,7 +109,9 @@ Catalog results, collection tables, deck editor, and analytical views.
 ### Core palette
 
 - Navy: `#1F2F5A`
+- Entry navy: `#071827`
 - Gold: `#C29A3A`
+- Entry gray: `#DFE5EA`
 - Gray 50: `#F4F6FA`
 - Gray 100: `#E9EDF5`
 - Gray 200: `#D7DDEA`
@@ -131,7 +134,18 @@ All combinations must meet accessible contrast for their use.
 - navy is functional for primary actions/navigation;
 - gold is rare signal/selection/identity, not a primary button fill;
 - color never carries meaning alone;
-- no gradients, glassmorphism, neon effects, or large gold backgrounds.
+- the anonymous sign-in entrance may use one restrained entry-navy-to-entry-gray transition and a subtle, complex gold geometric field;
+- application surfaces use no gradients, glassmorphism, neon effects, or large gold backgrounds.
+
+### Brand entrance
+
+- the canonical emblem asset is the gold Talence emblem stored under the web app's local `public/brand` directory;
+- the authenticated shell references that same emblem file rather than maintaining a duplicate logo asset;
+- the authenticated header and page canvas reuse the same celestial SVG at one viewport-anchored size and position, rendering the continuous linework in gold over the deep-navy header and subtle dark gray over the page;
+- the anonymous entrance is a focused two-row sign-in surface rather than a marketing or SaaS feature page;
+- the identity row centers the emblem, Talence wordmark, and `Private Beta Underway` over entry navy;
+- the form row sits on entry gray and contains username-or-email, password, sign-in, and an underlined recovery link;
+- authenticated visits to the root or login surface redirect directly to the dashboard.
 
 ### Shape and depth
 
@@ -142,12 +156,12 @@ All combinations must meet accessible contrast for their use.
 
 ### Typography
 
-- one sans-serif family, recommended Inter through `next/font` or a system fallback;
+- one sans-serif family, recommended Inter through `next/font` or a system fallback, for application UI;
 - weights 400, 500, 600, optional 700 only for limited emphasis;
 - scale: 12, 14, 16, 20, 24, 32px;
 - default UI text 14px;
 - numeric columns use tabular numbers;
-- no decorative display fonts.
+- no decorative display fonts outside the restrained Talence wordmark and sign-in heading on the anonymous brand entrance.
 
 ### Motion
 
@@ -226,6 +240,8 @@ At minimum:
 - Pagination/CursorControls
 - DataTable responsive wrapper
 - CardImage with face handling and fallback
+
+Single-line text inputs and selects use the same explicit control height. Labels and supporting text remain outside that control-height measurement.
 - PriceDisplay with provider/freshness
 - QuantityStepper
 - FilterBar/FilterDrawer

@@ -10,13 +10,12 @@ export const metadata: Metadata = {
     default: "Talence",
     template: "%s · Talence",
   },
-  description:
-    "Invite-only tools for precise Magic: The Gathering catalog, collection, deck, and device workflows.",
+  description: "Private-beta access to Talence.",
 };
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#F4F6FA",
+  themeColor: "#DFE5EA",
   width: "device-width",
   initialScale: 1,
 };
