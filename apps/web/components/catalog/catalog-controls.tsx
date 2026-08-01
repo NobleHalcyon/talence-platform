@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   Button,
@@ -12,6 +13,7 @@ import {
   SearchInput,
   Select,
   TextInput,
+  Tooltip,
 } from "@talence/ui";
 
 import {
@@ -19,27 +21,65 @@ import {
   catalogQueryToSearchParams,
   DEFAULT_CATALOG_LANGUAGE,
 } from "@/features/catalog/query";
+import {
+  CATALOG_GRID_PAGE_SIZE_RULES,
+  NARROW_CATALOG_PAGE_SIZE,
+} from "@/features/catalog/responsive";
 import type { CatalogSearchQuery } from "@/features/catalog/types";
 
 import styles from "./catalog.module.css";
 
-function subscribeToHydration(): () => void {
-  return () => undefined;
-}
-
-function clientHydrationSnapshot(): boolean {
-  return true;
-}
-
-function serverHydrationSnapshot(): boolean {
-  return false;
-}
+const VARIANT_TOOLTIP =
+  "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card.";
 
 function HiddenQueryFields({ query, exclude }: { query: CatalogSearchQuery; exclude: string[] }) {
   const parameters = catalogQueryToSearchParams(query, { cursor: null });
   return Array.from(parameters.entries())
     .filter(([name]) => !exclude.includes(name))
     .map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />);
+}
+
+function useResponsiveCatalogPageSize(query: CatalogSearchQuery): void {
+  const router = useRouter();
+  const lastRequestedPageSize = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQueries = CATALOG_GRID_PAGE_SIZE_RULES.map((rule) => ({
+      ...rule,
+      query: window.matchMedia(rule.media),
+    }));
+    const synchronizePageSize = () => {
+      const pageSize =
+        mediaQueries.find((candidate) => candidate.query.matches)?.pageSize ??
+        NARROW_CATALOG_PAGE_SIZE;
+
+      if (pageSize === query.pageSize) {
+        lastRequestedPageSize.current = null;
+        return;
+      }
+      if (lastRequestedPageSize.current === pageSize) {
+        return;
+      }
+
+      lastRequestedPageSize.current = pageSize;
+      router.replace(catalogHref(query, { cursor: null, pageSize }), { scroll: false });
+    };
+
+    synchronizePageSize();
+    mediaQueries.forEach(({ query: mediaQuery }) => {
+      mediaQuery.addEventListener("change", synchronizePageSize);
+    });
+
+    return () => {
+      mediaQueries.forEach(({ query: mediaQuery }) => {
+        mediaQuery.removeEventListener("change", synchronizePageSize);
+      });
+    };
+  }, [query, router]);
 }
 
 function activeFilterCount(query: CatalogSearchQuery): number {
@@ -57,6 +97,7 @@ function activeFilterCount(query: CatalogSearchQuery): number {
     query.currency,
     query.includeDigital,
     query.includeNondefault,
+    query.returnAllVariants,
     query.releasedFrom,
     query.releasedTo,
   ].filter(Boolean).length;
@@ -186,6 +227,14 @@ function FilterFields({ query, prefix }: { query: CatalogSearchQuery; prefix: st
         </FormField>
       </div>
       <div className={styles.checks}>
+        <Tooltip content={VARIANT_TOOLTIP}>
+          <Checkbox
+            name="variants"
+            value="all"
+            label="Return all variants"
+            defaultChecked={query.returnAllVariants}
+          />
+        </Tooltip>
         <Checkbox
           name="digital"
           value="1"
@@ -218,6 +267,7 @@ function FilterFields({ query, prefix }: { query: CatalogSearchQuery; prefix: st
               currency: "",
               includeDigital: false,
               includeNondefault: false,
+              returnAllVariants: false,
               releasedFrom: "",
               releasedTo: "",
               sort: "name",
@@ -235,69 +285,40 @@ function FilterFields({ query, prefix }: { query: CatalogSearchQuery; prefix: st
 
 export function CatalogControls({ query }: { query: CatalogSearchQuery }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const hydrated = useSyncExternalStore(
-    subscribeToHydration,
-    clientHydrationSnapshot,
-    serverHydrationSnapshot,
-  );
+  useResponsiveCatalogPageSize(query);
   const filterCount = activeFilterCount(query);
 
   return (
     <div className={styles.controls}>
       <form className={styles.searchForm} action="/app/catalog" method="get" role="search">
         <HiddenQueryFields query={query} exclude={["q", "cursor"]} />
-        <FormField inputId="catalog-query" label="Search the catalog">
-          <SearchInput
-            name="q"
-            defaultValue={query.query}
-            minLength={2}
-            maxLength={120}
-            placeholder="Card name, rules text, or type"
-          />
-        </FormField>
-        <Button type="submit">Search</Button>
+        <div className={styles.searchControlRow}>
+          <FormField inputId="catalog-query" label="Search the catalog">
+            <SearchInput
+              name="q"
+              defaultValue={query.query}
+              minLength={2}
+              maxLength={120}
+              placeholder="Card name, rules text, or type"
+            />
+          </FormField>
+          <div className={styles.searchActions}>
+            <Button type="submit">Search</Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setDrawerOpen(true)}
+              aria-expanded={drawerOpen}
+            >
+              Filter{filterCount > 0 ? ` (${filterCount})` : ""}
+            </Button>
+          </div>
+        </div>
       </form>
-
-      <form className={styles.desktopFilters} action="/app/catalog" method="get">
-        <HiddenQueryFields
-          query={query}
-          exclude={[
-            "set",
-            "lang",
-            "rarity",
-            "finish",
-            "colors",
-            "identity",
-            "type",
-            "mv_min",
-            "mv_max",
-            "price",
-            "currency",
-            "digital",
-            "nondefault",
-            "released_from",
-            "released_to",
-            "sort",
-            "cursor",
-          ]}
-        />
-        <FilterFields query={query} prefix="catalog-desktop" />
-      </form>
-
-      <div className={styles.mobileFilterTrigger}>
-        <Button
-          variant="secondary"
-          disabled={!hydrated}
-          onClick={() => setDrawerOpen(true)}
-          aria-expanded={drawerOpen}
-        >
-          Filters{filterCount > 0 ? ` (${filterCount})` : ""}
-        </Button>
-      </div>
       <FilterDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        description="Narrow exact physical printings. English is the default; digital and nondefault objects remain excluded until selected."
+        description="Narrow catalog results. Oracle cards are returned once by default; digital and nondefault objects remain excluded until selected."
       >
         <form className={styles.drawerFilterForm} action="/app/catalog" method="get">
           <HiddenQueryFields
@@ -316,13 +337,14 @@ export function CatalogControls({ query }: { query: CatalogSearchQuery }) {
               "currency",
               "digital",
               "nondefault",
+              "variants",
               "released_from",
               "released_to",
               "sort",
               "cursor",
             ]}
           />
-          <FilterFields query={query} prefix="catalog-mobile" />
+          <FilterFields query={query} prefix="catalog-filter" />
         </form>
       </FilterDrawer>
     </div>

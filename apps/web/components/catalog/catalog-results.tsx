@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import {
   Badge,
-  Button,
+  ButtonLink,
   CardImage,
   CursorControls,
   DataTable,
@@ -12,7 +12,6 @@ import {
   StatusBadge,
 } from "@talence/ui";
 
-import { persistCatalogViewAction } from "@/features/catalog/actions";
 import { AddToCollection } from "@/components/collections/add-to-collection";
 import {
   ALL_CATALOG_LANGUAGES,
@@ -21,12 +20,14 @@ import {
 } from "@/features/catalog/query";
 import type {
   CatalogFreshness,
+  CatalogDeckOption,
   CatalogSearchItem,
   CatalogSearchQuery,
   CatalogSearchResult,
 } from "@/features/catalog/types";
 
 import styles from "./catalog.module.css";
+import { CatalogAddToDeck } from "./catalog-add-to-deck";
 
 function formatInstant(value: string | null): string {
   if (!value) {
@@ -165,6 +166,13 @@ function ActiveFilters({ query }: { query: CatalogSearchQuery }) {
       overrides: { includeNondefault: false },
     });
   }
+  if (query.returnAllVariants) {
+    filters.push({
+      key: "variants",
+      label: "All variants",
+      overrides: { returnAllVariants: false },
+    });
+  }
   if (query.releasedFrom || query.releasedTo) {
     filters.push({
       key: "release",
@@ -174,11 +182,7 @@ function ActiveFilters({ query }: { query: CatalogSearchQuery }) {
   }
 
   if (filters.length === 0) {
-    return (
-      <p className={styles.defaultPredicate}>
-        Showing active physical printings; digital and nondefault objects are excluded.
-      </p>
-    );
+    return null;
   }
 
   return (
@@ -198,22 +202,19 @@ function ActiveFilters({ query }: { query: CatalogSearchQuery }) {
 function CatalogViewToggle({ query }: { query: CatalogSearchQuery }) {
   return (
     <div className={styles.viewToggle} role="group" aria-label="Catalog result view">
-      {(["table", "grid"] as const).map((view) => {
+      {(["grid", "table"] as const).map((view) => {
         const selected = query.view === view;
         const returnTo = catalogHref(query, { cursor: null, view });
         return (
-          <form action={persistCatalogViewAction} key={view}>
-            <input type="hidden" name="view" value={view} />
-            <input type="hidden" name="returnTo" value={returnTo} />
-            <Button
-              type="submit"
-              size="small"
-              variant={selected ? "primary" : "secondary"}
-              aria-pressed={selected}
-            >
-              {view === "table" ? "Table" : "Grid"}
-            </Button>
-          </form>
+          <ButtonLink
+            href={returnTo}
+            size="small"
+            variant={selected ? "primary" : "secondary"}
+            aria-pressed={selected}
+            key={view}
+          >
+            {view === "table" ? "Table" : "Grid"}
+          </ButtonLink>
         );
       })}
     </div>
@@ -232,44 +233,70 @@ function FinishBadges({ item }: { item: CatalogSearchItem }) {
   );
 }
 
-function CatalogGrid({ items, from }: { items: CatalogSearchItem[]; from: string }) {
+function compactPrices(item: CatalogSearchItem): string[] {
+  return (
+    [
+      ["Nonfoil", item.displayPrices.nonfoil],
+      ["Foil", item.displayPrices.foil],
+    ] as const
+  ).flatMap(([label, price]) => {
+    if (!price) return [];
+    if (price.currency === "TIX") return [`${label} ${price.amount} TIX`];
+    const amount = Number(price.amount);
+    const formatted = Number.isFinite(amount)
+      ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: price.currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount)
+      : `${price.amount} ${price.currency}`;
+    return [`${label} ${formatted}`];
+  });
+}
+
+function CatalogGrid({
+  items,
+  from,
+  decks,
+}: {
+  items: CatalogSearchItem[];
+  from: string;
+  decks: CatalogDeckOption[];
+}) {
   return (
     <div className={styles.cardGrid} aria-label="Catalog results">
       {items.map((item) => {
         const addAttemptId = randomUUID();
         const addOccurredAt = new Date().toISOString();
+        const prices = compactPrices(item);
         return (
           <article className={styles.catalogCard} key={item.printingId}>
+            <p className={styles.gridOracleName}>{item.oracleName}</p>
             <CardImage
               className={styles.gridImage}
               alt={`${item.name} card image`}
-              faces={faceImages(item)}
+              faces={faceImages(item).slice(0, 1)}
             />
-            <div className={styles.catalogCardBody}>
-              <div>
-                <h2 className={styles.catalogCardTitle}>
-                  <Link href={detailsHref(item, from)}>{item.name}</Link>
-                </h2>
-                {item.printedName && item.printedName !== item.name ? (
-                  <p className={styles.printedName}>{item.printedName}</p>
-                ) : null}
-                <p className={styles.printingMeta}>
-                  <Link href={`/app/catalog/sets/${item.set.code}`}>{item.set.code}</Link> ·{" "}
-                  <Link href={printingHref(item, from)}>#{item.collectorNumber}</Link> ·{" "}
-                  {item.language.toUpperCase()}
-                </p>
-              </div>
-              <FinishBadges item={item} />
-              <PriceDisplay observation={item.bestPrice} />
+            <Link
+              className={styles.gridCardLink}
+              href={detailsHref(item, from)}
+              aria-label={`View ${item.oracleName}`}
+            />
+            <div className={styles.gridQuickActions}>
               <AddToCollection
                 printingId={item.printingId}
                 name={item.name}
                 finishes={item.finishes}
                 attemptId={addAttemptId}
                 occurredAt={addOccurredAt}
-                compact
+                iconOnly
               />
+              <CatalogAddToDeck cardId={item.cardId} name={item.oracleName} decks={decks} />
             </div>
+            <p className={styles.gridPrices}>
+              {prices.length ? prices.join(" · ") : "Price unavailable"}
+            </p>
           </article>
         );
       })}
@@ -348,11 +375,12 @@ function CatalogTable({ items, from }: { items: CatalogSearchItem[]; from: strin
 export function CatalogResults({
   query,
   result,
-  preview,
+  deckOptions = [],
 }: {
   query: CatalogSearchQuery;
   result: CatalogSearchResult;
   preview: boolean;
+  deckOptions?: CatalogDeckOption[];
 }) {
   const from = catalogHref(query);
   const countLabel =
@@ -363,15 +391,12 @@ export function CatalogResults({
   return (
     <section className={styles.results} aria-labelledby="catalog-results-title">
       <div className={styles.resultHeader}>
-        <div>
-          <h2 id="catalog-results-title">{countLabel}</h2>
-          <CatalogFreshnessSummary freshness={result.catalog} preview={preview} />
-        </div>
+        <h2 id="catalog-results-title">{countLabel}</h2>
         <CatalogViewToggle query={query} />
       </div>
       <ActiveFilters query={query} />
       {query.view === "grid" ? (
-        <CatalogGrid items={result.items} from={from} />
+        <CatalogGrid items={result.items} from={from} decks={deckOptions} />
       ) : (
         <CatalogTable items={result.items} from={from} />
       )}

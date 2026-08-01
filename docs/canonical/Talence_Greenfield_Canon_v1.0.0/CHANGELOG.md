@@ -1,5 +1,21 @@
 # Talence Greenfield Canon Changelog
 
+## 1.0.3 — 2026-08-01
+
+- Made Grid the catalog default for every bare-route visit while retaining Table as an explicit URL-addressable view.
+- Replaced grid information panels with image detail links and hover/focus Oracle names, compact foil/nonfoil prices, and collection/deck quick actions, with touch-accessible equivalents.
+- Removed catalog ingestion metadata and the redundant Oracle-mode explanation from browse results.
+- Added admitted-user-scoped short-term result caching and session scroll restoration for reliable browser-Back continuity.
+- Defined Oracle price floors across eligible printings, including set-constrained floors and exact-printing prices in all-variants mode.
+
+## 1.0.2 — 2026-07-31
+
+- Made catalog browse open directly on populated grid results, with the result-view controls ordered Grid then Table.
+- Consolidated all catalog filters into one drawer launched beside Search at every viewport width.
+- Aligned the one-to-five-column grid with bounded 6/12/18/24/30-result page sizes so catalog pages form six complete rows when enough matches exist.
+- Made Oracle-card results the default, added the opt-in **Return all variants** control, and made representative selection honor every active filter including set code.
+- Enlarged the authenticated header and identity controls, reduced primary navigation to Catalog, Collections, and Decks, and moved workspace switching, Devices, authorized Admin access, Settings, and Log Out into the profile submenu.
+
 ## 1.0.1 — 2026-07-29
 
 - Amended private-beta authentication to accept an admitted handle or email while keeping password/session authority in Supabase Auth and handle mapping on the trusted server.

@@ -183,7 +183,7 @@ Unique one active invitation per workspace/email.
 Fields:
 
 - `user_id uuid primary key`
-- `catalog_view text`
+- `catalog_view text` defaulting to `grid` for new preference rows
 - `collection_view text`
 - `deck_view text`
 - `compact_mode boolean`

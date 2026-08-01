@@ -77,20 +77,20 @@ The user may request account deletion only after ownership obligations are resol
 
 Desktop/tablet primary navigation:
 
-- Dashboard
 - Catalog
 - Collections
 - Decks
-- Devices
-- Settings
+
+The canonical Talence emblem links to the dashboard, so Dashboard is not duplicated as a text link. The profile control opens an account submenu ordered as workspace selector, Devices, Admin for platform administrators, Settings, and Log Out.
 
 Mobile primary navigation must keep the highest-frequency destinations reachable without horizontal scrolling. Contextual filters move into a drawer/sheet.
+The compact bottom navigation contains Catalog, Collections, and Decks; account and administrative destinations remain in the shared profile submenu.
 
 ### 3.2 Workspace context — P0 foundation, P1 UI
 
 All resource queries operate in an active workspace. The first UI may default directly to the personal workspace while still using workspace-scoped routes and data internally.
 
-Workspace switching appears when a user belongs to more than one workspace.
+Workspace switching appears first in the profile submenu and lists every workspace accessible to the user.
 
 ### 3.3 Required page states — P0
 
@@ -126,16 +126,21 @@ Dashboard cards link to the underlying detail route. Expensive aggregates use da
 
 ### 5.1 Catalog browse — P0
 
-Admitted users can browse all catalog printings ingested by Talence.
+Admitted users can browse the Oracle-card catalog and may explicitly expand results to all eligible printings ingested by Talence.
 
 Default browse scope emphasizes physical, non-digital printings while allowing an explicit switch to broader catalog records.
+Oracle mode is the default and returns one deterministic representative printing per Oracle card after applying the active filters. A selected set therefore chooses that card's representative from the selected set.
+Selecting **Return all variants** disables Oracle grouping and returns every eligible individual printing.
+The initial browse is populated without requiring a search term.
 
 View modes:
 
-- dense table/list;
-- card grid.
+- card grid, the default whenever the browse route has no explicit view parameter;
+- dense table/list.
 
-Persist the user's preference.
+The table remains an explicit URL-addressable view, but it does not replace the grid default for a later bare-route visit.
+Grid requests use bounded responsive page sizes aligned to the active column count so a full page contains complete rows without requesting the full catalog.
+Browse query parameters and results use a short-lived, admitted-user-scoped cache, and the browser preserves catalog scroll position so detail navigation and browser Back restore the recent browse state.
 
 ### 5.2 Search — P0
 
@@ -167,6 +172,12 @@ At minimum:
 - release date range.
 
 Filters are URL-addressable so a result can be refreshed or shared among admitted users.
+All browse filters live in a drawer opened from the search control group at every viewport width.
+The drawer includes an unchecked **Return all variants** checkbox with the tooltip: "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card."
+
+Grid presentation is image-first. The browse surface omits import/freshness metadata and the explanatory Oracle-mode sentence. Hover and keyboard focus reveal the Oracle name above the image, compact nonfoil/foil prices below it, and folder-plus/list-plus actions for collection and deck entry. The image area links to card detail. Touch layouts keep the same information and actions available without hover.
+
+Oracle-mode grid prices are the least expensive current nonfoil and foil observations across eligible printings after language and set filters. All-variants mode uses the exact printing's market observations. A selected set constrains both Oracle representatives and price floors to that set.
 
 ### 5.4 Oracle-card detail — P0
 
@@ -206,6 +217,8 @@ Show:
 - Always expose provider and observed time.
 - If the latest observation is beyond the configured freshness threshold, show a stale indicator.
 - Condition multipliers are not applied in the first release.
+
+The compact browse-grid hover/focus summary is the deliberate exception to the provider/time presentation rule: it uses only the minimal Nonfoil/Foil labels and current amount. Full provenance and freshness remain on detail surfaces.
 
 ## 6. Collections and inventory
 

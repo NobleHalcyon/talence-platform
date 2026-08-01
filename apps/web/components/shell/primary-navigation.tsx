@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import { PRIMARY_NAVIGATION } from "@talence/domain";
 
@@ -40,25 +39,13 @@ export function DesktopNavigation() {
   );
 }
 
-const mobileItems = [
-  PRIMARY_NAVIGATION[0],
-  PRIMARY_NAVIGATION[1],
-  PRIMARY_NAVIGATION[2],
-  PRIMARY_NAVIGATION[3],
-  PRIMARY_NAVIGATION[5],
-] as const;
-
 export function BottomNavigation() {
   const pathname = usePathname();
-  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <nav className={styles.bottomNavigation} aria-label="Mobile navigation">
-      {mobileItems.slice(0, 4).map((item) => {
-        const active =
-          item.href === "/app/settings"
-            ? pathname.startsWith("/app/settings") || pathname.startsWith("/app/devices")
-            : isActive(pathname, item.href);
+      {PRIMARY_NAVIGATION.map((item) => {
+        const active = isActive(pathname, item.href);
 
         return (
           <Link
@@ -67,45 +54,10 @@ export function BottomNavigation() {
             aria-current={active ? "page" : undefined}
             key={item.href}
           >
-            {"shortLabel" in item ? item.shortLabel : item.label}
+            {item.label}
           </Link>
         );
       })}
-      <div className={styles.bottomMore}>
-        <button
-          className={`${styles.bottomLink} ${
-            pathname.startsWith("/app/settings") || pathname.startsWith("/app/devices")
-              ? styles.bottomLinkActive
-              : ""
-          }`}
-          type="button"
-          aria-expanded={moreOpen}
-          aria-controls="mobile-more-menu"
-          onClick={() => setMoreOpen((open) => !open)}
-        >
-          More
-        </button>
-        {moreOpen ? (
-          <div className={styles.moreMenu} id="mobile-more-menu">
-            <Link
-              className={styles.moreMenuLink}
-              href="/app/devices"
-              onClick={() => setMoreOpen(false)}
-            >
-              <span>Devices</span>
-              <span aria-hidden="true">→</span>
-            </Link>
-            <Link
-              className={styles.moreMenuLink}
-              href="/app/settings"
-              onClick={() => setMoreOpen(false)}
-            >
-              <span>Settings</span>
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-        ) : null}
-      </div>
     </nav>
   );
 }

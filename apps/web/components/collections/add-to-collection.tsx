@@ -7,6 +7,7 @@ import {
   ButtonLink,
   Dialog,
   FormField,
+  IconButton,
   QuantityStepper,
   Select,
   TextInput,
@@ -26,6 +27,7 @@ export function AddToCollection({
   attemptId,
   occurredAt,
   compact = false,
+  iconOnly = false,
 }: {
   printingId: string;
   name: string;
@@ -33,6 +35,7 @@ export function AddToCollection({
   attemptId: string;
   occurredAt: string;
   compact?: boolean;
+  iconOnly?: boolean;
 }) {
   const context = useOptionalWorkspaceContext();
   const collections =
@@ -47,6 +50,13 @@ export function AddToCollection({
   const [quantity, setQuantity] = useState(1);
 
   if (context !== null && !canEditWorkspace(context.workspace.role)) {
+    if (iconOnly) {
+      return (
+        <IconButton label="Add to collection" disabled>
+          <FolderPlusIcon />
+        </IconButton>
+      );
+    }
     return (
       <Button size={compact ? "small" : "standard"} variant="secondary" disabled>
         View-only access
@@ -55,6 +65,13 @@ export function AddToCollection({
   }
 
   if (context !== null && collections.length === 0) {
+    if (iconOnly) {
+      return (
+        <IconButton label="Add to collection" disabled>
+          <FolderPlusIcon />
+        </IconButton>
+      );
+    }
     return (
       <ButtonLink href="/app/collections" size={compact ? "small" : "standard"} variant="secondary">
         Create collection first
@@ -64,14 +81,24 @@ export function AddToCollection({
 
   return (
     <>
-      <Button
-        size={compact ? "small" : "standard"}
-        variant={compact ? "secondary" : "primary"}
-        onClick={() => setOpen(true)}
-        disabled={!collections.length || !supportedFinishes.length}
-      >
-        Add to collection
-      </Button>
+      {iconOnly ? (
+        <IconButton
+          label="Add to collection"
+          onClick={() => setOpen(true)}
+          disabled={!collections.length || !supportedFinishes.length}
+        >
+          <FolderPlusIcon />
+        </IconButton>
+      ) : (
+        <Button
+          size={compact ? "small" : "standard"}
+          variant={compact ? "secondary" : "primary"}
+          onClick={() => setOpen(true)}
+          disabled={!collections.length || !supportedFinishes.length}
+        >
+          Add to collection
+        </Button>
+      )}
       <Dialog
         open={open}
         onOpenChange={setOpen}
@@ -139,5 +166,26 @@ export function AddToCollection({
         </form>
       </Dialog>
     </>
+  );
+}
+
+function FolderPlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M3.75 6.75h5l2 2h9.5v9.5h-16.5z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 11.5v4.5M9.75 13.75h4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

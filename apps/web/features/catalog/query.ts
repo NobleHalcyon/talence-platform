@@ -1,6 +1,8 @@
 import {
+  CATALOG_PAGE_SIZES,
   CATALOG_SORTS,
   CATALOG_VIEWS,
+  type CatalogPageSize,
   type CatalogQueryParseResult,
   type CatalogSearchQuery,
   type CatalogSort,
@@ -15,6 +17,7 @@ const FINISH_VALUES = new Set(["nonfoil", "foil", "etched"]);
 const PRICE_VALUES = new Set(["any", "available", "unavailable"]);
 const SORT_VALUES = new Set<string>(CATALOG_SORTS);
 const VIEW_VALUES = new Set<string>(CATALOG_VIEWS);
+const PAGE_SIZE_VALUES = new Set<number>(CATALOG_PAGE_SIZES);
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const CURSOR_PATTERN = /^[A-Za-z0-9_-]{8,2048}$/;
 const SET_CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{0,31}$/;
@@ -22,7 +25,7 @@ const LANGUAGE_PATTERN = /^[a-z][a-z0-9_-]{1,15}$/;
 const MAX_QUERY_LENGTH = 120;
 const MAX_FILTER_LENGTH = 80;
 
-export const CATALOG_PAGE_SIZE = 24;
+export const DEFAULT_CATALOG_PAGE_SIZE: CatalogPageSize = 30;
 export const DEFAULT_CATALOG_LANGUAGE = "en";
 export const ALL_CATALOG_LANGUAGES = "all";
 
@@ -68,7 +71,7 @@ function combinesColorlessWithColors(value: string[]): boolean {
   return value.includes("C") && value.length > 1;
 }
 
-export function defaultCatalogQuery(view: CatalogView = "table"): CatalogSearchQuery {
+export function defaultCatalogQuery(view: CatalogView = "grid"): CatalogSearchQuery {
   return {
     query: "",
     setCode: "",
@@ -84,17 +87,19 @@ export function defaultCatalogQuery(view: CatalogView = "table"): CatalogSearchQ
     currency: "",
     includeDigital: false,
     includeNondefault: false,
+    returnAllVariants: false,
     releasedFrom: "",
     releasedTo: "",
     sort: "name",
     cursor: null,
     view,
+    pageSize: DEFAULT_CATALOG_PAGE_SIZE,
   };
 }
 
 export function parseCatalogQuery(
   input: CatalogUrlInput,
-  preferredView: CatalogView = "table",
+  preferredView: CatalogView = "grid",
 ): CatalogQueryParseResult {
   const notices: string[] = [];
   const rawQuery = bounded(first(input.q), MAX_QUERY_LENGTH);
@@ -115,6 +120,11 @@ export function parseCatalogQuery(
   const price = first(input.price);
   const sort = first(input.sort);
   const view = first(input.view);
+  const rawPageSize = first(input.page_size);
+  const numericPageSize = Number(rawPageSize);
+  const pageSize = PAGE_SIZE_VALUES.has(numericPageSize)
+    ? (numericPageSize as CatalogPageSize)
+    : DEFAULT_CATALOG_PAGE_SIZE;
   const parsedColors = colors(first(input.colors));
   const parsedColorIdentity = colors(first(input.identity));
   const colorsConflict = combinesColorlessWithColors(parsedColors);
@@ -164,6 +174,9 @@ export function parseCatalogQuery(
   if (rawCursor && cursor === null) {
     notices.push("The catalog cursor was invalid and has been reset.");
   }
+  if (rawPageSize && !PAGE_SIZE_VALUES.has(numericPageSize)) {
+    notices.push("The catalog page size was invalid and has been reset.");
+  }
 
   return {
     query: {
@@ -183,11 +196,13 @@ export function parseCatalogQuery(
       currency: CURRENCY_VALUES.has(currency) ? currency : "",
       includeDigital: first(input.digital) === "1",
       includeNondefault: first(input.nondefault) === "1",
+      returnAllVariants: first(input.variants) === "all",
       releasedFrom: invertedReleaseRange ? "" : releasedFrom,
       releasedTo: invertedReleaseRange ? "" : releasedTo,
       sort: SORT_VALUES.has(sort) ? (sort as CatalogSort) : "name",
       cursor,
       view: VIEW_VALUES.has(view) ? (view as CatalogView) : preferredView,
+      pageSize,
     },
     notices,
   };
@@ -216,10 +231,14 @@ export function catalogQueryToSearchParams(
   if (value.currency) params.set("currency", value.currency);
   if (value.includeDigital) params.set("digital", "1");
   if (value.includeNondefault) params.set("nondefault", "1");
+  if (value.returnAllVariants) params.set("variants", "all");
   if (value.releasedFrom) params.set("released_from", value.releasedFrom);
   if (value.releasedTo) params.set("released_to", value.releasedTo);
   if (value.sort !== "name") params.set("sort", value.sort);
   if (value.cursor) params.set("cursor", value.cursor);
+  if (value.pageSize !== DEFAULT_CATALOG_PAGE_SIZE) {
+    params.set("page_size", String(value.pageSize));
+  }
   params.set("view", value.view);
 
   return params;

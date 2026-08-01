@@ -157,7 +157,7 @@ test("real private-beta critical journey remains secure, accessible, and workspa
   await expect(page).toHaveURL(/\/app$/);
 
   await page.goto("/app/catalog?q=Lightning%20Bolt&view=table");
-  await expect(page.getByRole("heading", { name: "Browse exact printings" })).toBeVisible();
+  await expect(page.getByLabel("Search the catalog")).toBeVisible();
   const resultRow = page
     .getByRole("row")
     .filter({ has: page.getByRole("link", { name: "Lightning Bolt", exact: true }).first() })

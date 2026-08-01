@@ -3,6 +3,7 @@ import "server-only";
 import type { PriceObservation } from "@talence/domain";
 
 import { ALL_CATALOG_LANGUAGES, DEFAULT_CATALOG_LANGUAGE } from "./query";
+import { catalogPricePair } from "./prices";
 import type {
   AdminCatalogStatus,
   CatalogCardDetail,
@@ -70,11 +71,18 @@ const lightningBoltPrice: PriceObservation = {
   staleAfter: "2026-07-27T12:00:00Z",
 };
 
-const PREVIEW_ITEMS: CatalogSearchItem[] = [
+const lightningBoltFoilPrice: PriceObservation = {
+  ...lightningBoltPrice,
+  amount: "8.4500",
+  finish: "foil",
+};
+
+const BASE_PREVIEW_ITEMS: CatalogSearchItem[] = [
   {
     cardId: "00000000-0000-4000-8000-000000000001",
     printingId: "00000000-0000-4000-8000-000000000101",
     name: "Black Lotus",
+    oracleName: "Black Lotus",
     printedName: null,
     manaCost: "{0}",
     manaValue: 0,
@@ -118,12 +126,15 @@ const PREVIEW_ITEMS: CatalogSearchItem[] = [
         },
       ),
     ],
+    prices: [blackLotusPrice],
     bestPrice: blackLotusPrice,
+    displayPrices: catalogPricePair([blackLotusPrice]),
   },
   {
     cardId: "00000000-0000-4000-8000-000000000002",
     printingId: "00000000-0000-4000-8000-000000000102",
     name: "Delver of Secrets // Insectile Aberration",
+    oracleName: "Delver of Secrets // Insectile Aberration",
     printedName: null,
     manaCost: "{U}",
     manaValue: 1,
@@ -185,12 +196,15 @@ const PREVIEW_ITEMS: CatalogSearchItem[] = [
         },
       ),
     ],
+    prices: [],
     bestPrice: null,
+    displayPrices: catalogPricePair([]),
   },
   {
     cardId: "00000000-0000-4000-8000-000000000003",
     printingId: "00000000-0000-4000-8000-000000000103",
     name: "Lightning Bolt",
+    oracleName: "Lightning Bolt",
     printedName: "稲妻",
     manaCost: "{R}",
     manaValue: 1,
@@ -235,12 +249,15 @@ const PREVIEW_ITEMS: CatalogSearchItem[] = [
         },
       ),
     ],
+    prices: [lightningBoltPrice, lightningBoltFoilPrice],
     bestPrice: lightningBoltPrice,
+    displayPrices: catalogPricePair([lightningBoltPrice, lightningBoltFoilPrice]),
   },
   {
     cardId: null,
     printingId: "00000000-0000-4000-8000-000000000104",
     name: "Treasure",
+    oracleName: "Treasure",
     printedName: null,
     manaCost: null,
     manaValue: null,
@@ -283,25 +300,53 @@ const PREVIEW_ITEMS: CatalogSearchItem[] = [
         },
       ),
     ],
+    prices: [],
     bestPrice: null,
+    displayPrices: catalogPricePair([]),
   },
+];
+
+const BLACK_LOTUS_UNLIMITED: CatalogSearchItem = {
+  ...BASE_PREVIEW_ITEMS[0]!,
+  printingId: "00000000-0000-4000-8000-000000000105",
+  set: {
+    ...BASE_PREVIEW_ITEMS[0]!.set,
+    id: "00000000-0000-4000-8000-000000001005",
+    code: "2ED",
+    name: "Unlimited Edition",
+    releasedAt: "1993-12-01",
+  },
+  collectorNumber: "233",
+  releasedAt: "1993-12-01",
+  providerUri: "https://scryfall.com/card/2ed/233/black-lotus",
+  faces: [
+    face(
+      "00000000-0000-4000-8000-000000000105",
+      0,
+      "Black Lotus",
+      "b/d/bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd",
+      {
+        manaCost: "{0}",
+        typeLine: "Artifact",
+        oracleText: "{T}, Sacrifice Black Lotus: Add three mana of any one color.",
+        artist: "Christopher Rush",
+      },
+    ),
+  ],
+};
+
+const PREVIEW_ITEMS: CatalogSearchItem[] = [
+  BASE_PREVIEW_ITEMS[0]!,
+  BLACK_LOTUS_UNLIMITED,
+  ...BASE_PREVIEW_ITEMS.slice(1),
 ];
 
 const PRICE_BY_PRINTING = new Map<string, PriceObservation[]>([
   [PREVIEW_ITEMS[0]!.printingId, [blackLotusPrice]],
-  [PREVIEW_ITEMS[1]!.printingId, []],
-  [
-    PREVIEW_ITEMS[2]!.printingId,
-    [
-      lightningBoltPrice,
-      {
-        ...lightningBoltPrice,
-        amount: "8.4500",
-        finish: "foil",
-      },
-    ],
-  ],
-  [PREVIEW_ITEMS[3]!.printingId, []],
+  [PREVIEW_ITEMS[1]!.printingId, [blackLotusPrice]],
+  [PREVIEW_ITEMS[2]!.printingId, []],
+  [PREVIEW_ITEMS[3]!.printingId, [lightningBoltPrice, lightningBoltFoilPrice]],
+  [PREVIEW_ITEMS[4]!.printingId, []],
 ]);
 
 function includesText(item: CatalogSearchItem, query: string): boolean {
@@ -323,6 +368,25 @@ function comparePrice(left: CatalogSearchItem, right: CatalogSearchItem): number
   const leftPrice = left.bestPrice ? Number(left.bestPrice.amount) : Number.POSITIVE_INFINITY;
   const rightPrice = right.bestPrice ? Number(right.bestPrice.amount) : Number.POSITIVE_INFINITY;
   return leftPrice - rightPrice;
+}
+
+function oracleRepresentatives(items: CatalogSearchItem[]): CatalogSearchItem[] {
+  const representatives = new Map<string, CatalogSearchItem>();
+
+  items.forEach((item) => {
+    const identity = item.cardId ?? `printing:${item.printingId}`;
+    const current = representatives.get(identity);
+    if (
+      !current ||
+      (item.releasedAt ?? "") > (current.releasedAt ?? "") ||
+      ((item.releasedAt ?? "") === (current.releasedAt ?? "") &&
+        item.printingId < current.printingId)
+    ) {
+      representatives.set(identity, item);
+    }
+  });
+
+  return Array.from(representatives.values());
 }
 
 export function previewCatalogSearch(query: CatalogSearchQuery): CatalogSearchResult {
@@ -367,7 +431,19 @@ export function previewCatalogSearch(query: CatalogSearchQuery): CatalogSearchRe
     return true;
   });
 
-  filtered.sort((left, right) => {
+  const selected = query.returnAllVariants
+    ? filtered.map((item) => ({
+        ...item,
+        displayPrices: catalogPricePair(item.prices, query.currency),
+      }))
+    : oracleRepresentatives(filtered).map((item) => {
+        const oraclePrices = filtered
+          .filter((candidate) => candidate.cardId === item.cardId)
+          .flatMap((candidate) => candidate.prices);
+        return { ...item, displayPrices: catalogPricePair(oraclePrices, query.currency) };
+      });
+
+  selected.sort((left, right) => {
     if (query.sort === "newest") {
       return (
         (right.releasedAt ?? "").localeCompare(left.releasedAt ?? "") ||
@@ -387,19 +463,25 @@ export function previewCatalogSearch(query: CatalogSearchQuery): CatalogSearchRe
     );
   });
 
+  const items = selected.slice(0, query.pageSize);
+
   return {
-    items: filtered,
+    items,
     nextCursor: null,
     previousCursor: null,
-    totalCount: filtered.length,
-    resultCount: filtered.length,
+    totalCount: selected.length,
+    resultCount: items.length,
     currency: query.currency || "USD",
     catalog: PREVIEW_CATALOG,
   };
 }
 
 export function previewCatalogCardDetail(cardId: string): CatalogCardDetail | null {
-  const printings = PREVIEW_ITEMS.filter((item) => item.cardId === cardId);
+  const printings = PREVIEW_ITEMS.filter((item) => item.cardId === cardId).sort(
+    (left, right) =>
+      (right.releasedAt ?? "").localeCompare(left.releasedAt ?? "") ||
+      left.printingId.localeCompare(right.printingId),
+  );
   const representative = printings[0];
   if (!representative) {
     return null;

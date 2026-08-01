@@ -64,16 +64,17 @@ Admin routes remain invisible and denied to ordinary users.
 
 ### Wide layout
 
-- sticky deep-navy top navigation, 56px, using the canonical gold Talence emblem;
-- no persistent active-workspace rail; workspace defaults and switching live in Settings;
+- sticky deep-navy top navigation, approximately 64px, using the canonical gold Talence emblem at a proportionally enlarged size;
+- the emblem is the dashboard/home control; the visible primary links are Catalog, Collections, and Decks;
+- no persistent active-workspace rail; the enlarged profile control opens a deep-navy submenu ordered as workspace selector, Devices, Admin when authorized, Settings, and Log Out with its icon;
 - independently scrolling main content;
 - page header with title, context, and primary action;
 - main content may be constrained or full-width.
 
 ### Compact layout
 
-- compact top bar with Talence mark, context title, and account/action menu;
-- bottom primary navigation for Dashboard, Catalog, Collections, Decks, and More;
+- compact 64px top bar with the enlarged Talence mark and the same account submenu;
+- bottom primary navigation for Catalog, Collections, and Decks;
 - contextual sidebars become sheets/drawers;
 - primary create/add actions remain reachable near the thumb zone;
 - tables become semantic stacked rows/cards when columns cannot remain readable.
@@ -252,12 +253,19 @@ Feature code composes these primitives instead of recreating controls.
 
 ### Browse
 
-- search remains visible;
+- the page opens directly on a populated result set without a redundant catalog introduction;
+- search remains visible and shares one control group with Search and Filter actions;
 - active filters are visible as removable chips/summary;
-- filter drawer on compact screens;
-- table and grid toggle;
-- result count and catalog freshness;
-- cards show name, set, image, available finishes, and price estimate when available.
+- all filters live in a drawer at every viewport width;
+- the filter drawer exposes an unchecked **Return all variants** checkbox; its tooltip reads "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card.";
+- unchecked Oracle mode shows one representative per card, while checking it shows individual printings; a set filter constrains the Oracle representative to that set;
+- the grid-first table/grid toggle always defaults a bare catalog route to grid; table remains an explicit URL-addressable view and does not become the later default;
+- the grid uses one through five media-query-aligned columns and requests 6, 12, 18, 24, or 30 results respectively, yielding six complete rows when at least that many matches exist;
+- the browse header shows the result count without ingestion metadata or a redundant Oracle-mode explanation;
+- grid results remove the information panel and use the image itself as the detail link;
+- hover and keyboard focus reveal the Oracle name above the image, compact Nonfoil/Foil prices below it, and folder-plus/list-plus quick actions near the image's upper-right corner; touch layouts expose the same controls without hover;
+- Oracle-mode prices are the least expensive current nonfoil and foil observations across eligible printings, selected-set mode constrains those floors to that set, and all-variants mode shows exact-printing observations;
+- URL query state, admitted-user-scoped short-lived result caching, and session scroll restoration make browser Back return to the recent browse instead of resetting it.
 
 ### Detail
 

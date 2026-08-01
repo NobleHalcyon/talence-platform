@@ -8,9 +8,14 @@ import {
   parseCatalogQuery,
   safeCatalogReturnPath,
 } from "@/features/catalog/query";
+import {
+  CATALOG_GRID_PAGE_SIZE_RULES,
+  catalogPageSizeForMedia,
+} from "@/features/catalog/responsive";
 
 describe("catalog URL query contract", () => {
   it("uses the saved view only when the URL does not choose one", () => {
+    expect(defaultCatalogQuery().view).toBe("grid");
     expect(parseCatalogQuery({}, "grid").query.view).toBe("grid");
     expect(parseCatalogQuery({ view: "table" }, "grid").query.view).toBe("table");
   });
@@ -20,6 +25,7 @@ describe("catalog URL query contract", () => {
     const allLanguages = parseCatalogQuery({ lang: "ALL" }).query;
 
     expect(defaultQuery.language).toBe("en");
+    expect(defaultQuery.returnAllVariants).toBe(false);
     expect(catalogQueryToSearchParams(defaultQuery).has("lang")).toBe(false);
     expect(allLanguages.language).toBe("all");
     expect(catalogQueryToSearchParams(allLanguages).get("lang")).toBe("all");
@@ -41,11 +47,13 @@ describe("catalog URL query contract", () => {
       currency: "usd",
       digital: "1",
       nondefault: "1",
+      variants: "all",
       released_from: "2020-01-01",
       released_to: "2026-07-26",
       sort: "price_desc",
       cursor: "opaque_cursor-1",
       view: "grid",
+      page_size: "18",
     });
 
     expect(parsed.notices).toEqual([]);
@@ -64,11 +72,13 @@ describe("catalog URL query contract", () => {
       currency: "USD",
       includeDigital: true,
       includeNondefault: true,
+      returnAllVariants: true,
       releasedFrom: "2020-01-01",
       releasedTo: "2026-07-26",
       sort: "price_desc",
       cursor: "opaque_cursor-1",
       view: "grid",
+      pageSize: 18,
     });
   });
 
@@ -165,6 +175,34 @@ describe("catalog URL query contract", () => {
     expect(catalogHref(query)).toContain("cursor=next_opaque");
   });
 
+  it("serializes all-variants mode while leaving Oracle mode implicit", () => {
+    const oracle = defaultCatalogQuery();
+    const variants = { ...oracle, returnAllVariants: true };
+
+    expect(catalogQueryToSearchParams(oracle).has("variants")).toBe(false);
+    expect(catalogQueryToSearchParams(variants).get("variants")).toBe("all");
+    expect(parseCatalogQuery({ variants: "all" }).query.returnAllVariants).toBe(true);
+  });
+
+  it("accepts only complete-row responsive page sizes", () => {
+    const query = parseCatalogQuery({ page_size: "24" }).query;
+    const invalid = parseCatalogQuery({ page_size: "25" });
+
+    expect(query.pageSize).toBe(24);
+    expect(catalogQueryToSearchParams(query).get("page_size")).toBe("24");
+    expect(invalid.query.pageSize).toBe(30);
+    expect(invalid.notices).toContain("The catalog page size was invalid and has been reset.");
+    expect(catalogQueryToSearchParams(defaultCatalogQuery()).has("page_size")).toBe(false);
+  });
+
+  it("maps viewport media tiers to six complete catalog rows", () => {
+    const matches = new Set(["(min-width: 58rem)", "(min-width: 44rem)", "(min-width: 27rem)"]);
+
+    expect(catalogPageSizeForMedia((media) => matches.has(media))).toBe(24);
+    expect(catalogPageSizeForMedia(() => false)).toBe(6);
+    expect(CATALOG_GRID_PAGE_SIZE_RULES.map((rule) => rule.pageSize)).toEqual([30, 24, 18, 12]);
+  });
+
   it("maps the URL model to the exact typed SQL RPC arguments", () => {
     const query = parseCatalogQuery({
       q: "lotus",
@@ -174,6 +212,8 @@ describe("catalog URL query contract", () => {
       mv_min: "2",
       mv_max: "7",
       sort: "newest",
+      page_size: "18",
+      variants: "all",
     }).query;
 
     expect(catalogSearchRpcArgs(query)).toMatchObject({
@@ -185,13 +225,15 @@ describe("catalog URL query contract", () => {
       p_min_mana_value: 2,
       p_max_mana_value: 7,
       p_sort: "newest",
-      p_limit: 24,
+      p_limit: 18,
+      p_return_all_variants: true,
     });
   });
 
   it("defaults the RPC language to English and maps the all sentinel to null", () => {
     expect(catalogSearchRpcArgs(defaultCatalogQuery())).toMatchObject({
       p_language: "en",
+      p_return_all_variants: false,
     });
     expect(
       catalogSearchRpcArgs({

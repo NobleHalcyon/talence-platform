@@ -5,12 +5,9 @@ export interface NavigationItem {
 }
 
 export const PRIMARY_NAVIGATION = [
-  { href: "/app", label: "Dashboard" },
   { href: "/app/catalog", label: "Catalog" },
   { href: "/app/collections", label: "Collections" },
   { href: "/app/decks", label: "Decks" },
-  { href: "/app/devices", label: "Devices" },
-  { href: "/app/settings", label: "Settings", shortLabel: "More" },
 ] as const satisfies readonly NavigationItem[];
 
 export const ADMIN_NAVIGATION = [

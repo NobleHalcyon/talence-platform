@@ -1,6 +1,7 @@
 .shell {
   --shell-geometry-image: url("/brand/talence_celestial_background.svg");
   --shell-geometry-size: max(100vw, 177.7778svh) auto;
+  --tl-shell-top-height: 4rem;
 
   position: relative;
   isolation: isolate;
@@ -76,7 +77,7 @@
 }
 
 .brandEmblem {
-  width: 2.35rem;
+  width: 2.65rem;
   height: auto;
   filter: drop-shadow(0 0.25rem 0.55rem rgb(0 0 0 / 28%));
 }
@@ -106,7 +107,7 @@
   align-items: center;
   color: rgb(255 255 255 / 72%);
   padding-inline: var(--tl-space-3);
-  font-size: var(--tl-font-size-14);
+  font-size: var(--tl-font-size-16);
   font-weight: var(--tl-font-weight-semibold);
   text-decoration: none;
 }
@@ -125,51 +126,143 @@
   content: "";
 }
 
-.accountLink {
+.accountButton {
   display: inline-flex;
-  min-width: var(--tl-touch-target);
-  min-height: var(--tl-touch-target);
+  width: var(--tl-touch-target);
+  height: var(--tl-touch-target);
   align-items: center;
   justify-content: center;
   border: 1px solid rgb(194 154 58 / 68%);
   border-radius: var(--tl-radius);
   background: rgb(255 255 255 / 6%);
   color: #ead393;
-  font-size: var(--tl-font-size-12);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--tl-font-size-14);
   font-weight: var(--tl-font-weight-bold);
-  text-decoration: none;
 }
 
 .accountGroup {
   display: flex;
   flex: 0 0 auto;
+  align-self: stretch;
   align-items: center;
-  gap: var(--tl-space-2);
 }
 
-.adminLink {
-  display: none;
+.accountMenuRoot {
+  position: relative;
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+}
+
+.accountButton:hover,
+.accountButton[aria-expanded="true"] {
+  border-color: var(--tl-color-gold);
+  background: rgb(255 255 255 / 12%);
+  color: #ead393;
+}
+
+.accountButton:focus-visible,
+.accountMenuLink:focus-visible,
+.accountMenuLogout:focus-visible,
+.workspaceSelect:focus-visible {
+  outline: 3px solid #ead393;
+  outline-offset: 2px;
+}
+
+.accountPopover {
+  position: absolute;
+  z-index: 40;
+  width: min(20rem, calc(100vw - var(--tl-space-4) * 2));
+  inset-block-start: 100%;
+  inset-inline-end: 0;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid rgb(194 154 58 / 68%);
+  border-radius: 0 0 var(--tl-radius) var(--tl-radius);
+  background: var(--tl-color-deep-navy);
+  box-shadow: var(--tl-shadow-overlay);
+}
+
+.workspaceSelector {
+  display: grid;
+  gap: var(--tl-space-2);
+  border-block-end: 1px solid rgb(194 154 58 / 32%);
+  padding: var(--tl-space-4);
+}
+
+.workspaceLabel {
   color: #ead393;
   font-size: var(--tl-font-size-12);
+  font-weight: var(--tl-font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspaceSelect {
+  width: 100%;
+  min-height: var(--tl-control-height);
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: var(--tl-radius);
+  background: rgb(255 255 255 / 8%);
+  color: var(--tl-color-white);
+  padding-inline: var(--tl-space-3);
+  font: inherit;
+  font-size: var(--tl-font-size-14);
   font-weight: var(--tl-font-weight-semibold);
+}
+
+.workspaceSelect option {
+  background: var(--tl-color-deep-navy);
+  color: var(--tl-color-white);
+}
+
+.workspaceUnavailable {
+  color: rgb(255 255 255 / 72%);
+  font-size: var(--tl-font-size-14);
+}
+
+.accountMenuLink,
+.accountMenuLogout {
+  display: flex;
+  width: 100%;
+  min-height: var(--tl-touch-target);
+  align-items: center;
+  gap: var(--tl-space-3);
+  border: 0;
+  border-block-end: 1px solid rgb(194 154 58 / 24%);
+  background: transparent;
+  color: rgb(255 255 255 / 82%);
+  padding: var(--tl-space-3) var(--tl-space-4);
+  font: inherit;
+  font-size: var(--tl-font-size-16);
+  font-weight: var(--tl-font-weight-semibold);
+  text-align: start;
   text-decoration: none;
 }
 
-.logoutButton {
-  min-height: var(--tl-touch-target);
-  border: 0;
-  background: transparent;
-  color: rgb(255 255 255 / 72%);
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--tl-font-size-12);
-  font-weight: var(--tl-font-weight-semibold);
+.accountMenuLink:hover,
+.accountMenuLogout:hover {
+  background: rgb(255 255 255 / 9%);
+  color: var(--tl-color-white);
 }
 
-.logoutButton:hover,
-.adminLink:hover {
-  color: var(--tl-color-white);
-  text-decoration: underline;
+.logoutForm {
+  margin: 0;
+}
+
+.accountMenuLogout {
+  border-block-end: 0;
+  color: #ead393;
+  cursor: pointer;
+}
+
+.logoutIcon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  fill: currentcolor;
 }
 
 .previewBanner {
@@ -201,7 +294,7 @@
   inset-block-end: 0;
   inset-inline: 0;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   min-height: calc(4rem + env(safe-area-inset-bottom));
   border-block-start: 1px solid var(--tl-color-border);
   background: rgb(255 255 255 / 98%);
@@ -221,46 +314,6 @@
   font-size: var(--tl-font-size-12);
   font-weight: var(--tl-font-weight-semibold);
   text-decoration: none;
-}
-
-.bottomMore {
-  display: grid;
-}
-
-.moreMenu {
-  position: fixed;
-  z-index: 30;
-  width: min(18rem, calc(100vw - var(--tl-space-4) * 2));
-  inset-inline-end: var(--tl-space-2);
-  inset-block-end: calc(4rem + env(safe-area-inset-bottom) + var(--tl-space-2));
-  display: grid;
-  overflow: hidden;
-  border: 1px solid var(--tl-color-border);
-  border-radius: var(--tl-radius);
-  background: var(--tl-color-surface);
-  box-shadow: var(--tl-shadow-overlay);
-}
-
-.moreMenuLink {
-  display: flex;
-  min-height: var(--tl-touch-target);
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--tl-space-3);
-  border-block-end: 1px solid var(--tl-color-border);
-  color: var(--tl-color-navy);
-  padding-inline: var(--tl-space-4);
-  font-size: var(--tl-font-size-14);
-  font-weight: var(--tl-font-weight-semibold);
-  text-decoration: none;
-}
-
-.moreMenuLink:last-child {
-  border-block-end: 0;
-}
-
-.moreMenuLink:hover {
-  background: var(--tl-color-gray-50);
 }
 
 .bottomLinkActive {
@@ -283,10 +336,6 @@
 
   .main {
     padding: var(--tl-space-8) var(--tl-space-6) calc(5rem + env(safe-area-inset-bottom));
-  }
-
-  .adminLink {
-    display: inline-flex;
   }
 }
 

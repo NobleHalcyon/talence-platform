@@ -9,11 +9,14 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 import { catalogSyncEnabled, staticCatalogPreviewEnabled } from "./config";
+import { catalogSearchCache } from "./cache";
+import { catalogPricePair } from "./prices";
 import { ALL_CATALOG_LANGUAGES, DEFAULT_CATALOG_LANGUAGE } from "./query";
 import {
   parseAdminCatalogStatus,
   parseCatalogCardDetail,
   parseCatalogPrintingDetail,
+  parseCatalogPriceFloors,
   parseCatalogSearchResult,
   parseCatalogSetDetail,
   parseCatalogStatus,
@@ -141,9 +144,10 @@ export function catalogSearchRpcArgs(query: CatalogSearchQuery): Record<string, 
     p_released_to: nullable(query.releasedTo),
     p_include_digital: query.includeDigital,
     p_include_nondefault: query.includeNondefault,
+    p_return_all_variants: query.returnAllVariants,
     p_sort: query.sort,
     p_after: query.cursor,
-    p_limit: 24,
+    p_limit: query.pageSize,
   };
 }
 
@@ -173,15 +177,22 @@ export async function searchCatalog(
   }
   const requestId = randomUUID();
   let workspaceId: string;
+  let userId: string;
   try {
     const context = await getAppContextState();
     if (context.status !== "ready") {
       return { ok: false, reason: "request_failed", requestId };
     }
     workspaceId = context.context.workspace.id;
+    userId = context.context.userId;
   } catch {
     warnCatalogFailure("quota_context_unavailable", requestId);
     return { ok: false, reason: "request_failed", requestId };
+  }
+  const cacheKey = `${userId}:${JSON.stringify(catalogSearchRpcArgs(query))}`;
+  const cached = catalogSearchCache.get(cacheKey);
+  if (cached) {
+    return { ok: true, data: cached, preview: false };
   }
   try {
     const reservation = await clientState.client.rpc(
@@ -189,7 +200,7 @@ export async function searchCatalog(
       {
         p_feature_key: "catalog_search",
         p_workspace_id: workspaceId,
-        p_units: 24,
+        p_units: query.pageSize,
         p_correlation_id: requestId,
       },
     );
@@ -210,7 +221,63 @@ export async function searchCatalog(
     warnCatalogFailure("catalog_search_quota_unavailable", requestId);
     return { ok: false, reason: "request_failed", requestId };
   }
-  return searchCatalogWithClient(clientState.client, query);
+  const search = await searchCatalogWithClient(clientState.client, query);
+  if (!search.ok) return search;
+
+  let data = search.data;
+  if (query.returnAllVariants) {
+    data = {
+      ...data,
+      items: data.items.map((item) => ({
+        ...item,
+        displayPrices: catalogPricePair(item.prices, data.currency ?? query.currency),
+      })),
+    };
+  } else {
+    const cardIds = Array.from(
+      new Set(data.items.flatMap((item) => (item.cardId ? [item.cardId] : []))),
+    );
+    if (cardIds.length) {
+      try {
+        const floorsResult = await clientState.client.rpc(
+          DATABASE_FUNCTIONS.catalogOraclePriceFloors,
+          {
+            p_card_ids: cardIds,
+            p_currency: data.currency ?? query.currency ?? null,
+            p_set_code: query.setCode || null,
+            p_language:
+              query.language === ALL_CATALOG_LANGUAGES
+                ? null
+                : query.language || DEFAULT_CATALOG_LANGUAGE,
+          },
+        );
+        const floors = floorsResult.error ? null : parseCatalogPriceFloors(floorsResult.data);
+        if (!floors) {
+          warnCatalogFailure(floorsResult.error?.code ?? "invalid_price_floor_response", requestId);
+        }
+        data = {
+          ...data,
+          items: data.items.map((item) => ({
+            ...item,
+            displayPrices: item.cardId
+              ? (floors?.[item.cardId] ?? { nonfoil: null, foil: null })
+              : item.displayPrices,
+          })),
+        };
+      } catch {
+        warnCatalogFailure("catalog_price_floor_unavailable", requestId);
+        data = {
+          ...data,
+          items: data.items.map((item) => ({
+            ...item,
+            displayPrices: item.cardId ? { nonfoil: null, foil: null } : item.displayPrices,
+          })),
+        };
+      }
+    }
+  }
+  catalogSearchCache.set(cacheKey, data);
+  return { ok: true, data, preview: false };
 }
 
 export async function loadCatalogCardWithClient(
@@ -354,7 +421,7 @@ export async function loadAdminCatalogStatus(
 export async function loadCatalogViewPreference(): Promise<CatalogView> {
   const client = await createServerSupabaseClient();
   if (!client) {
-    return "table";
+    return "grid";
   }
 
   try {
@@ -362,8 +429,8 @@ export async function loadCatalogViewPreference(): Promise<CatalogView> {
       .from(DATABASE_TABLES.userPreferences)
       .select("catalog_view")
       .maybeSingle();
-    return !result.error && result.data?.catalog_view === "grid" ? "grid" : "table";
+    return !result.error && result.data?.catalog_view === "table" ? "table" : "grid";
   } catch {
-    return "table";
+    return "grid";
   }
 }

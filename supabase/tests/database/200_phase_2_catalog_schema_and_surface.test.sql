@@ -1,6 +1,6 @@
 begin;
 
-select plan(40);
+select plan(43);
 
 select has_table('public', 'catalog_sets', 'catalog sets exist');
 select has_table('public', 'catalog_cards', 'oracle cards exist');
@@ -110,7 +110,8 @@ select has_function(
     'boolean',
     'text',
     'text',
-    'integer'
+    'integer',
+    'boolean'
   ],
   'bounded catalog search has explicit typed filters'
 );
@@ -119,6 +120,12 @@ select has_function(
   'catalog_card_detail',
   array['uuid'],
   'oracle card detail RPC exists'
+);
+select has_function(
+  'public',
+  'catalog_oracle_price_floors',
+  array['uuid[]', 'text', 'text', 'text'],
+  'bounded Oracle price-floor RPC exists'
 );
 select has_function(
   'public',
@@ -245,15 +252,31 @@ select ok(
 select ok(
   has_function_privilege(
     'authenticated',
-    'public.catalog_search(text,text,text,text,text,public.card_finish,text[],text[],text,boolean,text,numeric,numeric,date,date,boolean,boolean,text,text,integer)',
+    'public.catalog_search(text,text,text,text,text,public.card_finish,text[],text[],text,boolean,text,numeric,numeric,date,date,boolean,boolean,text,text,integer,boolean)',
     'EXECUTE'
   ),
   'authenticated sessions may execute bounded catalog search'
 );
 select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.catalog_oracle_price_floors(uuid[],text,text,text)',
+    'EXECUTE'
+  ),
+  'authenticated sessions may read bounded Oracle price floors'
+);
+select ok(
   not has_function_privilege(
     'anon',
-    'public.catalog_search(text,text,text,text,text,public.card_finish,text[],text[],text,boolean,text,numeric,numeric,date,date,boolean,boolean,text,text,integer)',
+    'public.catalog_oracle_price_floors(uuid[],text,text,text)',
+    'EXECUTE'
+  ),
+  'anonymous sessions cannot read Oracle price floors'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.catalog_search(text,text,text,text,text,public.card_finish,text[],text[],text,boolean,text,numeric,numeric,date,date,boolean,boolean,text,text,integer,boolean)',
     'EXECUTE'
   ),
   'anonymous sessions cannot search the catalog'

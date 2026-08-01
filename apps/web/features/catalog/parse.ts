@@ -8,12 +8,14 @@ import type {
   CatalogImportSummary,
   CatalogLegality,
   CatalogPrintingDetail,
+  CatalogPricePair,
   CatalogSearchItem,
   CatalogSearchResult,
   CatalogSetDetail,
   CatalogSetSummary,
   CatalogStatus,
 } from "./types";
+import { catalogPricePair } from "./prices";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -237,14 +239,25 @@ export function parseCatalogSearchItem(value: unknown): CatalogSearchItem | null
     : Array.isArray(printing.prices)
       ? printing.prices
       : [];
-  const firstPrice = rawPrices
+  const prices = rawPrices
     .map(parsePriceObservation)
-    .find((price): price is PriceObservation => price !== null);
+    .filter((price): price is PriceObservation => price !== null);
+  const firstPrice = prices[0] ?? null;
+  const oracleName =
+    string(card.name ?? item.card_name ?? item.oracle_name ?? item.oracleName) ?? name;
+  const rawDisplayPrices = record(item.display_prices ?? item.displayPrices);
+  const displayPrices: CatalogPricePair = rawDisplayPrices
+    ? {
+        nonfoil: parsePriceObservation(rawDisplayPrices.nonfoil),
+        foil: parsePriceObservation(rawDisplayPrices.foil),
+      }
+    : catalogPricePair(prices);
 
   return {
     cardId: nullableString(card.id ?? item.card_id ?? item.cardId),
     printingId,
     name,
+    oracleName,
     printedName: nullableString(printing.printed_name ?? printing.printedName ?? item.printed_name),
     manaCost: nullableString(card.mana_cost ?? card.manaCost ?? item.mana_cost),
     manaValue: number(card.mana_value ?? card.manaValue ?? item.mana_value),
@@ -269,8 +282,37 @@ export function parseCatalogSearchItem(value: unknown): CatalogSearchItem | null
       printing.scryfall_uri ?? printing.provider_uri ?? item.scryfall_uri ?? item.provider_uri,
     ),
     faces,
+    prices,
     bestPrice: parsePriceObservation(item.best_price ?? item.bestPrice) ?? firstPrice ?? null,
+    displayPrices,
   };
+}
+
+export function parseCatalogPriceFloors(value: unknown): Record<string, CatalogPricePair> | null {
+  const result = record(value);
+  const cards = record(result?.cards);
+  if (!result || !cards) {
+    return null;
+  }
+
+  const parsed: Record<string, CatalogPricePair> = {};
+  for (const [cardId, rawPair] of Object.entries(cards)) {
+    const pair = record(rawPair);
+    if (!pair) {
+      return null;
+    }
+    parsed[cardId] = {
+      nonfoil: pair.nonfoil === null ? null : parsePriceObservation(pair.nonfoil),
+      foil: pair.foil === null ? null : parsePriceObservation(pair.foil),
+    };
+    if (
+      (pair.nonfoil !== null && parsed[cardId]!.nonfoil === null) ||
+      (pair.foil !== null && parsed[cardId]!.foil === null)
+    ) {
+      return null;
+    }
+  }
+  return parsed;
 }
 
 export function parseCatalogSearchResult(value: unknown): CatalogSearchResult | null {

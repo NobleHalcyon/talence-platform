@@ -24,6 +24,7 @@ export const DATABASE_FUNCTIONS = {
   adminRecordInvitedUserError: "admin_record_invited_user_error",
   adminRevokeInvitedUser: "admin_revoke_invited_user",
   catalogSearch: "catalog_search",
+  catalogOraclePriceFloors: "catalog_oracle_price_floors",
   catalogCardDetail: "catalog_card_detail",
   catalogPrintingDetail: "catalog_printing_detail",
   catalogSetDetail: "catalog_set_detail",

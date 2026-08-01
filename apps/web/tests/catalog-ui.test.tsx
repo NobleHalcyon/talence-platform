@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import CatalogLoading from "@/app/(authenticated)/app/catalog/loading";
 import {
@@ -16,12 +16,23 @@ import {
 } from "@/features/catalog/preview";
 import { defaultCatalogQuery } from "@/features/catalog/query";
 
+const navigationMocks = vi.hoisted(() => ({ replace: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: navigationMocks.replace }),
+}));
+
+afterEach(() => {
+  navigationMocks.replace.mockReset();
+  vi.unstubAllGlobals();
+});
+
 function parsed(view: "grid" | "table" = "grid") {
   return { query: defaultCatalogQuery(view), notices: [] };
 }
 
 describe("catalog UI states", () => {
-  it("renders a successful result with explicit available and unavailable prices", () => {
+  it("renders the image-only grid with compact hover details and quick actions", () => {
     const query = defaultCatalogQuery("grid");
     const data = previewCatalogSearch(query);
     render(
@@ -32,14 +43,24 @@ describe("catalog UI states", () => {
     );
 
     expect(screen.getByRole("heading", { name: "2 results" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Black Lotus" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Lightning Bolt" })).not.toBeInTheDocument();
-    expect(
-      screen.getAllByText("Price unavailable").some((element) => element.tagName === "SPAN"),
-    ).toBe(true);
-    expect(screen.getAllByText(/Scryfall estimate/)).toHaveLength(1);
-    expect(screen.getAllByText(/ingested/).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "View Black Lotus" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("/app/catalog/cards/"),
+    );
+    expect(screen.queryByRole("link", { name: "View Lightning Bolt" })).not.toBeInTheDocument();
+    expect(screen.getByText("Nonfoil $25,000.00")).toBeInTheDocument();
+    expect(screen.getAllByText("Price unavailable")).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Add to collection" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Add to deck" })).toHaveLength(2);
+    expect(screen.queryByLabelText("Catalog freshness")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Oracle mode:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ingested/i)).not.toBeInTheDocument();
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
+    const viewToggle = screen.getByRole("group", { name: "Catalog result view" });
+    expect(Array.from(viewToggle.querySelectorAll("a"), (link) => link.textContent)).toEqual([
+      "Grid",
+      "Table",
+    ]);
   });
 
   it("renders the empty state with one safe broadening action", () => {
@@ -98,27 +119,62 @@ describe("catalog UI states", () => {
       />,
     );
 
-    const filterTrigger = screen.getByRole("button", { name: "Filters" });
+    const filterTrigger = screen.getByRole("button", { name: "Filter" });
     expect(filterTrigger).toBeEnabled();
+    expect(filterTrigger.parentElement).toBe(
+      screen.getByRole("button", { name: "Search" }).parentElement,
+    );
     fireEvent.click(filterTrigger);
     const drawer = screen.getByRole("dialog", { name: "Filters" });
     expect(drawer).toBeVisible();
-    expect(screen.getAllByLabelText("Language code")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Language code")).toHaveLength(1);
     expect(
       screen.getAllByText('English is the default. Enter "all" to include every language.'),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(drawer.querySelector('[name="lang"]')).toBeInTheDocument();
+    const variants = screen.getByRole("checkbox", { name: "Return all variants" });
+    expect(variants).not.toBeChecked();
+    expect(variants).toHaveAccessibleDescription(
+      "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card.",
+    );
   });
 
-  it("keeps the mobile filter trigger disabled in server markup until hydration", () => {
+  it("renders one server-side Filter trigger beside Search", () => {
     const container = document.createElement("div");
     container.innerHTML = renderToString(<CatalogControls query={defaultCatalogQuery("grid")} />);
 
-    const filterTrigger = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Filters",
+    const buttons = Array.from(container.querySelectorAll("button"));
+    const searchTrigger = buttons.find((button) => button.textContent === "Search");
+    const filterTrigger = buttons.find((button) => button.textContent === "Filter");
+
+    expect(filterTrigger).toBeEnabled();
+    expect(filterTrigger?.parentElement).toBe(searchTrigger?.parentElement);
+    expect(container.querySelectorAll('[name="lang"]')).toHaveLength(0);
+  });
+
+  it("requests a complete-row page size when the viewport crosses a grid tier", async () => {
+    const activeMedia = new Set(["(min-width: 58rem)", "(min-width: 44rem)", "(min-width: 27rem)"]);
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((media: string) => ({
+        matches: activeMedia.has(media),
+        media,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
     );
 
-    expect(filterTrigger).toBeDisabled();
+    render(<CatalogControls query={defaultCatalogQuery("grid")} />);
+
+    await waitFor(() => {
+      expect(navigationMocks.replace).toHaveBeenCalledWith("/app/catalog?page_size=24&view=grid", {
+        scroll: false,
+      });
+    });
   });
 
   it("broadens preview results only through the explicit all-language sentinel", () => {
@@ -128,6 +184,30 @@ describe("catalog UI states", () => {
     expect(data.items.map((item) => item.language)).toContain("en");
     expect(data.items.map((item) => item.language)).toContain("ja");
     expect(data.resultCount).toBe(3);
+  });
+
+  it("returns one representative per Oracle card unless variants are requested", () => {
+    const oracle = previewCatalogSearch({
+      ...defaultCatalogQuery("grid"),
+      query: "Black Lotus",
+    });
+    const variants = previewCatalogSearch({
+      ...defaultCatalogQuery("grid"),
+      query: "Black Lotus",
+      returnAllVariants: true,
+    });
+    const alphaSet = previewCatalogSearch({
+      ...defaultCatalogQuery("grid"),
+      query: "Black Lotus",
+      setCode: "LEA",
+    });
+
+    expect(oracle.totalCount).toBe(1);
+    expect(oracle.items[0]?.set.code).toBe("2ED");
+    expect(variants.totalCount).toBe(2);
+    expect(variants.items.map((item) => item.set.code)).toEqual(["2ED", "LEA"]);
+    expect(alphaSet.totalCount).toBe(1);
+    expect(alphaSet.items[0]?.set.code).toBe("LEA");
   });
 
   it("renders direct provider images and switches ordered printing faces", () => {
@@ -165,7 +245,7 @@ describe("catalog UI states", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Printings (251)" })).toBeVisible();
-    expect(screen.getByText(/Showing the newest 1 of 251 printings/)).toBeVisible();
+    expect(screen.getByText(/Showing the newest 2 of 251 printings/)).toBeVisible();
     expect(screen.getByRole("link", { name: "Browse catalog matches" })).toHaveAttribute(
       "href",
       expect.stringContaining("/app/catalog?q=Black+Lotus&view=table"),

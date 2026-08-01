@@ -3,9 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { TALENCE_EMBLEM_SRC } from "@/components/brand/brand-assets";
-import { signOutAction } from "@/features/auth/actions";
 import type { AppContext } from "@/lib/auth/app-context";
 
+import { AccountMenu } from "./account-menu";
 import styles from "./app-shell.module.css";
 import { BottomNavigation, DesktopNavigation } from "./primary-navigation";
 
@@ -28,7 +28,7 @@ export function AppShell({
   return (
     <div className={styles.shell}>
       <header className={styles.topBar}>
-        <Link className={styles.brandLink} href="/app" aria-label="Talence dashboard">
+        <Link className={styles.brandLink} href="/app" aria-label="Talence home">
           <Image
             className={styles.brandEmblem}
             src={TALENCE_EMBLEM_SRC}
@@ -40,25 +40,14 @@ export function AppShell({
         </Link>
         <DesktopNavigation />
         <div className={styles.accountGroup}>
-          {context?.isPlatformAdmin ? (
-            <Link className={styles.adminLink} href="/app/admin/invites">
-              Admin
-            </Link>
-          ) : null}
-          <Link
-            className={styles.accountLink}
-            href="/app/settings"
-            aria-label="Account and settings"
-          >
-            {initials}
-          </Link>
-          {context ? (
-            <form action={signOutAction}>
-              <button className={styles.logoutButton} type="submit">
-                Sign out
-              </button>
-            </form>
-          ) : null}
+          <AccountMenu
+            initials={initials}
+            isPlatformAdmin={context?.isPlatformAdmin ?? false}
+            profileName={context?.profile.display_name ?? context?.profile.handle ?? null}
+            currentWorkspaceId={context?.workspace.id ?? null}
+            workspaces={context?.workspaces ?? []}
+            signedIn={Boolean(context)}
+          />
         </div>
       </header>
       {previewMode ? (

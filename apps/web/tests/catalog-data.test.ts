@@ -7,9 +7,11 @@ import {
 } from "@/features/catalog/data";
 import {
   parseCatalogCardDetail,
+  parseCatalogPriceFloors,
   parseCatalogSearchResult,
   parsePriceObservation,
 } from "@/features/catalog/parse";
+import { catalogPricePair } from "@/features/catalog/prices";
 import { defaultCatalogQuery } from "@/features/catalog/query";
 import type { CatalogRpcClient } from "@/features/catalog/types";
 
@@ -74,6 +76,7 @@ function rawPrinting(overrides: Record<string, unknown> = {}) {
         image_normal_uri: "https://cards.scryfall.io/normal/back/fixture-back.jpg",
       },
     ],
+    prices: [rawPrice(), rawPrice({ finish: "foil", amount: "8.5000" })],
     best_price: rawPrice(),
     ...overrides,
   };
@@ -117,7 +120,49 @@ describe("catalog data boundary", () => {
       observedAt: "2026-07-26T12:00:00Z",
       ingestedAt: "2026-07-26T12:30:00Z",
     });
+    expect(parsed?.items[0]?.displayPrices).toMatchObject({
+      nonfoil: { amount: "4.2500" },
+      foil: { amount: "8.5000" },
+    });
     expect(parsed?.catalog.ingestedAt).toBe("2026-07-26T12:30:00Z");
+  });
+
+  it("parses bounded Oracle foil and nonfoil price floors", () => {
+    expect(
+      parseCatalogPriceFloors({
+        cards: {
+          [CARD_ID]: {
+            nonfoil: rawPrice({ amount: "1.2500" }),
+            foil: rawPrice({ finish: "foil", amount: "3.5000" }),
+          },
+        },
+      }),
+    ).toMatchObject({
+      [CARD_ID]: {
+        nonfoil: { amount: "1.2500", finish: "nonfoil" },
+        foil: { amount: "3.5000", finish: "foil" },
+      },
+    });
+    expect(
+      parseCatalogPriceFloors({ cards: { [CARD_ID]: { nonfoil: {}, foil: null } } }),
+    ).toBeNull();
+  });
+
+  it("selects the least current price per finish without crossing currencies", () => {
+    expect(
+      catalogPricePair(
+        [
+          parsePriceObservation(rawPrice({ amount: "4.00" }))!,
+          parsePriceObservation(rawPrice({ amount: "3.00", provider: "tcgplayer" }))!,
+          parsePriceObservation(rawPrice({ amount: "1.00", currency: "EUR" }))!,
+          parsePriceObservation(rawPrice({ amount: "7.00", finish: "foil" }))!,
+        ],
+        "USD",
+      ),
+    ).toMatchObject({
+      nonfoil: { amount: "3.00", currency: "USD" },
+      foil: { amount: "7.00", currency: "USD" },
+    });
   });
 
   it("keeps explicit zero observations while treating missing or malformed prices as unavailable", () => {
@@ -213,6 +258,7 @@ describe("catalog data boundary", () => {
     const result = await searchCatalogWithClient({ rpc } as CatalogRpcClient, {
       ...defaultCatalogQuery("table"),
       query: "fixture",
+      pageSize: 18,
     });
 
     expect(result.ok).toBe(true);
@@ -223,7 +269,8 @@ describe("catalog data boundary", () => {
         p_game_code: "mtg",
         p_language: "en",
         p_after: null,
-        p_limit: 24,
+        p_limit: 18,
+        p_return_all_variants: false,
       }),
     );
   });

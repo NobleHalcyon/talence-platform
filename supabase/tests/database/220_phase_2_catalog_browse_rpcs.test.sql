@@ -1,6 +1,6 @@
 begin;
 
-select plan(36);
+select plan(44);
 
 create function pg_temp.create_auth_user(
   p_user_id uuid,
@@ -556,8 +556,32 @@ select is(
     public.catalog_search(p_query => 'Tie Card')
       ->> 'total_count'
   )::integer,
+  1,
+  'Oracle mode returns one representative across language-specific printings'
+);
+select is(
+  (
+    public.catalog_search(
+      p_query => 'Tie Card',
+      p_return_all_variants => true
+    ) ->> 'total_count'
+  )::integer,
   3,
-  'null language searches all language-specific printings'
+  'all-variants mode returns every eligible printing'
+);
+select is(
+  public.catalog_search(p_query => 'Tie Card')
+    -> 'items' -> 0 ->> 'printing_id',
+  '87000000-0000-4000-8000-000000000006',
+  'Oracle mode chooses the newest eligible representative printing'
+);
+select is(
+  public.catalog_search(
+    p_query => 'Tie Card',
+    p_set_code => 'aaa'
+  ) -> 'items' -> 0 ->> 'printing_id',
+  '87000000-0000-4000-8000-000000000001',
+  'a set filter chooses the representative printing from that set'
 );
 select is(
   (
@@ -582,8 +606,8 @@ select is(
     public.catalog_search(p_query => 'Tie Crd')
       ->> 'total_count'
   )::integer,
-  3,
-  'index-backed trigram matching tolerates a representative typo'
+  1,
+  'index-backed trigram matching tolerates a representative typo in Oracle mode'
 );
 select is(
   (
@@ -766,7 +790,8 @@ values (
   public.catalog_search(
     p_query => 'Tie Card',
     p_sort => 'price_asc',
-    p_limit => 1
+    p_limit => 1,
+    p_return_all_variants => true
   )
 );
 insert into search_pages
@@ -780,7 +805,8 @@ select
       from search_pages
       where page_number = 1
     ),
-    p_limit => 1
+    p_limit => 1,
+    p_return_all_variants => true
   );
 insert into search_pages
 select
@@ -793,7 +819,8 @@ select
       from search_pages
       where page_number = 2
     ),
-    p_limit => 1
+    p_limit => 1,
+    p_return_all_variants => true
   );
 
 select is(
@@ -822,13 +849,6 @@ select is(
   3,
   'cursor pages retain exact total count'
 );
-
-reset role;
-update public.catalog_state
-set
-  active_catalog_version = 'mtg-20260726T130000Z-deadbeef-s1',
-  current_search_index_version = 'mtg-20260726T130000Z-deadbeef-s1';
-set local role authenticated;
 select throws_ok(
   format(
     'select public.catalog_search(p_query => %L, p_sort => %L, p_after => %L, p_limit => 1)',
@@ -842,7 +862,86 @@ select throws_ok(
   ),
   '22023',
   'talence_catalog_cursor_invalid',
+  'an all-variants cursor cannot be reused in Oracle mode'
+);
+
+reset role;
+update public.catalog_state
+set
+  active_catalog_version = 'mtg-20260726T130000Z-deadbeef-s1',
+  current_search_index_version = 'mtg-20260726T130000Z-deadbeef-s1';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.catalog_search(p_query => %L, p_sort => %L, p_after => %L, p_limit => 1, p_return_all_variants => true)',
+    'Tie Card',
+    'price_asc',
+    (
+      select result ->> 'next_cursor'
+      from search_pages
+      where page_number = 1
+    )
+  ),
+  '22023',
+  'talence_catalog_cursor_invalid',
   'cursor scope is invalidated when active catalog/search version changes'
+);
+
+reset role;
+insert into public.current_prices (
+  printing_id,
+  provider,
+  currency,
+  finish,
+  amount,
+  observed_at,
+  ingested_at,
+  source_file_id,
+  stale_after
+)
+values (
+  '87000000-0000-4000-8000-000000000006',
+  'tcgplayer',
+  'USD',
+  'nonfoil',
+  0.5,
+  '2026-07-26 12:00:00+00',
+  '2026-07-26 12:05:00+00',
+  '83000000-0000-4000-8000-000000000001',
+  '2026-07-28 00:00:00+00'
+);
+set local role authenticated;
+
+select is(
+  public.catalog_oracle_price_floors(
+    array['86000000-0000-4000-8000-000000000001'::uuid],
+    'USD'
+  ) -> 'cards' -> '86000000-0000-4000-8000-000000000001' -> 'nonfoil' ->> 'amount',
+  '0.5000',
+  'Oracle mode returns the least expensive nonfoil printing'
+);
+select is(
+  public.catalog_oracle_price_floors(
+    array['86000000-0000-4000-8000-000000000001'::uuid],
+    'USD'
+  ) -> 'cards' -> '86000000-0000-4000-8000-000000000001' -> 'foil' ->> 'amount',
+  '9.0000',
+  'Oracle mode returns the least expensive foil printing separately'
+);
+select is(
+  public.catalog_oracle_price_floors(
+    array['86000000-0000-4000-8000-000000000001'::uuid],
+    'USD',
+    'aaa'
+  ) -> 'cards' -> '86000000-0000-4000-8000-000000000001' -> 'nonfoil' ->> 'amount',
+  '1.0000',
+  'a set filter constrains Oracle price floors to that set'
+);
+select throws_ok(
+  $$select public.catalog_oracle_price_floors('{}'::uuid[])$$,
+  '22023',
+  'talence_catalog_card_ids_invalid',
+  'Oracle price-floor reads reject empty card lists'
 );
 
 reset role;

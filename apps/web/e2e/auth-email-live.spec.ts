@@ -458,13 +458,15 @@ test("real invite and recovery emails complete securely through the browser", as
     await waitForLocation(admittedBrowser.page, "/app", "invitation_complete");
     await expectProvisionedExactlyOnce(database, admittedEmail);
 
-    await admittedBrowser.page.getByRole("button", { name: "Sign out" }).click();
+    await admittedBrowser.page.getByRole("button", { name: /Open account menu/ }).click();
+    await admittedBrowser.page.getByRole("button", { name: "Log Out" }).click();
     await waitForLocation(admittedBrowser.page, "/login", "signed_out");
     await admittedBrowser.page.getByLabel("Username or email").fill(handle);
     await admittedBrowser.page.getByLabel("Password").fill(initialPassword);
     await admittedBrowser.page.getByRole("button", { name: "Sign in" }).click();
     await waitForLocation(admittedBrowser.page, "/app");
-    await admittedBrowser.page.getByRole("button", { name: "Sign out" }).click();
+    await admittedBrowser.page.getByRole("button", { name: /Open account menu/ }).click();
+    await admittedBrowser.page.getByRole("button", { name: "Log Out" }).click();
     await waitForLocation(admittedBrowser.page, "/login", "signed_out");
 
     const reusedInviteBrowser = await freshPage(browser);

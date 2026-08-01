@@ -2505,6 +2505,15 @@ export type Database = {
         Returns: Json;
       };
       catalog_card_detail: { Args: { p_card_id: string }; Returns: Json };
+      catalog_oracle_price_floors: {
+        Args: {
+          p_card_ids: string[];
+          p_currency?: string;
+          p_language?: string;
+          p_set_code?: string;
+        };
+        Returns: Json;
+      };
       catalog_printing_detail: {
         Args: { p_printing_id: string };
         Returns: Json;
@@ -2528,6 +2537,7 @@ export type Database = {
           p_rarity?: string;
           p_released_from?: string;
           p_released_to?: string;
+          p_return_all_variants?: boolean;
           p_set_code?: string;
           p_sort?: string;
           p_type_line?: string;

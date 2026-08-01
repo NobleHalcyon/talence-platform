@@ -3,6 +3,9 @@ import type { PriceObservation } from "@talence/domain";
 export const CATALOG_VIEWS = ["table", "grid"] as const;
 export type CatalogView = (typeof CATALOG_VIEWS)[number];
 
+export const CATALOG_PAGE_SIZES = [6, 12, 18, 24, 30] as const;
+export type CatalogPageSize = (typeof CATALOG_PAGE_SIZES)[number];
+
 export const CATALOG_SORTS = ["name", "newest", "price_asc", "price_desc"] as const;
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
@@ -23,11 +26,13 @@ export interface CatalogSearchQuery {
   currency: string;
   includeDigital: boolean;
   includeNondefault: boolean;
+  returnAllVariants: boolean;
   releasedFrom: string;
   releasedTo: string;
   sort: CatalogSort;
   cursor: string | null;
   view: CatalogView;
+  pageSize: CatalogPageSize;
 }
 
 export interface CatalogQueryParseResult {
@@ -68,6 +73,7 @@ export interface CatalogSearchItem {
   cardId: string | null;
   printingId: string;
   name: string;
+  oracleName: string;
   printedName: string | null;
   manaCost: string | null;
   manaValue: number | null;
@@ -89,7 +95,20 @@ export interface CatalogSearchItem {
   artist: string | null;
   providerUri: string | null;
   faces: CatalogFace[];
+  prices: PriceObservation[];
   bestPrice: PriceObservation | null;
+  displayPrices: CatalogPricePair;
+}
+
+export interface CatalogPricePair {
+  nonfoil: PriceObservation | null;
+  foil: PriceObservation | null;
+}
+
+export interface CatalogDeckOption {
+  id: string;
+  name: string;
+  currentRevision: number;
 }
 
 export interface CatalogFreshness {

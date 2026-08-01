@@ -541,20 +541,20 @@ The user may request account deletion only after ownership obligations are resol
 
 Desktop/tablet primary navigation:
 
-- Dashboard
 - Catalog
 - Collections
 - Decks
-- Devices
-- Settings
+
+The canonical Talence emblem links to the dashboard, so Dashboard is not duplicated as a text link. The profile control opens an account submenu ordered as workspace selector, Devices, Admin for platform administrators, Settings, and Log Out.
 
 Mobile primary navigation must keep the highest-frequency destinations reachable without horizontal scrolling. Contextual filters move into a drawer/sheet.
+The compact bottom navigation contains Catalog, Collections, and Decks; account and administrative destinations remain in the shared profile submenu.
 
 ### 3.2 Workspace context — P0 foundation, P1 UI
 
 All resource queries operate in an active workspace. The first UI may default directly to the personal workspace while still using workspace-scoped routes and data internally.
 
-Workspace switching appears when a user belongs to more than one workspace.
+Workspace switching appears first in the profile submenu and lists every workspace accessible to the user.
 
 ### 3.3 Required page states — P0
 
@@ -590,16 +590,21 @@ Dashboard cards link to the underlying detail route. Expensive aggregates use da
 
 ### 5.1 Catalog browse — P0
 
-Admitted users can browse all catalog printings ingested by Talence.
+Admitted users can browse the Oracle-card catalog and may explicitly expand results to all eligible printings ingested by Talence.
 
 Default browse scope emphasizes physical, non-digital printings while allowing an explicit switch to broader catalog records.
+Oracle mode is the default and returns one deterministic representative printing per Oracle card after applying the active filters. A selected set therefore chooses that card's representative from the selected set.
+Selecting **Return all variants** disables Oracle grouping and returns every eligible individual printing.
+The initial browse is populated without requiring a search term.
 
 View modes:
 
-- dense table/list;
-- card grid.
+- card grid, the default whenever the browse route has no explicit view parameter;
+- dense table/list.
 
-Persist the user's preference.
+The table remains an explicit URL-addressable view, but it does not replace the grid default for a later bare-route visit.
+Grid requests use bounded responsive page sizes aligned to the active column count so a full page contains complete rows without requesting the full catalog.
+Browse query parameters and results use a short-lived, admitted-user-scoped cache, and the browser preserves catalog scroll position so detail navigation and browser Back restore the recent browse state.
 
 ### 5.2 Search — P0
 
@@ -631,6 +636,12 @@ At minimum:
 - release date range.
 
 Filters are URL-addressable so a result can be refreshed or shared among admitted users.
+All browse filters live in a drawer opened from the search control group at every viewport width.
+The drawer includes an unchecked **Return all variants** checkbox with the tooltip: "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card."
+
+Grid presentation is image-first. The browse surface omits import/freshness metadata and the explanatory Oracle-mode sentence. Hover and keyboard focus reveal the Oracle name above the image, compact nonfoil/foil prices below it, and folder-plus/list-plus actions for collection and deck entry. The image area links to card detail. Touch layouts keep the same information and actions available without hover.
+
+Oracle-mode grid prices are the least expensive current nonfoil and foil observations across eligible printings after language and set filters. All-variants mode uses the exact printing's market observations. A selected set constrains both Oracle representatives and price floors to that set.
 
 ### 5.4 Oracle-card detail — P0
 
@@ -670,6 +681,8 @@ Show:
 - Always expose provider and observed time.
 - If the latest observation is beyond the configured freshness threshold, show a stale indicator.
 - Condition multipliers are not applied in the first release.
+
+The compact browse-grid hover/focus summary is the deliberate exception to the provider/time presentation rule: it uses only the minimal Nonfoil/Foil labels and current amount. Full provenance and freshness remain on detail surfaces.
 
 ## 6. Collections and inventory
 
@@ -1656,7 +1669,7 @@ Unique one active invitation per workspace/email.
 Fields:
 
 - `user_id uuid primary key`
-- `catalog_view text`
+- `catalog_view text` defaulting to `grid` for new preference rows
 - `collection_view text`
 - `deck_view text`
 - `compact_mode boolean`
@@ -2457,6 +2470,10 @@ Use:
 - cursor or keyset pagination;
 - bounded page size;
 - no unbounded “return everything” request;
+- Oracle mode groups eligible results by Oracle-card identity after applying every search filter;
+- the Oracle representative prefers default-browse printings, then the newest release, with deterministic variation, promo, and printing-ID tie-breakers;
+- all-variants mode returns every eligible printing and is part of cursor scope so cursors cannot cross modes;
+- the visual Oracle grid obtains bounded, admitted-user-only foil and nonfoil floors for the result card IDs; set and language filters constrain the eligible printings, while all-variants results use each exact printing's current observations;
 - query plan/performance tests on representative catalog size.
 
 ## 7. Price model
@@ -2512,6 +2529,8 @@ Examples:
 - `Scryfall estimate · observed Jul 26, 2026 12:00 UTC`
 - `Price unavailable`
 - `Estimate may be stale · observed 2 days ago`
+
+The image-first catalog grid intentionally compresses this to `Nonfoil <amount>` and `Foil <amount>` on hover/focus (and persistently on touch). It omits timestamps and provider labels only on that compact browse surface; detail pages retain full source and freshness context.
 
 ## 8. Image strategy
 
@@ -3032,16 +3051,17 @@ Admin routes remain invisible and denied to ordinary users.
 
 ### Wide layout
 
-- sticky deep-navy top navigation, 56px, using the canonical gold Talence emblem;
-- no persistent active-workspace rail; workspace defaults and switching live in Settings;
+- sticky deep-navy top navigation, approximately 64px, using the canonical gold Talence emblem at a proportionally enlarged size;
+- the emblem is the dashboard/home control; the visible primary links are Catalog, Collections, and Decks;
+- no persistent active-workspace rail; the enlarged profile control opens a deep-navy submenu ordered as workspace selector, Devices, Admin when authorized, Settings, and Log Out with its icon;
 - independently scrolling main content;
 - page header with title, context, and primary action;
 - main content may be constrained or full-width.
 
 ### Compact layout
 
-- compact top bar with Talence mark, context title, and account/action menu;
-- bottom primary navigation for Dashboard, Catalog, Collections, Decks, and More;
+- compact 64px top bar with the enlarged Talence mark and the same account submenu;
+- bottom primary navigation for Catalog, Collections, and Decks;
 - contextual sidebars become sheets/drawers;
 - primary create/add actions remain reachable near the thumb zone;
 - tables become semantic stacked rows/cards when columns cannot remain readable.
@@ -3220,12 +3240,19 @@ Feature code composes these primitives instead of recreating controls.
 
 ### Browse
 
-- search remains visible;
+- the page opens directly on a populated result set without a redundant catalog introduction;
+- search remains visible and shares one control group with Search and Filter actions;
 - active filters are visible as removable chips/summary;
-- filter drawer on compact screens;
-- table and grid toggle;
-- result count and catalog freshness;
-- cards show name, set, image, available finishes, and price estimate when available.
+- all filters live in a drawer at every viewport width;
+- the filter drawer exposes an unchecked **Return all variants** checkbox; its tooltip reads "Select this to return all individual printings of a card. Leave this unchecked to only return one result per card.";
+- unchecked Oracle mode shows one representative per card, while checking it shows individual printings; a set filter constrains the Oracle representative to that set;
+- the grid-first table/grid toggle always defaults a bare catalog route to grid; table remains an explicit URL-addressable view and does not become the later default;
+- the grid uses one through five media-query-aligned columns and requests 6, 12, 18, 24, or 30 results respectively, yielding six complete rows when at least that many matches exist;
+- the browse header shows the result count without ingestion metadata or a redundant Oracle-mode explanation;
+- grid results remove the information panel and use the image itself as the detail link;
+- hover and keyboard focus reveal the Oracle name above the image, compact Nonfoil/Foil prices below it, and folder-plus/list-plus quick actions near the image's upper-right corner; touch layouts expose the same controls without hover;
+- Oracle-mode prices are the least expensive current nonfoil and foil observations across eligible printings, selected-set mode constrains those floors to that set, and all-variants mode shows exact-printing observations;
+- URL query state, admitted-user-scoped short-lived result caching, and session scroll restoration make browser Back return to the recent browse instead of resetting it.
 
 ### Detail
 

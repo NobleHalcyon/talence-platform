@@ -1,3 +1,11 @@
+.catalogPage {
+  display: grid;
+  width: 100%;
+  max-width: 87rem;
+  gap: var(--tl-space-4);
+  margin-inline: auto;
+}
+
 .controls,
 .results,
 .detailStack {
@@ -6,22 +14,23 @@
 }
 
 .searchForm {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--tl-space-3);
   border: 1px solid var(--tl-color-border);
   border-radius: var(--tl-radius);
   background: var(--tl-color-surface);
   padding: var(--tl-space-3);
 }
 
-.desktopFilters {
-  display: none;
-  border: 1px solid var(--tl-color-border);
-  border-radius: var(--tl-radius);
-  background: var(--tl-color-surface);
-  padding: var(--tl-space-4);
+.searchControlRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--tl-space-3);
+}
+
+.searchActions {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2);
 }
 
 .filterGrid {
@@ -41,11 +50,6 @@
   justify-content: flex-end;
   gap: var(--tl-space-2);
   margin-block-start: var(--tl-space-4);
-}
-
-.mobileFilterTrigger {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .drawerFilterForm {
@@ -118,21 +122,108 @@
 
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
-  gap: var(--tl-space-4);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tl-space-2);
 }
 
 .catalogCard {
-  display: grid;
+  position: relative;
+  display: block;
   min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--tl-color-border);
-  border-radius: var(--tl-radius);
-  background: var(--tl-color-surface);
+  padding-block: 1.25rem 1.5rem;
+  background: transparent;
 }
 
 .gridImage {
+  display: block;
   width: 100%;
+}
+
+.gridOracleName,
+.gridPrices {
+  position: absolute;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  margin: 0;
+  opacity: 0;
+  text-overflow: ellipsis;
+  transition: opacity 140ms ease;
+  white-space: nowrap;
+}
+
+.gridOracleName {
+  top: 0;
+  color: var(--tl-color-navy);
+  font-size: var(--tl-font-size-14);
+  font-weight: var(--tl-font-weight-semibold);
+}
+
+.gridPrices {
+  bottom: 0;
+  color: var(--tl-color-text);
+  font-size: var(--tl-font-size-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.gridCardLink {
+  position: absolute;
+  z-index: 1;
+  inset: 1.25rem 0 1.5rem;
+  border-radius: var(--tl-radius);
+  cursor: pointer;
+}
+
+.gridCardLink:focus-visible {
+  outline: 3px solid var(--tl-color-focus);
+  outline-offset: 3px;
+}
+
+.gridQuickActions {
+  position: absolute;
+  z-index: 2;
+  top: calc(1.25rem + 20px);
+  right: 20px;
+  display: flex;
+  width: 32%;
+  gap: var(--tl-space-1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.gridQuickActions > button {
+  flex: 1 1 0;
+  width: 15%;
+  min-width: 0;
+  aspect-ratio: 1;
+  border-color: var(--tl-color-gold);
+  background: color-mix(in srgb, var(--tl-color-navy) 92%, transparent);
+  color: var(--tl-color-gold);
+}
+
+.gridQuickActions svg {
+  width: 100%;
+  height: 100%;
+}
+
+.catalogCard:hover .gridOracleName,
+.catalogCard:hover .gridPrices,
+.catalogCard:hover .gridQuickActions,
+.catalogCard:focus-within .gridOracleName,
+.catalogCard:focus-within .gridPrices,
+.catalogCard:focus-within .gridQuickActions {
+  opacity: 1;
+}
+
+.catalogCard:hover .gridQuickActions,
+.catalogCard:focus-within .gridQuickActions {
+  pointer-events: auto;
+}
+
+.quickActionForm {
+  display: grid;
+  gap: var(--tl-space-3);
 }
 
 .catalogCardBody {
@@ -334,14 +425,6 @@
 }
 
 @media (min-width: 40rem) {
-  .desktopFilters {
-    display: block;
-  }
-
-  .mobileFilterTrigger {
-    display: none;
-  }
-
   .filterGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -351,15 +434,37 @@
   }
 }
 
-@media (min-width: 64rem) {
-  .filterGrid {
+@media (min-width: 27rem) {
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 44rem) {
+  .cardGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 58rem) {
+  .cardGrid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
+@media (min-width: 73rem) {
+  .cardGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 39.999rem) {
-  .searchForm {
+  .searchControlRow {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .searchActions {
+    justify-content: flex-end;
   }
 
   .filterChips {
@@ -374,8 +479,7 @@
   }
 
   .cardGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--tl-space-3);
+    gap: var(--tl-space-1);
   }
 
   .catalogCardBody {
@@ -452,8 +556,14 @@
   }
 }
 
-@media (max-width: 27rem) {
-  .cardGrid {
-    grid-template-columns: minmax(0, 1fr);
+@media (hover: none) {
+  .gridOracleName,
+  .gridPrices,
+  .gridQuickActions {
+    opacity: 1;
+  }
+
+  .gridQuickActions {
+    pointer-events: auto;
   }
 }

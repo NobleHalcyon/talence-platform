@@ -176,6 +176,10 @@ Use:
 - cursor or keyset pagination;
 - bounded page size;
 - no unbounded “return everything” request;
+- Oracle mode groups eligible results by Oracle-card identity after applying every search filter;
+- the Oracle representative prefers default-browse printings, then the newest release, with deterministic variation, promo, and printing-ID tie-breakers;
+- all-variants mode returns every eligible printing and is part of cursor scope so cursors cannot cross modes;
+- the visual Oracle grid obtains bounded, admitted-user-only foil and nonfoil floors for the result card IDs; set and language filters constrain the eligible printings, while all-variants results use each exact printing's current observations;
 - query plan/performance tests on representative catalog size.
 
 ## 7. Price model
@@ -231,6 +235,8 @@ Examples:
 - `Scryfall estimate · observed Jul 26, 2026 12:00 UTC`
 - `Price unavailable`
 - `Estimate may be stale · observed 2 days ago`
+
+The image-first catalog grid intentionally compresses this to `Nonfoil <amount>` and `Foil <amount>` on hover/focus (and persistently on touch). It omits timestamps and provider labels only on that compact browse surface; detail pages retain full source and freshness context.
 
 ## 8. Image strategy
 
