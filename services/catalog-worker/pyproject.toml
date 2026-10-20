@@ -12,7 +12,7 @@ license = { text = "UNLICENSED" }
 authors = [{ name = "Talence" }]
 dependencies = [
   "httpx==0.28.1",
-  "ijson==3.5.1",
+  "ijson==3.6.0",
   "psycopg[binary]==3.3.4",
 ]
 
